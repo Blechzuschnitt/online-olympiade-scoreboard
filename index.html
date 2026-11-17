@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Online-Olympiade Scoreboard</title>
+<style>
+  :root{--bg:#0f1b3d;--card:#18285a;--line:#2b3f80;--text:#f4f6ff;--mute:#9db0e8;--gold:#ffd23f;--silver:#c9d3e6;--bronze:#e0904f;--accent:#38d6a0}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);padding:14px;min-height:100vh}
+  h1{font-size:22px;margin:0 0 2px;text-align:center}
+  .sub{text-align:center;color:var(--mute);font-size:13px;margin-bottom:14px}
+  .rings{text-align:center;font-size:20px;letter-spacing:4px;margin-bottom:4px}
+  .podium{display:flex;gap:8px;align-items:flex-end;justify-content:center;margin:14px 0}
+  .pod{flex:1;max-width:130px;background:var(--card);border:2px solid var(--line);border-radius:12px;text-align:center;padding:10px 4px}
+  .pod .med{font-size:28px}
+  .pod .nm{font-weight:700;font-size:14px;word-break:break-word}
+  .pod .pt{font-size:20px;font-weight:800}
+  .pod.p1{border-color:var(--gold);padding-top:22px;padding-bottom:22px}
+  .pod.p2{border-color:var(--silver);padding-top:14px;padding-bottom:14px}
+  .pod.p3{border-color:var(--bronze)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:12px}
+  .card h2{font-size:15px;margin:0 0 8px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+  .rank{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--line)}
+  .rank:last-child{border:0}
+  .rank .pos{width:28px;text-align:center;font-weight:800}
+  .rank .name{flex:1;font-weight:600}
+  .rank .tot{font-weight:800;font-size:18px;color:var(--accent)}
+  .scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid var(--line);padding:6px 4px;text-align:center;white-space:nowrap}
+  th{background:#22356f;font-weight:600;max-width:90px;white-space:normal;word-break:break-word}
+  td.t{text-align:left;font-weight:600;position:sticky;left:0;background:var(--card)}
+  td.sum{font-weight:800;color:var(--accent)}
+  input.cell{width:44px;padding:6px 2px;text-align:center;background:#0f1b3d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:15px}
+  input.txt{background:#0f1b3d;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px;font-size:14px;width:100%}
+  button{background:var(--accent);color:#06251c;border:0;border-radius:8px;padding:8px 12px;font-weight:700;font-size:14px;cursor:pointer}
+  button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+  .bar{display:flex;gap:8px;justify-content:center;margin:10px 0;flex-wrap:wrap}
+  .status{text-align:center;font-size:12px;color:var(--mute);min-height:16px}
+  .err{color:#ff8f8f}
+  .hint{font-size:12px;color:var(--mute);margin-top:6px}
+  .row{display:flex;gap:6px;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="rings">🔵⚫🔴🟡🟢</div>
+<h1>🏅 Online-Olympiade</h1>
+<div class="sub">Live-Scoreboard – aktualisiert sich automatisch</div>
+
+<div class="podium" id="podium"></div>
+
+<div class="card"><h2>Gesamtwertung</h2><div id="ranking"></div></div>
+
+<div class="card"><h2>Punkte pro Disziplin</h2>
+  <div class="scroll"><table id="grid"></table></div>
+  <div class="hint">Tipp: 3 = Gold, 2 = Silber, 1 = Bronze. Finale zählt doppelt (Punkte einfach selbst doppelt eintragen).</div>
+</div>
+
+<div class="bar">
+  <button id="editBtn" class="ghost">✏️ Bearbeiten</button>
+</div>
+<div id="editor" style="display:none">
+  <div class="card"><h2>Teams</h2><div id="teamEdit"></div>
+    <div class="bar"><button id="addTeam" class="ghost">+ Team</button></div></div>
+  <div class="card"><h2>Disziplinen</h2><div id="discEdit"></div>
+    <div class="bar"><button id="addDisc" class="ghost">+ Disziplin</button></div></div>
+  <div class="bar"><button id="resetBtn" class="ghost">Alle Punkte löschen</button></div>
+</div>
+<div class="status" id="status"></div>
+
+<script>
+const DEFAULT = {
+  teams: [{name:"Team Rot",flag:"🔴"},{name:"Team Blau",flag:"🔵"},{name:"Team Grün",flag:"🟢"}],
+  discs: ["Zeichnen & Raten","Wortschlacht","Wissensquiz","Geo-Duell","Tetris-Sprint","Tipp-Rennen","Wikipedia-Rennen","Dino-Finale"],
+  scores: {}
+};
+let state = JSON.parse(JSON.stringify(DEFAULT));
+let edit = false;
+let docRef = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function total(ti){
+  let s=0;
+  state.discs.forEach((_,di)=>{ s += Number(state.scores[ti+"|"+di])||0; });
+  return s;
+}
+function ranking(){
+  return state.teams.map((t,i)=>({i,t,tot:total(i)})).sort((a,b)=>b.tot-a.tot);
+}
+function render(){
+  const r = ranking();
+  const meds=["🥇","🥈","🥉"];
+  const order=[1,0,2].filter(k=>r[k]);
+  $("podium").innerHTML = order.map(k=>`<div class="pod p${k+1}"><div class="med">${meds[k]}</div><div class="nm">${esc(r[k].t.flag||"")} ${esc(r[k].t.name)}</div><div class="pt">${r[k].tot}</div></div>`).join("");
+  $("ranking").innerHTML = r.map((x,k)=>`<div class="rank"><div class="pos">${meds[k]||k+1}</div><div class="name">${esc(x.t.flag||"")} ${esc(x.t.name)}</div><div class="tot">${x.tot}</div></div>`).join("");
+  let h = "<tr><th>Team</th>"+state.discs.map(d=>`<th>${esc(d)}</th>`).join("")+"<th>Σ</th></tr>";
+  state.teams.forEach((t,ti)=>{
+    h += `<tr><td class="t">${esc(t.flag||"")} ${esc(t.name)}</td>`;
+    state.discs.forEach((_,di)=>{
+      const v = state.scores[ti+"|"+di];
+      h += edit
+        ? `<td><input class="cell" type="number" inputmode="numeric" min="0" data-k="${ti}|${di}" value="${v??""}"></td>`
+        : `<td>${v??"–"}</td>`;
+    });
+    h += `<td class="sum">${total(ti)}</td></tr>`;
+  });
+  $("grid").innerHTML = h;
+  if(edit){
+    document.querySelectorAll("input.cell").forEach(inp=>{
+      inp.addEventListener("change",()=>{
+        const k=inp.dataset.k;
+        if(inp.value==="") delete state.scores[k]; else state.scores[k]=Number(inp.value);
+        save(); render();
+      });
+    });
+    $("teamEdit").innerHTML = state.teams.map((t,i)=>`<div class="row"><input class="txt" style="width:52px" data-tf="${i}" value="${esc(t.flag||"")}"><input class="txt" data-tn="${i}" value="${esc(t.name)}"><button class="ghost" data-td="${i}">✕</button></div>`).join("");
+    $("discEdit").innerHTML = state.discs.map((d,i)=>`<div class="row"><input class="txt" data-dn="${i}" value="${esc(d)}"><button class="ghost" data-dd="${i}">✕</button></div>`).join("");
+    document.querySelectorAll("[data-tf]").forEach(e=>e.addEventListener("change",()=>{state.teams[e.dataset.tf].flag=e.value;save();render();}));
+    document.querySelectorAll("[data-tn]").forEach(e=>e.addEventListener("change",()=>{state.teams[e.dataset.tn].name=e.value;save();render();}));
+    document.querySelectorAll("[data-dn]").forEach(e=>e.addEventListener("change",()=>{state.discs[e.dataset.dn]=e.value;save();render();}));
+    document.querySelectorAll("[data-td]").forEach(e=>e.addEventListener("click",()=>{
+      const i=+e.dataset.td; state.teams.splice(i,1);
+      const ns={}; Object.keys(state.scores).forEach(k=>{const[a,b]=k.split("|").map(Number); if(a<i)ns[k]=state.scores[k]; else if(a>i)ns[(a-1)+"|"+b]=state.scores[k];});
+      state.scores=ns; save(); render();
+    }));
+    document.querySelectorAll("[data-dd]").forEach(e=>e.addEventListener("click",()=>{
+      const i=+e.dataset.dd; state.discs.splice(i,1);
+      const ns={}; Object.keys(state.scores).forEach(k=>{const[a,b]=k.split("|").map(Number); if(b<i)ns[k]=state.scores[k]; else if(b>i)ns[a+"|"+(b-1)]=state.scores[k];});
+      state.scores=ns; save(); render();
+    }));
+  }
+}
+function setStatus(msg,isErr){ const s=$("status"); s.textContent=msg; s.className="status"+(isErr?" err":""); }
+async function save(){
+  if(!docRef){ setStatus("Nur lokal – keine Verbindung zum gemeinsamen Speicher.",true); return; }
+  try{
+    await docRef.set({teams:state.teams,discs:state.discs,scores:state.scores});
+    setStatus("Gespeichert ✓");
+  }catch(e){
+    setStatus("Speichern nicht erlaubt (nur Besitzer/Editoren dürfen Punkte eintragen).",true);
+  }
+}
+$("editBtn").onclick=()=>{ edit=!edit; $("editBtn").textContent=edit?"✅ Fertig":"✏️ Bearbeiten"; $("editor").style.display=edit?"block":"none"; render(); };
+$("addTeam").onclick=()=>{ state.teams.push({name:"Neues Team",flag:"⭐"}); save(); render(); };
+$("addDisc").onclick=()=>{ state.discs.push("Neue Disziplin"); save(); render(); };
+$("resetBtn").onclick=()=>{ if($("resetBtn").dataset.sure){ state.scores={}; delete $("resetBtn").dataset.sure; $("resetBtn").textContent="Alle Punkte löschen"; save(); render(); } else { $("resetBtn").dataset.sure="1"; $("resetBtn").textContent="Sicher? Nochmal tippen"; setTimeout(()=>{delete $("resetBtn").dataset.sure; $("resetBtn").textContent="Alle Punkte löschen";},4000); } };
+
+function apply(snap){
+  let d = snap && typeof snap.data==="function" ? snap.data() : snap;
+  if(d && d.data && !d.teams) d = d.data;
+  if(d && Array.isArray(d.teams) && Array.isArray(d.discs)){
+    // don't clobber an input being edited
+    if(edit && document.activeElement && document.activeElement.tagName==="INPUT") return;
+    state = {teams:d.teams,discs:d.discs,scores:d.scores||{}};
+    render();
+  }
+}
+render();
+(async()=>{
+  try{
+    const db = await claude.use("db");
+    if(!db){ setStatus("Gemeinsamer Speicher nicht verfügbar – Anzeige nur lokal.",true); return; }
+    docRef = db.doc("olympics/state");
+    let timer = setTimeout(()=>setStatus("Laden dauert länger als erwartet…",true),10000);
+    docRef.onSnapshot(snap=>{ clearTimeout(timer); apply(snap); setStatus(""); }, err=>{ clearTimeout(timer); setStatus("Lesen nicht möglich.",true); });
+  }catch(e){ setStatus("Gemeinsamer Speicher nicht verfügbar.",true); }
+})();
+</script>
+</body>
+</html>
