@@ -1,24 +1,33 @@
 # Online-Olympiade Scoreboard
 
-Ein Scoreboard für eine Online-Olympiade mit mehreren Teams und Disziplinen. Es besteht aus einer einzigen HTML-Datei und braucht weder Build-Schritt noch Abhängigkeiten.
+Ein Scoreboard für die Familien-Olympiade von Yana, Noah und Papa. Es besteht aus einer einzigen HTML-Datei und braucht weder Build-Schritt noch Abhängigkeiten.
+
+**Live:** https://blechzuschnitt.github.io/online-olympiade-scoreboard/
 
 ## Funktionen
 
-- Podium mit Gold, Silber und Bronze
-- Gesamtwertung, automatisch sortiert
-- Punktetabelle pro Disziplin mit Summenspalte
-- Bearbeiten-Modus: Teams (Emoji und Name) und Disziplinen hinzufügen, umbenennen oder entfernen, Punkte eintragen, alle Punkte zurücksetzen
+- Podium mit Gold, Silber und Bronze, der Spitzenreiter bekommt eine Krone
+- Gesamtwertung mit Fortschrittsbalken
+- Punktetabelle pro Disziplin mit Medaillen-Farben
+- Übersicht aller Spiele mit Links: Tippen öffnet das Spiel in einem neuen Tab, dazu wird angezeigt, wer die Disziplin gewonnen hat
+- Bearbeiten-Modus: Spieler (Emoji und Name), Disziplinen und Spiele-Links ändern, Punkte eintragen, alles zurücksetzen
 
-Vorbelegt sind drei Teams (Rot, Blau, Grün) und acht Disziplinen, vom „Zeichnen & Raten“ bis zum „Dino-Finale“.
+## Die Spiele
+
+| # | Disziplin | Spiel |
+|---|---|---|
+| 1 | Zeichnen & Raten | [skribbl.io](https://skribbl.io) |
+| 2 | Wortschlacht | [Stadt Land Fluss online](https://stadtlandflussonline.net) |
+| 3 | Wissensquiz | [Kahoot](https://kahoot.it) |
+| 4 | Geo-Duell | [OpenGuessr](https://openguessr.com) |
+| 5 | Tetris-Sprint | [TETR.IO](https://tetr.io) |
+| 6 | Tipp-Rennen | [TypeRacer](https://play.typeracer.com) |
+| 7 | Wikipedia-Rennen | [The Wiki Game](https://www.thewikigame.com) |
+| 8 | Dino-Finale (zählt doppelt) | [Chrome Dino](https://chromedino.com) |
 
 **Wertung:** 3 = Gold, 2 = Silber, 1 = Bronze. Das Finale zählt doppelt, die Punkte dafür trägst du einfach doppelt ein.
 
-## Nutzung
+## Speicherung
 
-`index.html` im Browser öffnen, fertig.
-
-## Hinweis zum Live-Sync
-
-Ursprünglich lief das Scoreboard als Claude-Artifact. Dort werden die Punkte über einen gemeinsamen Speicher (`claude.use("db")`) live mit allen Zuschauern synchronisiert.
-
-Außerhalb von Claude, zum Beispiel lokal oder auf GitHub Pages, gibt es diesen Speicher nicht. Dann läuft die Seite nur lokal: Eingaben gelten bis zum Neuladen und werden nicht geteilt. Unten auf der Seite erscheint dazu ein Hinweis.
+- **Als Claude-Artifact:** Die Punkte werden über `claude.use("db")` live mit allen Zuschauern synchronisiert.
+- **Auf GitHub Pages oder lokal:** Die Punkte werden im Browser des jeweiligen Geräts gespeichert (`localStorage`). Sie bleiben dort auch nach dem Neuladen erhalten, werden aber nicht mit anderen geteilt.
