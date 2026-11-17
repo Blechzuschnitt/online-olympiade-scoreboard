@@ -339,7 +339,8 @@ const WHEEL_COLORS = ["#ff6fb5","#4cc9ff","#ffb547","#7ee081","#b18cff","#ff7a59
 let wheelRot = 0, spinning = false, wheelKey = "", wheelItems = [];
 function played(di){ return state.teams.some((_,ti)=>state.scores[ti+"|"+di]!=null && state.scores[ti+"|"+di]!==""); }
 function wheelCandidates(){
-  const all = state.discs.map((d,di)=>({d,di}));
+  // Das Finale wird nicht ausgelost, es kommt immer zum Schluss
+  const all = state.discs.map((d,di)=>({d,di})).filter(x=>!/finale/i.test(x.d));
   if(!$("onlyOpen").checked) return all;
   const open = all.filter(x=>!played(x.di));
   return open.length ? open : all;

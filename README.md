@@ -9,7 +9,7 @@ Ein Scoreboard für die Familien-Olympiade von Yana, Noah und Papa. Es besteht a
 - Podium mit Gold, Silber und Bronze, der Spitzenreiter bekommt eine Krone
 - Gesamtwertung mit Fortschrittsbalken
 - Punktetabelle pro Disziplin mit Medaillen-Farben
-- Glücksrad, das das nächste Spiel auslost (auf Wunsch nur Spiele ohne Punkte)
+- Glücksrad, das das nächste Spiel auslost (auf Wunsch nur Spiele ohne Punkte; das Finale ist nicht dabei, es kommt immer zum Schluss)
 - Übersicht aller Spiele mit Links: Tippen öffnet das Spiel in einem neuen Tab, dazu wird angezeigt, wer die Disziplin gewonnen hat
 - Bearbeiten-Modus: Spieler (Emoji und Name), Disziplinen und Spiele-Links ändern, Punkte eintragen, alles zurücksetzen
 
