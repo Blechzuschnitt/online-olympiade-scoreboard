@@ -6,7 +6,7 @@ Eine Familien-Olympiade im Las-Vegas-Look: Spiele sammeln, ins Glücksrad legen,
 
 ## So funktioniert's
 
-1. **Spiele sammeln:** Unter „Spiele“ einen Link einfügen. Das Spiel wird automatisch mit Name und Icon hinzugefügt, bei bekannten Seiten wie skribbl.io, Kahoot oder TETR.IO sogar mit passender Beschreibung. Mit ✏️ lassen sich Name, Icon, Link und „zählt doppelt (×2)“ ändern.
+1. **Spiele sammeln:** Unter „Spiele“ einen Link einfügen. Das Spiel erscheint in der Liste mit Originalnamen, 🔗-Link und kleinem Vorschaubild (über microlink.io, ersatzweise das Seiten-Icon). Mit ✏️ lassen sich Name, Icon, Beschreibung, Link und „zählt doppelt (×2)“ ändern.
 2. **Ins Glücksrad legen:** Bei jedem Spiel auf „+ Ins Rad“ tippen.
 3. **Spieler wählen:** Unter „Wer spielt mit?“ Spieler an- und abwählen oder neue hinzufügen.
 4. **Olympiade erstellen:** Dafür braucht es mindestens 1 Spiel im Rad und 2 Spieler.
