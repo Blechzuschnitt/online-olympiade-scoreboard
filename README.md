@@ -30,3 +30,7 @@ Der Spielstand liegt online in **Supabase** (Tabelle `public.olympiade_state`, Z
 - Jedes Gerät hält zusätzlich eine lokale Kopie (`localStorage`). Ohne Verbindung läuft die Seite also weiter, dann allerdings nur auf diesem Gerät.
 - Der Schlüssel im Code ist ein öffentlicher *publishable key*. Per Row Level Security darf er nur die Zeile `nelskamp` lesen und deren Spalte `data` ändern. Anlegen, Löschen und alle anderen Tabellen des Projekts sind gesperrt.
 - Wer die Seiten-Adresse kennt, kann den Spielstand ändern. Für eine Familienrunde ist das gewollt.
+
+## Spiele-Sammlung (PDF)
+
+Ganz unten in der App gibt es `spiele-sammlung.pdf`: die deutsche Fassung einer öffentlichen Liste mit 225 kostenlosen Browserspielen (Original von „nia“, Stand 2020). Das PDF hat ein anklickbares Inhaltsverzeichnis, PDF-Lesezeichen, ein Stichwortverzeichnis mit deutschen Spielnamen und durchsuchbaren Text. Alle Links wurden am 19.11.2026 geprüft, nicht mehr erreichbare sind grau markiert.
