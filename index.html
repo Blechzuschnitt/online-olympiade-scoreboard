@@ -203,6 +203,12 @@
   .game .tag{position:absolute;top:-9px;left:12px;z-index:1;font-family:Bungee;font-size:10px;padding:2px 8px;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--pink));color:#2a0a1a}
   .game .tools .grow{flex:1 1 100%;white-space:nowrap}
   .game .tools .ic{font-family:Nunito;font-size:16px;width:40px;height:36px;padding:0;line-height:1;color:#fff}
+  .favbtn{position:absolute;top:3px;right:3px;z-index:2;width:30px;height:30px;padding:0;border-radius:50%;font-family:Nunito;font-size:18px;line-height:1;
+    color:#fff;background:rgba(10,2,20,.72);border:1.5px solid rgba(255,255,255,.35);box-shadow:none}
+  .favbtn.on{color:var(--gold);border-color:var(--gold);text-shadow:0 0 8px rgba(255,210,63,.9);box-shadow:0 0 10px rgba(255,210,63,.5)}
+  .favbtn:active:not(:disabled){transform:scale(.9);box-shadow:none}
+  .game.fav{border-left:4px solid var(--gold)}
+  .favsep{font-family:Bungee;font-size:12px;color:var(--gold);margin:6px 2px 0;text-shadow:0 0 8px rgba(255,210,63,.5)}
   .game input.txt{font-size:14px;padding:7px 9px;border-radius:10px;width:100%}
   .game .editgrid{display:grid;grid-template-columns:56px 1fr;gap:6px}
   .game .editgrid .full{grid-column:1/-1}
@@ -673,7 +679,16 @@ function renderRound(){
 
 function renderLibrary(){
   const inWheel = new Set(state.wheel);
-  $("games").innerHTML = state.library.map(g=>{
+  // Favoriten nach oben, sonst Reihenfolge des Hinzufügens
+  const list = [...state.library].sort((a,b)=>(b.fav?1:0)-(a.fav?1:0));
+  const nFav = list.filter(g=>g.fav).length;
+  $("games").innerHTML = list.map((g,i)=>{
+    const sep = nFav && i===0 ? `<div class="favsep">★ Favoriten</div>` : nFav && i===nFav ? `<div class="favsep" style="color:var(--mute);text-shadow:none">Weitere Spiele</div>` : "";
+    return sep + gameRow(g, inWheel);
+  }).join("") || `<div class="hint">Noch keine Spiele – füge oben einen Link ein.</div>`;
+}
+function gameRow(g, inWheel){
+  {
     if(editingId===g.id){
       return `<div class="game editing" data-gid="${g.id}">
         <div class="editgrid">
@@ -692,9 +707,10 @@ function renderLibrary(){
       ? `<img class="cover" src="${esc(img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">${logo?`<img class="logo" src="${esc(logo)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:""}`
       : logo ? `<img class="solo" src="${esc(logo)}" alt="" referrerpolicy="no-referrer" onerror="this.insertAdjacentText('afterend',this.parentNode.dataset.icon);this.remove()">`
       : esc(g.icon);
-    return `<div class="game ${w?"inwheel":""}" data-gid="${g.id}">
+    return `<div class="game ${w?"inwheel":""} ${g.fav?"fav":""}" data-gid="${g.id}">
       ${g.double?'<span class="tag">×2 PUNKTE</span>':''}
-      <div class="thumb" data-icon="${esc(g.icon)}">${thumb}${metaLoading.has(g.id)?'<span class="loading" style="position:absolute;top:4px;right:6px">lädt…</span>':""}</div>
+      <div class="thumb" data-icon="${esc(g.icon)}">${thumb}${metaLoading.has(g.id)?'<span class="loading" style="position:absolute;bottom:4px;right:6px">lädt…</span>':""}
+        <button class="favbtn ${g.fav?"on":""}" data-act="fav" data-id="${g.id}" aria-pressed="${!!g.fav}" title="${g.fav?"Favorit entfernen":"Als Favorit markieren"}" aria-label="${esc(g.name)} ${g.fav?"nicht mehr favorisieren":"favorisieren"}">${g.fav?"★":"☆"}</button></div>
       <div class="gmeta">
         <span class="gn">${esc(g.name)}</span>
         ${g.info?`<span class="gd">${esc(g.info)}</span>`:""}
@@ -705,7 +721,7 @@ function renderLibrary(){
         <button class="ghost sm ic" data-act="edit" data-id="${g.id}" title="Bearbeiten" aria-label="${esc(g.name)} bearbeiten">✏️</button>
         <button class="ghost sm ic" data-act="delgame" data-id="${g.id}" title="Löschen" aria-label="${esc(g.name)} löschen">🗑️</button>
       </div></div>`;
-  }).join("") || `<div class="hint">Noch keine Spiele – füge oben einen Link ein.</div>`;
+  }
 }
 
 function roundLi(ol, r, canDelete){
@@ -815,6 +831,8 @@ document.addEventListener("click", e=>{
   const act = el.dataset.act, id = el.dataset.id;
   if(act==="double") return; // Checkbox, siehe change-Handler
   switch(act){
+    case "fav": {
+      const g = game(id); if(g){ g.fav = !g.fav; commit(); } break; }
     case "wheel":
       state.wheel = state.wheel.includes(id) ? state.wheel.filter(x=>x!==id) : [...state.wheel, id];
       commit(); break;
