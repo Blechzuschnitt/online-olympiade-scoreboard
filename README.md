@@ -1,34 +1,29 @@
 # Nelskamp Olympiade
 
-Ein Scoreboard für die Familien-Olympiade von Yana, Noah und Papa. Es besteht aus einer einzigen HTML-Datei und braucht weder Build-Schritt noch Abhängigkeiten.
+Eine Familien-Olympiade im Las-Vegas-Look: Spiele sammeln, ins Glücksrad legen, Spieler wählen, Olympiade erstellen und Runde für Runde um Medaillen spielen. Alles steckt in einer einzigen HTML-Datei, ohne Build-Schritt und ohne Abhängigkeiten.
 
 **Live:** https://blechzuschnitt.github.io/online-olympiade-scoreboard/
 
-## Funktionen
+## So funktioniert's
 
-- Podium mit Gold, Silber und Bronze, der Spitzenreiter bekommt eine Krone
-- Gesamtwertung mit Fortschrittsbalken
-- Punktetabelle pro Disziplin mit Medaillen-Farben
-- Großes Glücksrad mit Würfel: Das Rad lost das nächste Spiel aus (auf Wunsch nur Spiele ohne Punkte; das Finale ist nicht dabei, es kommt immer zum Schluss)
-- Übersicht aller Spiele mit Links: Tippen öffnet das Spiel in einem neuen Tab, dazu wird angezeigt, wer die Disziplin gewonnen hat
-- Bearbeiten-Modus: Spieler (Emoji und Name), Disziplinen und Spiele-Links ändern, Punkte eintragen, alles zurücksetzen
+1. **Spiele sammeln:** Unter „Spiele“ einen Link einfügen. Das Spiel wird automatisch mit Name und Icon hinzugefügt, bei bekannten Seiten wie skribbl.io, Kahoot oder TETR.IO sogar mit passender Beschreibung. Mit ✏️ lassen sich Name, Icon, Link und „zählt doppelt (×2)“ ändern.
+2. **Ins Glücksrad legen:** Bei jedem Spiel auf „+ Ins Rad“ tippen.
+3. **Spieler wählen:** Unter „Wer spielt mit?“ Spieler an- und abwählen oder neue hinzufügen.
+4. **Olympiade erstellen:** Dafür braucht es mindestens 1 Spiel im Rad und 2 Spieler.
+5. **Spielen:** SPIN dreht das Rad. Alternativ tippst du ein Spiel unter „Im Rad“ direkt an. Danach die Spieler in der Reihenfolge ihrer Platzierung antippen und die Runde speichern.
+6. **Beenden:** „Olympiade beenden“ verschiebt sie ins Archiv.
 
-## Die Spiele
+Der Würfel oben rechts im Glücksrad-Rahmen würfelt eine Zahl von 1 bis 6.
 
-| # | Disziplin | Spiel |
-|---|---|---|
-| 1 | Zeichnen & Raten | [skribbl.io](https://skribbl.io) |
-| 2 | Wortschlacht | [Stadt Land Fluss online](https://stadtlandflussonline.net) |
-| 3 | Wissensquiz | [Kahoot](https://kahoot.it) |
-| 4 | Geo-Duell | [OpenGuessr](https://openguessr.com) |
-| 5 | Tetris-Sprint | [TETR.IO](https://tetr.io) |
-| 6 | Tipp-Rennen | [TypeRacer](https://play.typeracer.com) |
-| 7 | Wikipedia-Rennen | [The Wiki Game](https://www.thewikigame.com) |
-| 8 | Dino-Finale (zählt doppelt) | [Chrome Dino](https://chromedino.com) |
+**Wertung:** 🥇 3 · 🥈 2 · 🥉 1 Punkte. Runden mit ×2 zählen doppelt. Gespielte Spiele fallen aus dem Rad.
 
-**Wertung:** 3 = Gold, 2 = Silber, 1 = Bronze. Das Finale zählt doppelt, die Punkte dafür trägst du einfach doppelt ein.
+## Gespielte Runden
+
+- Log aller Runden der laufenden Olympiade mit Platzierungen, Punkten und Uhrzeit. Eine falsch eingetragene Runde lässt sich löschen.
+- Statistiken: gespielte Runden, Führender, meiste Siege, verbleibende Spiele
+- Archiv aller beendeten Olympiaden und eine **Ewige Tabelle** mit Titeln, Goldmedaillen und Punkten über alle Olympiaden
 
 ## Speicherung
 
-- **Als Claude-Artifact:** Die Punkte werden über `claude.use("db")` live mit allen Zuschauern synchronisiert.
-- **Auf GitHub Pages oder lokal:** Die Punkte werden im Browser des jeweiligen Geräts gespeichert (`localStorage`). Sie bleiben dort auch nach dem Neuladen erhalten, werden aber nicht mit anderen geteilt.
+- **Auf GitHub Pages oder lokal:** Alles wird im Browser des jeweiligen Geräts gespeichert (`localStorage`). Es bleibt nach dem Neuladen erhalten, wird aber nicht mit anderen Geräten geteilt.
+- **Als Claude-Artifact:** Über `claude.use("db")` wird alles live mit allen Zuschauern synchronisiert.
