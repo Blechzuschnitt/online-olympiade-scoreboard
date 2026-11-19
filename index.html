@@ -188,6 +188,10 @@
   .gmeta{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
   .gmeta .gn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .gmeta .gd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .gfacts{display:flex;flex-wrap:wrap;gap:6px;margin:3px 0 1px}
+  .gfact{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:900;padding:2px 9px;border-radius:99px;
+    background:rgba(255,210,63,.12);border:1px solid rgba(255,210,63,.4);color:#ffe9a3;white-space:nowrap}
+  .game .editgrid .half{grid-column:span 1}
   .glink{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:var(--cyan);text-decoration:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .glink:hover{text-decoration:underline}
   .game .tools{flex:none;display:flex;gap:6px;align-items:center;margin:0}
@@ -707,6 +711,8 @@ function gameRow(g, inWheel){
           <input class="txt" data-edit="name" value="${esc(g.name)}" aria-label="Name">
           <input class="txt full" data-edit="info" value="${esc(g.info)}" aria-label="Beschreibung" placeholder="Beschreibung">
           <input class="txt full" data-edit="url" value="${esc(g.url)}" aria-label="Link" placeholder="Link">
+          <input class="txt full" data-edit="players" value="${esc(g.players||"")}" aria-label="Spielerzahl" placeholder="Spieler, z. B. 2–6">
+          <input class="txt full" data-edit="time" value="${esc(g.time||"")}" aria-label="Spieldauer" placeholder="Spieldauer, z. B. 20 Min.">
         </div>
         <label class="toggle"><input type="checkbox" data-edit="double" ${g.double?"checked":""}> zählt doppelt (×2)</label>
         <div class="tools"><button class="gold sm grow" data-act="saveedit" data-id="${g.id}">✓ Fertig</button></div>
@@ -724,6 +730,7 @@ function gameRow(g, inWheel){
         <button class="favbtn ${g.fav?"on":""}" data-act="fav" data-id="${g.id}" aria-pressed="${!!g.fav}" title="${g.fav?"Favorit entfernen":"Als Favorit markieren"}" aria-label="${esc(g.name)} ${g.fav?"nicht mehr favorisieren":"favorisieren"}">${g.fav?"★":"☆"}</button></div>
       <div class="gmeta">
         <span class="gn">${esc(g.name)}</span>
+        ${(g.players||g.time)?`<span class="gfacts">${g.players?`<span class="gfact" title="Spielerzahl">👥 ${esc(g.players)} Spieler</span>`:""}${g.time?`<span class="gfact" title="Ungefähre Spieldauer">⏱ ca. ${esc(g.time)}</span>`:""}</span>`:""}
         ${g.info?`<span class="gd">${esc(g.info)}</span>`:""}
         ${g.url?`<a class="glink" href="${esc(g.url)}" target="_blank" rel="noopener noreferrer" title="${esc(g.url)}">🔗 ${esc(host(g.url))}</a>`:""}
       </div>
@@ -894,6 +901,8 @@ document.addEventListener("click", e=>{
       if(nn!==g.name) g.nameEdited = true;
       if(ni!==g.info) g.infoEdited = true;
       g.name = nn; g.info = ni;
+      g.players = v("players").value.trim().replace(/\s*Spieler$/i,"").replace(/(\d)\s*-\s*(\d)/,"$1–$2");
+      g.time = v("time").value.trim().replace(/^ca\.?\s*/i,"");
       const u = normUrl(v("url").value); g.url = u ? u.href : "";
       g.double = v("double").checked;
       editingId = null; commit(); break; }
