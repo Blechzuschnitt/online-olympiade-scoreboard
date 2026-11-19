@@ -304,6 +304,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script>
 /* ================= Grunddaten ================= */
 const $ = id => document.getElementById(id);
@@ -391,19 +392,70 @@ function defaults(){
   };
 }
 let state = defaults();
-let docRef = null, editingId = null;
+let editingId = null;
 
-/* ================= Speichern ================= */
+/* ================= Speichern (Supabase + lokale Kopie) ================= */
+// Öffentlicher Schlüssel: darf nur die Zeile "nelskamp" der Tabelle olympiade_state lesen/ändern (RLS)
+const SB_URL = "https://ktpjtmoezirsccgjbafe.supabase.co";
+const SB_KEY = "sb_publishable_JthhfbzVbUjImGFvevYXaA_j_ssZ3tB";
+const SB_ROW = "nelskamp";
+let sb = null, online = false, myRev = null, saveTimer = null, saving = Promise.resolve();
+
 function valid(d){ return d && d.v===3 && Array.isArray(d.players) && Array.isArray(d.library); }
 function setState(d){ state = Object.assign(defaults(), d); }
-async function save(){
-  if(docRef){
-    try{ await docRef.set(JSON.parse(JSON.stringify(state))); }
-    catch(e){ toast("Speichern nicht erlaubt 🔒"); }
-    return;
-  }
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+function setLive(mode){
+  const live=$("live"), t=$("liveText");
+  live.classList.toggle("shared", mode==="online");
+  t.textContent = mode==="online" ? "Live – für alle synchron" : mode==="connecting" ? "Verbinde …" : "Offline – nur auf diesem Gerät";
 }
+function save(){
+  state._rev = uid();
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  if(!sb) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(pushRemote, 250);
+}
+function pushRemote(){
+  const snapshot = JSON.parse(JSON.stringify(state));
+  myRev = snapshot._rev;
+  saving = saving.then(async()=>{
+    const { error } = await sb.from("olympiade_state").update({data:snapshot}).eq("id",SB_ROW);
+    if(error){ online=false; setLive("offline"); toast("⚠️ Online-Speichern fehlgeschlagen – lokal gesichert"); }
+    else if(!online){ online=true; setLive("online"); }
+  });
+}
+function applyRemote(d){
+  if(!valid(d) || d._rev===state._rev) return;
+  if(spinning || editingId){ applyRemote.queued = d; return; }   // später übernehmen
+  setState(d);
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  render();
+}
+async function fetchRemote(){
+  const { data, error } = await sb.from("olympiade_state").select("data").eq("id",SB_ROW).maybeSingle();
+  if(error || !data) throw error || new Error("Zeile fehlt");
+  return data.data;
+}
+async function connect(){
+  if(!window.supabase){ setLive("offline"); return; }
+  setLive("connecting");
+  try{
+    sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:false, autoRefreshToken:false}});
+    const remote = await fetchRemote();
+    if(valid(remote)) applyRemote(remote);
+    else pushRemote();                       // erste Nutzung: lokalen Stand hochladen
+    online = true; setLive("online");
+    sb.channel("olympiade")
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"olympiade_state"}, p=>{ if(p.new && p.new.id===SB_ROW) applyRemote(p.new.data); })
+      .subscribe();
+  }catch(e){ online=false; setLive("offline"); }
+}
+// Beim Zurückkehren zur Seite sicherheitshalber neu laden (falls Live-Verbindung schlief)
+document.addEventListener("visibilitychange", async()=>{
+  if(document.visibilityState!=="visible" || !sb) return;
+  try{ applyRemote(await fetchRemote()); if(!online){ online=true; setLive("online"); } }catch(e){}
+});
+setInterval(()=>{ if(applyRemote.queued && !spinning && !editingId){ const d=applyRemote.queued; applyRemote.queued=null; applyRemote(d); } }, 1000);
 function commit(){ save(); render(); }
 
 /* ================= Helfer ================= */
@@ -800,19 +852,7 @@ function loadLocal(){
   render();
 }
 loadLocal();
-(async()=>{
-  if(typeof claude==="undefined" || !claude.use) return;
-  try{
-    const db = await claude.use("db"); if(!db) return;
-    docRef = db.doc("olympics/v3");
-    $("live").classList.add("shared"); $("liveText").textContent = "Live – für alle synchron";
-    docRef.onSnapshot(snap=>{
-      let d = snap && typeof snap.data==="function" ? snap.data() : snap;
-      if(d && d.data && !d.players) d = d.data;
-      if(valid(d)){ if(document.activeElement && document.activeElement.tagName==="INPUT") return; setState(d); render(); }
-    }, ()=>{});
-  }catch(e){}
-})();
+connect();
 </script>
 </body>
 </html>
