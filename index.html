@@ -130,6 +130,37 @@ select.txt option{background:var(--bg2)}
 .chip.player{padding:6px 4px 6px 14px;cursor:pointer;user-select:none}
 .chip.player.on{background:linear-gradient(135deg,rgba(0,245,255,.16),rgba(139,92,246,.18));box-shadow:inset 0 0 0 1px rgba(0,245,255,.6),0 0 16px -6px var(--cyan)}
 .chip.locked{padding:8px 14px;cursor:default}
+/* Profilbilder (statt Emojis), Spielerprofile, „+“-Auswahl, Dialog */
+.fimg{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover}
+.fini{font:800 .5em/1 var(--fh);letter-spacing:.02em;color:#fff}
+.ava{flex:none;display:inline-grid;place-items:center;width:1.75em;height:1.75em;margin-right:.45em;vertical-align:middle;border-radius:50%;background:linear-gradient(145deg,#3a2f7a,#1b1f4a);box-shadow:0 0 0 1px rgba(255,255,255,.2)}
+.ava .fini{font-size:.72em}
+.ava.big{width:72px;height:72px;margin:0;font-size:28px}
+.ava.huge{width:124px;height:124px;margin:0;font-size:46px;box-shadow:0 0 0 3px var(--cyan),0 0 40px -6px var(--cyan)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:12px}
+.prof{flex-direction:column;gap:8px;padding:16px 8px;border-radius:18px;color:var(--tx);background:rgba(8,11,20,.5);box-shadow:inset 0 0 0 1px var(--ln2)}
+.prof:hover{box-shadow:inset 0 0 0 1px var(--cyan),0 0 22px -8px var(--cyan)}
+.prof b{font-size:15px}.prof small{font-size:11px;font-weight:600;color:var(--mu)}
+.prof.add .ava{font:300 36px var(--fb);color:var(--cyan);background:none;box-shadow:none;border:2px dashed rgba(0,245,255,.55)}
+.picker{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pchip{display:inline-flex;align-items:center;gap:2px;padding:4px 4px 4px 5px;border-radius:99px;font-weight:700;font-size:14px;background:linear-gradient(135deg,rgba(0,245,255,.16),rgba(139,92,246,.2));box-shadow:inset 0 0 0 1px rgba(0,245,255,.5)}
+.pchip>b{margin:0 2px 0 6px;color:var(--cyan)}
+.pchip .x{width:28px;height:28px;padding:0;border-radius:50%;background:none;color:var(--mu)}
+.pchip .x:hover{color:#fff;background:rgba(255,77,109,.3)}
+.padd{width:42px;height:42px;padding:0;border-radius:50%;font-size:24px;color:var(--cyan);background:rgba(0,245,255,.08);box-shadow:inset 0 0 0 2px rgba(0,245,255,.6),0 0 16px -4px var(--cyan)}
+.padd.on{font-size:16px;color:#fff;background:rgba(255,77,109,.2);box-shadow:inset 0 0 0 2px var(--red)}
+.pmenu{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding:12px;border-radius:14px;background:rgba(8,11,20,.6);border:1px dashed rgba(0,245,255,.35)}
+.pmenu .chip{padding:5px 14px 5px 5px;cursor:pointer}
+.pmenu .chip:hover{box-shadow:inset 0 0 0 1px var(--cyan)}
+.dlg{position:fixed;inset:0;z-index:92;display:grid;place-items:center;padding:16px;background:rgba(5,7,22,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.dlgbox{position:relative;width:min(440px,100%);max-height:92vh;overflow:auto;padding:26px 22px 22px;border-radius:22px;background:var(--glass);box-shadow:var(--edge),0 0 0 1px rgba(0,245,255,.35),var(--e4);animation:rise .35s var(--ease)}
+.dlgbox h3{margin:6px 0 4px;font:900 20px var(--fh);letter-spacing:.04em}
+.dlgx{position:absolute;top:12px;right:12px}
+.pf-head{display:grid;justify-items:center;gap:12px;margin-bottom:16px;text-align:center}
+.pinrow{display:flex;gap:8px;flex-wrap:wrap}
+.pin{flex:1;min-width:120px;text-align:center;font:700 22px var(--fn);letter-spacing:.4em}
+.fl{display:grid;gap:5px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--mu)}
+.bigcode{font:900 40px var(--fn);letter-spacing:.3em;color:var(--gold);text-align:center;margin:12px 0}
 
 /* ============ Header (Turnier-Übertragung) ============ */
 .bar{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px 20px;max-width:1340px;margin:0 auto;padding:22px 26px 12px}
@@ -233,7 +264,7 @@ main{max-width:1340px;margin:0 auto;padding:12px 26px 60px}
 .places{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:10px;margin-bottom:16px}
 .place{flex-direction:column;gap:3px;min-height:116px;padding:14px 8px;border-radius:16px;color:var(--tx);background:rgba(8,11,20,.58);box-shadow:inset 0 0 0 1px var(--ln2);transition:transform .25s var(--ease),box-shadow .25s,background .25s}
 .place:hover{box-shadow:inset 0 0 0 1px var(--pc)}
-.place .pav{font-size:34px;line-height:1.1}
+.place .pav{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;font-size:24px;background:rgba(24,34,56,.9);box-shadow:0 0 0 2px var(--pc)}
 .place .pn{font-weight:800}
 .place .pm{font:800 17px var(--fn);color:var(--mu)}
 .place.set{transform:translateY(-4px);background:linear-gradient(160deg,color-mix(in srgb,var(--pc) 26%,transparent),rgba(8,11,20,.6));box-shadow:inset 0 0 0 2px var(--pc),0 14px 30px -12px var(--pc)}
@@ -525,10 +556,10 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
 <section class="view" id="v-verwaltung">
   <div class="admin">
     <div>
-      <section class="panel"><h2 class="h">Spieler</h2>
-        <p class="hint" style="margin-top:-8px">Wer spielt mit? Antippen zum An- oder Abwählen.</p>
-        <div class="chips" id="playerChips"></div>
-        <form class="addrow" id="playerForm" autocomplete="off" style="margin-top:14px"><label class="sr" for="playerIn">Neuer Spieler</label><input class="txt" id="playerIn" maxlength="24" placeholder="Neuer Spieler …"><button class="ghost" type="submit">+ Spieler</button></form>
+      <section class="panel"><h2 class="h">Spielerprofile</h2>
+        <p class="hint" style="margin-top:-8px">Profil antippen und mit dem eigenen 4-stelligen Code entsperren – dann Profilbild und Name ändern.</p>
+        <div class="pgrid" id="profGrid"></div>
+        <div class="hint" id="adminState" style="margin-top:14px"></div>
       </section>
       <div data-slot="create"></div>
     </div>
@@ -558,6 +589,7 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
 </div>
 
 <div class="cere" id="cere" hidden></div>
+<div class="dlg" id="dlg" hidden><div class="dlgbox" id="dlgBox"></div></div>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="toast" id="toast" role="status"></div>
 
@@ -570,7 +602,6 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6
 const cnt = (n, one, many) => `${n} ${n===1 ? one : many}`;
 const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const PTS = [3,2,1], MEDALS = ["🥇","🥈","🥉"];
-const EMOJIS = ["🦄","🚀","🦁","🐼","🦊","🐸","🐯","🐙","🦖","🤠","🎩","🐳","🌵","👑","🐧","🦋"];
 const LS_KEY = "nelskamp-olympiade-v3";
 
 // Bekannte Spiele-Seiten: Icon, Name, Beschreibung
@@ -658,7 +689,7 @@ async function fetchMeta(id){
 }
 
 const defaults = () => ({v:3,
-  players:[{id:uid(),name:"Yana",emoji:"🦄",on:true},{id:uid(),name:"Noah",emoji:"🚀",on:true},{id:uid(),name:"Papa",emoji:"🦁",on:true}],
+  players:[{id:uid(),name:"Yana"},{id:uid(),name:"Noah"},{id:uid(),name:"Papa"}],
   library:[], wheel:[], olympiad:null, archive:[], pending:null, removePlayed:true});
 let state = defaults(), editingId = null;
 
@@ -756,7 +787,7 @@ function wheelBounds(w){
   const sum = w.reduce((a,b)=>a+b,0) || 1; let acc = 0;
   return w.map(x=>{ const a0 = acc*360/sum; acc += x; return [a0, acc*360/sum]; });
 }
-const pname = (ol,pid) => { const p = ol.roster.find(p=>p.id===pid); return p ? `${p.emoji} ${p.name}` : "?"; };
+const pname = (ol,pid) => { const p = ol.roster.find(p=>p.id===pid); return p ? who(p) : "?"; };     // HTML mit Profilbild
 // Kurzname: ohne Emojis, ohne Klammern, ohne Zusatz nach „–“ oder „:“
 function wheelName(name){
   const t = String(name||"").replace(/\([^)]*\)|\[[^\]]*\]/g," ").split(/\s[–—-]\s|:\s|\|/)[0]
@@ -781,6 +812,50 @@ const catColor = g => CATS[catOf(g)][2];
 const catBadge = g => { const c = CATS[catOf(g)]; return `<span class="cat" style="--cc:${c[2]}">${c[1]} ${c[0]}</span>`; };
 // Links auf Bereiche der App (#show) bleiben im selben Tab
 const linkAttr = url => /^#/.test(url) ? "" : `target="_blank" rel="noopener noreferrer"`;
+/* ---------- Spielerprofile: Profilbild & 4-stelliger Code ---------- */
+// Codes werden nur als Prüfsumme gespeichert. Das schützt vor versehentlichem Ändern – ein Tresor ist es nicht.
+function cyrb53(s){
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for(let i=0;i<s.length;i++){ const c = s.charCodeAt(i); h1 = Math.imul(h1^c, 2654435761); h2 = Math.imul(h2^c, 1597334677); }
+  h1 = Math.imul(h1^(h1>>>16), 2246822507) ^ Math.imul(h2^(h2>>>13), 3266489909);
+  h2 = Math.imul(h2^(h2>>>16), 2246822507) ^ Math.imul(h1^(h1>>>13), 3266489909);
+  return (4294967296*(2097151&h2) + (h1>>>0)).toString(36);
+}
+const pinHash = (salt, code) => cyrb53("oly|" + salt + "|" + code);
+const pinOk = v => /^\d{4}$/.test(v);
+const PHOTO_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+const initials = n => String(n||"?").trim().split(/\s+/).map(w=>[...w][0]||"").join("").slice(0,2).toUpperCase() || "?";
+// aktuelles Profil zu einem Spieler (auch aus alten Ranglisten) – ein neues Foto erscheint so überall
+const profile = p => (p && (state.players.find(x=>x.id===p.id) || state.players.find(x=>x.name===p.name))) || p || {};
+function face(p, raw){
+  const q = raw ? p : profile(p), ph = PHOTO_RE.test(q.photo||"") ? q.photo : "";
+  return ph ? `<img class="fimg" src="${ph}" alt="">` : `<span class="fini">${esc(initials(q.name))}</span>`;
+}
+const who = p => `<span class="ava">${face(p)}</span>${esc(p.name)}`;
+// Foto: mittig quadratisch zuschneiden, verkleinern (192 px), als JPEG speichern
+function photoFrom(file){
+  return new Promise((res, rej)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { const w = img.naturalWidth, h = img.naturalHeight, s = Math.min(w,h), c = document.createElement("canvas");
+      c.width = c.height = 192; c.getContext("2d").drawImage(img, (w-s)/2, (h-s)/2, s, s, 0, 0, 192, 192);
+      URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg", .8)); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(); };
+    img.src = url;
+  });
+}
+// „+“-Auswahl: niemand ist vorgemerkt
+const picks = {oly:[], rr:[]};
+let pickOpen = null;
+function pickerHTML(k, pool, max, numbered){
+  if(!pool.length) return `<p class="hint">Noch keine Spielerprofile – lege sie unter „Verwaltung“ an.</p>`;
+  const ids = picks[k] = picks[k].filter(id=>pool.some(p=>p.id===id));
+  const rest = pool.filter(p=>!ids.includes(p.id)), can = rest.length && ids.length<max, open = can && pickOpen===k;
+  return `<div class="picker">${ids.map((id,i)=>{ const p = pool.find(x=>x.id===id);
+      return `<span class="pchip">${numbered ? `<b>${i+1}.</b>` : ""}${who(p)}<button class="x" data-act="punpick" data-k="${k}" data-id="${esc(id)}" aria-label="${esc(p.name)} entfernen">✕</button></span>`; }).join("")}
+    ${can ? `<button class="padd${open ? " on" : ""}" data-act="popen" data-k="${k}" aria-label="Spieler hinzufügen" title="Spieler hinzufügen">${open ? "✕" : "+"}</button>` : ""}
+    ${ids.length ? "" : `<span class="hint">Noch niemand – tippe auf +</span>`}</div>
+    ${open ? `<div class="pmenu">${rest.map(p=>`<button class="chip" data-act="ppick" data-k="${k}" data-id="${esc(p.id)}">${who(p)}</button>`).join("")}</div>` : ""}`;
+}
 const facts = g => (g.players ? `<span class="pill" title="Spielerzahl">👥 ${esc(g.players)}</span>` : "") + (g.time ? `<span class="pill" title="Ungefähre Spieldauer">⏱ ${esc(g.time)}</span>` : "");
 
 /* ================= Render ================= */
@@ -829,14 +904,14 @@ function detail(x){
 function plinth(ol, x, i, sub){
   const m = x.any ? x.rank+1 : 0;
   return `<div class="pl m${m}" data-pid="${esc(x.p.id)}" data-pts="${x.pts}" data-k="${i}" style="--pc:${pcol(ol,x.p.id)};order:${[1,0,2][i]}">
-    <div class="orb">${m===1 ? '<span class="crown">👑</span>' : ""}${esc(x.p.emoji)}</div>
+    <div class="orb">${m===1 ? '<span class="crown">👑</span>' : ""}${face(x.p)}</div>
     <div class="nm">${esc(x.p.name)}</div><div class="sc"><b data-sc>${x.pts}</b><small>PKT</small></div>${sub}
     <div class="block"><span>${m || "–"}</span></div></div>`;
 }
 function boardHTML(ol){
   const rows = leaderRows(ol);
   return `<div class="podium">${rows.slice(0,3).map((x,i)=>plinth(ol, x, i, detail(x))).join("")}</div>` + (rows.length>3 ? `<ol class="ranks">${rows.slice(3).map(x=>
-    `<li class="rk" data-pid="${esc(x.p.id)}" data-pts="${x.pts}" style="--pc:${pcol(ol,x.p.id)}"><span class="pos">${x.any ? x.rank+1 : "–"}</span><span class="orb">${esc(x.p.emoji)}</span>
+    `<li class="rk" data-pid="${esc(x.p.id)}" data-pts="${x.pts}" style="--pc:${pcol(ol,x.p.id)}"><span class="pos">${x.any ? x.rank+1 : "–"}</span><span class="orb">${face(x.p)}</span>
       <span class="who"><b>${esc(x.p.name)}</b>${detail(x)}</span><span class="sc"><b data-sc>${x.pts}</b><small>PKT</small></span></li>`).join("")}</ol>` : "");
 }
 function countUp(el, a, b){
@@ -876,7 +951,7 @@ function sceneHTML(){
     ${g.url ? `<a class="btn pri" href="${esc(g.url)}" ${linkAttr(g.url)}>▶ Spiel starten</a>` : ""}
     <div class="how"><b>Wertung:</b> Spieler in der Reihenfolge ihrer Platzierung antippen (nochmal = zurücknehmen) · 🥇 ${PTS[0]*mult} · 🥈 ${PTS[1]*mult} · 🥉 ${PTS[2]*mult} Punkte</div>
     <div class="places">${ol.roster.map(pl=>{ const i = p.order.indexOf(pl.id);
-      return `<button class="place ${i>=0 ? "set" : ""}" data-act="place" data-id="${pl.id}" style="--pc:${pcol(ol,pl.id)}"><span class="pav">${esc(pl.emoji)}</span><span class="pn">${esc(pl.name)}</span>
+      return `<button class="place ${i>=0 ? "set" : ""}" data-act="place" data-id="${pl.id}" style="--pc:${pcol(ol,pl.id)}"><span class="pav">${face(pl)}</span><span class="pn">${esc(pl.name)}</span>
         <span class="pm">${i>=0 ? `${MEDALS[i]||(i+1)+"."} +${(PTS[i]||0)*mult}` : "–"}</span></button>`; }).join("")}</div>
     <div class="row between"><label class="toggle"><input type="checkbox" data-act="double" ${p.double ? "checked" : ""}> Doppelte Punkte (×2)</label>
       <div class="row"><button class="ghost sm" data-act="cancelround">Abbrechen</button><button class="pri" data-act="saveround" ${p.order.length ? "" : "disabled"}>💾 Runde speichern</button></div></div>
@@ -887,7 +962,7 @@ function vetoHTML(p, ol, n){
   if(state.veto && state.veto.round===n) return `<div class="veto">🙅 Das Veto für diese Runde ist schon verbraucht.</div>`;
   const v = p.veto || [], need = Math.floor(ol.roster.length/2)+1;
   return `<div class="veto">🙅 <b>Keine Lust auf ${esc(wheelName(p.gameName))}?</b> Wer dagegen ist, tippt sich an. Ab ${need} von ${ol.roster.length} Stimmen wird neu gedreht (einmal pro Runde).
-    <div class="chips">${ol.roster.map(pl=>`<button class="vbtn ${v.includes(pl.id) ? "on" : ""}" data-act="veto" data-id="${pl.id}">${esc(pl.emoji)} ${esc(pl.name)}</button>`).join("")}<span class="hint" style="align-self:center">${v.length} / ${need}</span></div></div>`;
+    <div class="chips">${ol.roster.map(pl=>`<button class="vbtn ${v.includes(pl.id) ? "on" : ""}" data-act="veto" data-id="${pl.id}">${who(pl)}</button>`).join("")}<span class="hint" style="align-self:center">${v.length} / ${need}</span></div></div>`;
 }
 function nextHTML(){
   const ol = O(); if(!ol || state.pending) return "";
@@ -895,21 +970,21 @@ function nextHTML(){
   return `<section class="cta tilt"><div class="k">Nächste Runde</div><div class="t">Runde ${ol.rounds.length+1}</div>
     <p>${n ? `${cnt(n,"Spiel wartet","Spiele warten")} im Glücksrad.` : "Alle Spiele im Rad sind gespielt – lege neue ins Rad oder beende die Olympiade."}</p>
     <div class="row">${n ? `<button class="pri big" data-act="gospin">🎰 Rad drehen</button>` : ""}<button class="ghost" data-view="${n ? "rad" : "spiele"}">${n ? "Zum Glücksrad" : "Zu den Spielen"}</button></div>
-    ${last ? `<div class="last"><span class="k">Letzte Runde</span><b>${esc(last.icon)} ${esc(wheelName(last.gameName))}</b>${w ? `<span>Sieg: ${esc(w.emoji)} ${esc(w.name)} · +${last.points[w.id]||0} Punkte</span>` : ""}</div>` : ""}</section>`;
+    ${last ? `<div class="last"><span class="k">Letzte Runde</span><b>${esc(last.icon)} ${esc(wheelName(last.gameName))}</b>${w ? `<span>Sieg: ${who(w)} · +${last.points[w.id]||0} Punkte</span>` : ""}</div>` : ""}</section>`;
 }
 function createHTML(){
   if(O()) return "";
-  const on = state.players.filter(p=>p.on), np = on.length, ng = state.wheel.length, ok = np>=2 && ng>=1;
-  return `<section class="cta tilt"><div class="k">Neues Event</div><div class="t">Olympiade #${state.archive.length+1}</div>
-    <div class="roster">${on.map(p=>`<span class="pill">${esc(p.emoji)} ${esc(p.name)}</span>`).join("") || `<span class="hint">Noch niemand ausgewählt</span>`}</div>
+  const ng = state.wheel.length, np = picks.oly.filter(id=>state.players.some(p=>p.id===id)).length, ok = np>=2 && ng>=1;
+  return `<section class="cta"><div class="k">Neues Event</div><div class="t">Olympiade #${state.archive.length+1}</div>
+    <div class="roster">${pickerHTML("oly", state.players, 30)}</div>
     <button class="pri big" data-act="create" ${ok ? "" : "disabled"}>🚀 Olympiade starten</button>
     <div class="note">${cnt(ng,"Spiel","Spiele")} im Rad · ${np} Spieler${ok ? "" : " — mindestens 1 Spiel und 2 Spieler"}<br>
-      <button class="link" data-view="verwaltung">Spieler wählen</button> · <button class="link" data-view="spiele">Spiele ins Rad legen</button></div></section>`;
+      <button class="link" data-view="verwaltung">Spielerprofile</button> · <button class="link" data-view="spiele">Spiele ins Rad legen</button></div></section>`;
 }
 function tvHTML(){
   const ol = O(), p = state.pending, last = ol && ol.rounds[ol.rounds.length-1];
   if(ol && p) return `<div class="k">Runde ${ol.rounds.length+1} · jetzt</div><div class="g">${esc(p.icon)} ${esc(wheelName(p.gameName))}</div>${catBadge(Object.assign({name:p.gameName}, game(p.gameId)||{}))}`;
-  if(last){ const w = ol.roster.find(x=>x.id===last.order[0]); return `<div class="k">Letzte Runde</div><div class="g">${esc(last.icon)} ${esc(wheelName(last.gameName))}</div>${w ? `<div class="w">👑 ${esc(w.emoji)} ${esc(w.name)} · +${last.points[w.id]||0}</div>` : ""}`; }
+  if(last){ const w = ol.roster.find(x=>x.id===last.order[0]); return `<div class="k">Letzte Runde</div><div class="g">${esc(last.icon)} ${esc(wheelName(last.gameName))}</div>${w ? `<div class="w">👑 ${who(w)} · +${last.points[w.id]||0}</div>` : ""}`; }
   return ol ? `<div class="k">Gleich geht's los</div><div class="g">Dreht das Glücksrad!</div>` : `<div class="k">Familien-Olympiade</div><div class="g">Bereit für das nächste Event</div>`;
 }
 function renderStage(){ slots("round", sceneHTML()); slots("next", nextHTML()); slots("create", createHTML()); slots("tvinfo", tvHTML()); }
@@ -1096,7 +1171,7 @@ function ceremony(ol){
   const st = standings(ol), top = st.slice(0,3), rest = st.slice(3), box = $("cere");
   box.innerHTML = `<canvas id="cereCv"></canvas><div class="k">${esc(ol.name)} · ${cnt(ol.rounds.length,"Runde","Runden")}</div><h2>🏆 Siegerehrung</h2>
     <div class="podium">${top.map((x,k)=>plinth(ol, Object.assign({}, x, {rank:k, any:true}), k, `<div class="meds">🥇 ${x.g} · 🥈 ${x.s} · 🥉 ${x.b}</div><div class="bds"></div>`)).join("")}</div>
-    ${rest.length ? `<div class="rest" id="cereRest">${rest.map((x,i)=>`${i+4}. ${esc(x.p.emoji)} ${esc(x.p.name)} (${x.pts})`).join(" · ")}</div>` : ""}
+    ${rest.length ? `<div class="rest" id="cereRest">${rest.map((x,i)=>`${i+4}. ${who(x.p)} (${x.pts})`).join(" · ")}</div>` : ""}
     <button class="ghost sm" data-act="cereclose">Schließen</button>`;
   box.hidden = false;
   const show = k => { const el = box.querySelector(`.pl[data-k="${k}"]`); if(el) el.classList.add("show"); };
@@ -1125,11 +1200,10 @@ function renderWheelChips(){
 }
 function renderAdmin(){
   const ol = O();
-  $("playerForm").hidden = !!ol;
-  $("playerChips").innerHTML = ol
-    ? ol.roster.map(p=>`<span class="chip player on locked">${esc(p.emoji)} ${esc(p.name)}</span>`).join("") + `<span class="hint" style="align-self:center">🔒 Spieler stehen fest, solange die Olympiade läuft.</span>`
-    : state.players.map(p=>`<span class="chip player ${p.on ? "on" : ""}" data-act="toggleplayer" data-id="${p.id}" role="button" tabindex="0" aria-pressed="${p.on}">${esc(p.emoji)} ${esc(p.name)}<button class="x" data-act="delplayer" data-id="${p.id}" aria-label="${esc(p.name)} entfernen">✕</button></span>`).join("")
-      || `<span class="hint">Noch keine Spieler.</span>`;
+  $("profGrid").innerHTML = state.players.map(p=>`<button class="prof" data-act="profile" data-id="${esc(p.id)}"><span class="ava big">${face(p)}</span><b>${esc(p.name)}</b><small>${p.code ? "🔒 geschützt" : "⚠️ noch kein Code"}</small></button>`).join("")
+    + `<button class="prof add" data-act="newplayer"><span class="ava big">+</span><b>Spieler hinzufügen</b><small>nur Spielleitung</small></button>`;
+  $("adminState").innerHTML = adminOn ? `🔓 Spielleitung angemeldet – du kannst alle Profile bearbeiten und Codes vergeben. <button class="link" data-act="adminoff">Abmelden</button>`
+    : `<button class="link" data-act="admin">🔑 Als Spielleitung anmelden</button>`;
   const sw = (key, on, label) => `<label class="switch"><input type="checkbox" data-set="${key}" ${on ? "checked" : ""} aria-label="${label}"><i></i></label>`;
   $("eventBox").innerHTML = `
     <div class="set"><div><b>Gespielte Spiele aus dem Rad nehmen</b><small>Sonst bleiben sie mit kleinerem Feld im Rad.</small></div>${sw("removePlayed", state.removePlayed, "Gespielte Spiele aus dem Rad nehmen")}</div>
@@ -1197,7 +1271,7 @@ function gameCard(g, inWheel){
 /* ---------- Runden, Archiv, Ewige Tabelle ---------- */
 const roundLi = (ol, r, canDelete) => `<li><span class="n">#${r.n}</span><div class="b">
   <div class="t">${esc(r.icon)} ${esc(r.gameName)} ${r.double ? '<span class="x2">×2</span>' : ""}</div><div class="tm">${fmtTime(r.at)}</div>
-  <div class="pls">${r.order.map((pid,i)=>`${MEDALS[i]||(i+1)+"."} ${esc(pname(ol,pid))} <b>+${r.points[pid]||0}</b>`).join(" · ")}</div></div>
+  <div class="pls">${r.order.map((pid,i)=>`${MEDALS[i]||(i+1)+"."} ${pname(ol,pid)} <b>+${r.points[pid]||0}</b>`).join(" · ")}</div></div>
   ${canDelete ? `<button class="ghost sm ic" data-act="delround" data-id="${r.id}" aria-label="Runde löschen">🗑</button>` : ""}</li>`;
 const stat = (v, l) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`;
 function renderLog(){
@@ -1205,8 +1279,8 @@ function renderLog(){
   let h = "";
   if(ol && ol.rounds.length){
     const st = standings(ol), lead = st[0], mostWins = [...st].sort((a,b)=>b.g-a.g)[0], dbl = ol.rounds.filter(r=>r.double).length;
-    h = `<div class="stats">${stat(ol.rounds.length, "Runden gespielt")}${stat(`${esc(lead.p.emoji)} ${esc(lead.p.name)}`, `führt mit ${lead.pts} Punkten`)}
-      ${stat(mostWins.g ? esc(mostWins.p.emoji)+" "+mostWins.g : "–", "meiste Siege")}${stat(wheelCandidates().length, "Spiele noch im Rad")}${dbl ? stat(dbl, "Runden mit ×2") : ""}</div>
+    h = `<div class="stats">${stat(ol.rounds.length, "Runden gespielt")}${stat(who(lead.p), `führt mit ${lead.pts} Punkten`)}
+      ${stat(mostWins.g ? `${who(mostWins.p)} · ${mostWins.g}` : "–", "meiste Siege")}${stat(wheelCandidates().length, "Spiele noch im Rad")}${dbl ? stat(dbl, "Runden mit ×2") : ""}</div>
       <div class="sub">${esc(ol.name)}</div><ul class="log">${[...ol.rounds].reverse().map(r=>roundLi(ol,r,true)).join("")}</ul>`;
   } else if(ol) h = `<div class="empty"><b>Los geht's!</b>Dreh am Glücksrad – jede gespielte Runde landet hier.</div>`;
   else if(!state.archive.length) h = `<div class="empty"><b>Noch nichts gespielt</b>Hier erscheinen alle Runden mit Platzierungen und Statistiken.</div>`;
@@ -1217,19 +1291,19 @@ function renderLog(){
     const et = {};
     state.archive.forEach(a=>{
       standings(a).forEach((x,i)=>{
-        const e = et[x.p.name] = et[x.p.name] || {emoji:x.p.emoji, name:x.p.name, titles:0, g:0, pts:0, n:0, best:{}};
+        const e = et[x.p.name] = et[x.p.name] || {name:x.p.name, titles:0, g:0, pts:0, n:0, best:{}};
         e.g += x.g; e.pts += x.pts; e.n++; if(i===0 && x.pts>0) e.titles++;
       });
       a.rounds.forEach(r=>{ const w = a.roster.find(p=>p.id===r.order[0]); if(w && et[w.name]){ const b = et[w.name].best; b[r.gameName] = (b[r.gameName]||0)+1; } });
     });
     const parade = r => { const e = Object.entries(r.best).sort((a,b)=>b[1]-a[1])[0]; return e && e[1]>1 ? `${esc(wheelName(e[0]))} (${e[1]}×)` : "–"; };
-    eh = `<div class="etl">${Object.values(et).sort((a,b)=>b.titles-a.titles||b.g-a.g||b.pts-a.pts).map((r,i)=>`<div class="etc ${i===0 ? "e1" : ""}"><span class="pos">${i+1}</span><span class="orb">${esc(r.emoji)}</span>
+    eh = `<div class="etl">${Object.values(et).sort((a,b)=>b.titles-a.titles||b.g-a.g||b.pts-a.pts).map((r,i)=>`<div class="etc ${i===0 ? "e1" : ""}"><span class="pos">${i+1}</span><span class="orb">${face({name:r.name})}</span>
       <div><b>${esc(r.name)}</b><div class="meta">${cnt(r.n,"Teilnahme","Teilnahmen")} · Paradespiel: ${parade(r)}</div></div>
       <div class="tt"><b>${r.titles}</b><span>TITEL</span></div><div class="tt"><b>${r.g}</b><span>SIEGE</span></div><div class="tt"><b>${r.pts}</b><span>PUNKTE</span></div></div>`).join("")}</div>`;
     h += `<div class="sub">🗄️ Beendete Olympiaden</div>` + [...state.archive].reverse().map(a=>{
       const st = standings(a), w = st[0];
-      return `<details class="arch"><summary>🏆 ${esc(a.name)} — ${w && w.pts>0 ? `${esc(w.p.emoji)} ${esc(w.p.name)} (${w.pts} P.)` : "ohne Sieger"} <span class="hint">${cnt(a.rounds.length,"Runde","Runden")} · ${fmtTime(a.ended)}</span></summary>
-        <table class="stand">${st.map((x,i)=>`<tr><td>${i+1}.</td><td>${esc(x.p.emoji)} ${esc(x.p.name)}</td><td>🥇${x.g} 🥈${x.s} 🥉${x.b}</td><td class="p">${x.pts}</td></tr>`).join("")}</table>
+      return `<details class="arch"><summary>🏆 ${esc(a.name)} — ${w && w.pts>0 ? `${who(w.p)} (${w.pts} P.)` : "ohne Sieger"} <span class="hint">${cnt(a.rounds.length,"Runde","Runden")} · ${fmtTime(a.ended)}</span></summary>
+        <table class="stand">${st.map((x,i)=>`<tr><td>${i+1}.</td><td>${who(x.p)}</td><td>🥇${x.g} 🥈${x.s} 🥉${x.b}</td><td class="p">${x.pts}</td></tr>`).join("")}</table>
         <ul class="log">${[...a.rounds].reverse().map(r=>roundLi(a,r,false)).join("")}</ul>
         <div class="row center" style="margin-top:12px">${w && w.pts>0 ? `<button class="pri sm" data-act="cere" data-id="${a.id}">🎉 Siegerehrung ansehen</button>` : ""}<button class="ghost sm" data-act="delarch" data-id="${a.id}">🗑 Aus dem Archiv löschen</button></div>
       </details>`; }).join("");
@@ -1271,17 +1345,76 @@ function addLink(){
 $("linkForm").onsubmit = e=>{ e.preventDefault(); addLink(); };
 $("linkIn").addEventListener("paste", ()=>setTimeout(addLink, 0));
 $("libSearch").addEventListener("input", e=>{ libF.q = e.target.value; renderLibrary(); });
-$("playerForm").onsubmit = e=>{
-  e.preventDefault();
-  const name = $("playerIn").value.trim(); if(!name) return;
-  if(state.players.some(p=>p.name.toLowerCase()===name.toLowerCase())){ toast(`${name} gibt es schon`); return; }
-  const used = new Set(state.players.map(p=>p.emoji));
-  state.players.push({id:uid(), name, emoji:EMOJIS.find(e=>!used.has(e)) || "⭐", on:true});
-  $("playerIn").value = ""; commit();
-};
+/* ================= Profil-Dialoge ================= */
+let adminOn = false; try{ adminOn = sessionStorage.getItem("oly-admin")==="1"; }catch(e){}
+const setAdmin = on => { adminOn = on; try{ sessionStorage.setItem("oly-admin", on ? "1" : ""); }catch(e){} renderAdmin(); };
+let unlocked = null, draft = {};
+const pinInput = (id, ph) => `<input class="txt pin" id="${id}" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="${ph||"••••"}">`;
+function dlg(html){ $("dlgBox").innerHTML = `<button class="ghost sm ic dlgx" data-act="dlgclose" aria-label="Schließen">✕</button>` + html; $("dlg").hidden = false; const f = $("dlgBox").querySelector("input:not([type=file])"); if(f) f.focus(); }
+function dlgClose(){ $("dlg").hidden = true; $("dlgBox").innerHTML = ""; unlocked = null; draft = {}; }
+const dlgMsg = t => { $("dlgMsg").textContent = t; };
+function openProfile(id){
+  const p = state.players.find(x=>x.id===id); if(!p) return;
+  if(adminOn || unlocked===id) return editProfile(p);
+  const head = `<div class="pf-head"><span class="ava huge">${face(p)}</span><h3>${esc(p.name)}</h3></div>`;
+  if(!p.code) return dlg(head + `<p class="hint">Für dieses Profil gibt es noch keinen Code – die Spielleitung vergibt ihn.</p><button class="ghost" data-act="admin">🔑 Als Spielleitung anmelden</button>`);
+  dlg(head + `<form id="dlgForm" class="pinrow">${pinInput("pinIn")}<button class="pri" type="submit">🔓 Entsperren</button></form><p class="hint" id="dlgMsg">Gib deinen 4-stelligen Code ein.</p>`);
+  $("dlgForm").onsubmit = e => { e.preventDefault();
+    if(pinHash(p.id, $("pinIn").value)===p.code){ unlocked = p.id; editProfile(p); }
+    else { dlgMsg("❌ Falscher Code."); $("pinIn").value = ""; $("pinIn").focus(); } };
+}
+function editProfile(p){
+  if(draft.id!==p.id) draft = {id:p.id, photo:p.photo||""};
+  dlg(`<div class="pf-head"><span class="ava huge">${face({name:p.name, photo:draft.photo}, true)}</span>
+      <div class="row center"><label class="btn ghost sm">📷 Profilbild wählen<input type="file" accept="image/*" id="photoIn" hidden></label>${draft.photo ? `<button class="ghost sm" data-act="photodel">Bild entfernen</button>` : ""}</div></div>
+    <form id="dlgForm" autocomplete="off"><label class="fl">Name<input class="txt" id="nameIn" maxlength="24" value="${esc(p.name)}"></label>
+      ${adminOn ? `<label class="fl">Neuer Code <small>(leer lassen = bleibt)</small>${pinInput("codeIn", "neu")}</label>` : ""}
+      <div class="row between"><button class="pri" type="submit">💾 Speichern</button>${adminOn ? `<button class="danger sm" type="button" data-act="delprofile" data-id="${esc(p.id)}">🗑 Spieler löschen</button>` : ""}</div></form>
+    <p class="hint" id="dlgMsg">${adminOn ? "Du bearbeitest als Spielleitung." : "Entsperrt – ändere dein Bild oder deinen Namen."}</p>`);
+  $("photoIn").onchange = async e => { const f = e.target.files[0]; if(!f) return;
+    try{ draft.photo = await photoFrom(f); editProfile(p); }catch(err){ dlgMsg("⚠️ Das Bild konnte nicht gelesen werden."); } };
+  $("dlgForm").onsubmit = e => { e.preventDefault();
+    const name = $("nameIn").value.trim(), code = adminOn ? $("codeIn").value.trim() : "";
+    if(!name) return dlgMsg("Bitte einen Namen eingeben.");
+    if(state.players.some(x=>x.id!==p.id && x.name.toLowerCase()===name.toLowerCase())) return dlgMsg("Diesen Namen gibt es schon.");
+    if(code && !pinOk(code)) return dlgMsg("Der Code muss genau 4 Ziffern haben.");
+    p.name = name; p.photo = draft.photo; if(code) p.code = pinHash(p.id, code);
+    const r = O() && O().roster.find(x=>x.id===p.id); if(r) r.name = name;       // laufende Olympiade mitziehen
+    commit(); dlgClose(); toast(code ? `✓ Gespeichert – neuer Code für ${name}: ${code}` : "✓ Profil gespeichert");
+  };
+}
+function openAdmin(after){
+  const first = !state.adminCode;
+  dlg(`<h3>🔑 Spielleitung</h3><p class="hint">${first ? "Lege deinen Spielleiter-Code fest. Damit legst du Spieler an, vergibst ihre Codes und kannst jedes Profil bearbeiten. Gut merken!" : "Spielleiter-Code eingeben."}</p>
+    <form id="dlgForm" class="pinrow">${pinInput("pinIn")}${first ? pinInput("pinIn2", "wiederholen") : ""}<button class="pri" type="submit">${first ? "Festlegen" : "Anmelden"}</button></form><p class="hint" id="dlgMsg"></p>`);
+  $("dlgForm").onsubmit = e => { e.preventDefault();
+    const v = $("pinIn").value;
+    if(first){ if(!pinOk(v)) return dlgMsg("Der Code muss genau 4 Ziffern haben."); if(v!==$("pinIn2").value) return dlgMsg("Die beiden Eingaben sind verschieden.");
+      state.adminCode = pinHash("admin", v); commit(); }
+    else if(pinHash("admin", v)!==state.adminCode){ dlgMsg("❌ Falscher Code."); $("pinIn").value = ""; return; }
+    setAdmin(true); if(after) after(); else { dlgClose(); toast("🔓 Spielleitung angemeldet"); }
+  };
+}
+function newPlayer(){
+  if(!adminOn) return openAdmin(newPlayer);
+  dlg(`<h3>➕ Neuer Spieler</h3><form id="dlgForm" autocomplete="off"><label class="fl">Name<input class="txt" id="nameIn" maxlength="24"></label>
+    <label class="fl">4-stelliger Code für den Spieler<input class="txt pin" id="codeIn" inputmode="numeric" maxlength="4" value="${1000+Math.floor(Math.random()*9000)}"></label>
+    <button class="pri" type="submit">Anlegen</button></form><p class="hint" id="dlgMsg">Mit diesem Code kann der Spieler sein Profilbild selbst ändern.</p>`);
+  $("dlgForm").onsubmit = e => { e.preventDefault();
+    const name = $("nameIn").value.trim(), code = $("codeIn").value.trim();
+    if(!name) return dlgMsg("Bitte einen Namen eingeben.");
+    if(state.players.some(x=>x.name.toLowerCase()===name.toLowerCase())) return dlgMsg("Diesen Namen gibt es schon.");
+    if(!pinOk(code)) return dlgMsg("Der Code muss genau 4 Ziffern haben.");
+    const id = uid(); state.players.push({id, name, photo:"", code:pinHash(id, code)}); commit();
+    dlg(`<div class="pf-head"><span class="ava huge">${face({name}, true)}</span><h3>${esc(name)} ist angelegt</h3></div>
+      <p class="hint" style="text-align:center">Code für ${esc(name)} – notieren und weitergeben:</p><div class="bigcode">${code}</div>
+      <div class="row center"><button class="pri" data-act="dlgclose">Fertig</button></div>`);
+  };
+}
 const clearResult = () => { $("wheelResult").textContent = ""; };
 
 document.addEventListener("click", e=>{
+  if(e.target.id==="dlg"){ dlgClose(); return; }
   const v = e.target.closest("[data-view]");
   if(v){ e.preventDefault(); if(!$("tv").hidden) tvOn(false); go(v.dataset.view); return; }
   const f = e.target.closest("[data-libf]");
@@ -1297,12 +1430,22 @@ document.addEventListener("click", e=>{
     case "pick":
       if(!ol) toast("Erst die Olympiade starten 🎰"); else if(p) toast("Erst die aktuelle Runde eintragen"); else startRound(id);
       break;
-    case "toggleplayer": { if(e.target.closest(".x")) break; const pl = state.players.find(x=>x.id===id); if(pl){ pl.on = !pl.on; commit(); } break; }
-    case "delplayer": state.players = state.players.filter(x=>x.id!==id); commit(); break;
-    case "create":
-      state.olympiad = {id:uid(), name:`Olympiade #${state.archive.length+1} · ${new Date().toLocaleDateString("de-DE")}`, started:Date.now(),
-        roster:state.players.filter(x=>x.on).map(x=>({id:x.id, name:x.name, emoji:x.emoji})), rounds:[]};
-      state.pending = null; commit(); toast("🎰 Die Olympiade ist eröffnet!"); break;
+    case "profile": openProfile(id); break;
+    case "newplayer": newPlayer(); break;
+    case "admin": openAdmin(); break;
+    case "adminoff": setAdmin(false); toast("Spielleitung abgemeldet"); break;
+    case "dlgclose": dlgClose(); break;
+    case "photodel": { draft.photo = ""; const pl = state.players.find(x=>x.id===draft.id); if(pl) editProfile(pl); break; }
+    case "delprofile": confirmTap(el, ()=>{ state.players = state.players.filter(x=>x.id!==id); dlgClose(); commit(); toast("Spieler gelöscht"); }); break;
+    case "popen": pickOpen = pickOpen===el.dataset.k ? null : el.dataset.k; render(); break;
+    case "ppick": { const l = picks[el.dataset.k]; if(!l.includes(id)) l.push(id); render(); break; }
+    case "punpick": picks[el.dataset.k] = picks[el.dataset.k].filter(x=>x!==id); render(); break;
+    case "create": {
+      const roster = picks.oly.map(pid=>state.players.find(x=>x.id===pid)).filter(Boolean).map(x=>({id:x.id, name:x.name}));
+      if(roster.length<2) break;
+      state.olympiad = {id:uid(), name:`Olympiade #${state.archive.length+1} · ${new Date().toLocaleDateString("de-DE")}`, started:Date.now(), roster, rounds:[]};
+      picks.oly = []; pickOpen = null;
+      state.pending = null; commit(); toast("🎰 Die Olympiade ist eröffnet!"); break; }
     case "place": { if(!p) break; const i = p.order.indexOf(id); if(i>=0) p.order.splice(i,1); else p.order.push(id); commit(); break; }
     case "veto": {
       if(!p || !ol) break;
@@ -1360,6 +1503,7 @@ document.addEventListener("change", e=>{
 });
 document.addEventListener("keydown", e=>{
   if((e.key==="Enter" || e.key===" ") && e.target.matches(".chip.player[data-act]")){ e.preventDefault(); e.target.click(); }
+  if(e.key==="Escape" && !$("dlg").hidden){ dlgClose(); return; }
   if(e.key==="Escape"){ if(!$("cere").hidden) closeCeremony(); else if(!$("tv").hidden) tvOn(false); }
 });
 

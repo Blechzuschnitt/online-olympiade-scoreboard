@@ -24,7 +24,7 @@ const RR_COL = ["#00F5FF","#FF00E5","#8B5CF6","#39FF88","#FF9F43"];
 const RR_SPECIAL = {bankrott:["BANKROTT","#0b0b12","#FF3D5A"], aussetzen:["AUSSETZEN","#e9edf7","#1b1640"], extra:["EXTRA","#FFD84D","#2a1a00"],
   joker:["JOKER","#4361EE","#ffffff"], jackpot:["JACKPOT","url(#rrJack)","#2a0030"]};
 
-let rrAnim = false, rrRot = 0, rrLastSpin, rrLastEv, rrIntroSeen, rrInit = false, rrBuy = false, rrWarn = null, rrPick = null;
+let rrAnim = false, rrRot = 0, rrLastSpin, rrLastEv, rrIntroSeen, rrInit = false, rrBuy = false, rrWarn = null;
 let rrWallKey = null, rrCardsKey = null, rrWheelKey = null, rrAdminBuilt = false, rrEditId = null;
 const rrBusy = () => rrAnim;
 
@@ -66,14 +66,14 @@ function rrNextRound(){
   rrDo({type:"round", puzzle:RRL.pickPuzzle(rrPuzzles(), sh.played, sh.settings.puzzleOrder, Math.random)});
 }
 const rrSource = () => O() ? O().roster : state.players;
-const rrPickList = () => rrPick || (O() ? O().roster.map(p=>p.id) : state.players.filter(p=>p.on).map(p=>p.id));
+const rrPickList = () => picks.rr.filter(id=>rrSource().some(p=>p.id===id));       // niemand ist vorgemerkt – Auswahl per „+“
 function rrStart(){
   const src = rrSource(), ps = rrPickList().map(id=>src.find(p=>p.id===id)).filter(Boolean), set = rrSettings();
   if(ps.length<2 || ps.length>6){ toast("Die Show braucht 2 bis 6 Spieler."); return; }
   const pz = RRL.pickPuzzle(rrPuzzles(), [], set.puzzleOrder, Math.random);
   if(!pz){ toast("Keine passenden Rätsel – lege in der Verwaltung welche an."); return; }
   const sh = RRL.newShow(ps, set); sh.intro = Date.now();
-  state.show = RRL.act(sh, {type:"round", puzzle:pz}).show; rrPick = null; commit();
+  state.show = RRL.act(sh, {type:"round", puzzle:pz}).show; picks.rr = []; pickOpen = null; commit();
 }
 // Show-Ergebnis über die vorhandene Rundenwertung in die Olympiade übernehmen
 function rrTransfer(){
@@ -264,7 +264,7 @@ function rrPlayers(sh){
   const box = $("rrPlayers"), key = sh.players.map(p=>p.id).join();
   if(key!==rrCardsKey){
     rrCardsKey = key;
-    box.innerHTML = sh.players.map((p,i)=>`<div class="rr-pc" data-pid="${esc(p.id)}" style="--pc:${PCOL[i%PCOL.length]}"><div class="av">${esc(p.emoji)}</div>
+    box.innerHTML = sh.players.map((p,i)=>`<div class="rr-pc" data-pid="${esc(p.id)}" style="--pc:${PCOL[i%PCOL.length]}"><div class="av">${face(p)}</div>
       <div class="who"><b>${esc(p.name)}</b><span class="jk"></span></div>
       <div class="pts"><span class="odo r" data-k="round"></span><small>Runde</small></div><div class="pts tot"><span class="odo" data-k="total"></span><small>Konto</small></div></div>`).join("");
   }
@@ -395,7 +395,7 @@ function rrHost(){
     <div class="sub">Buchstabe aufdecken (ohne Punkte)</div>
     <div class="rr-mini">${RRL.ALPHA.map(L=>`<button class="key" data-rr="reveal" data-l="${L}" ${sh.used.includes(L) ? "disabled" : ""}>${L}</button>`).join("")}</div>
     <div class="sub">Punkte korrigieren</div>
-    <table class="rr-adjt"><tr><th></th><th>Runde</th><th>Konto</th></tr>${sh.players.map(p=>`<tr><td>${esc(p.emoji)} ${esc(p.name)}</td><td>${adj(p,"round")}</td><td>${adj(p,"total")}</td></tr>`).join("")}</table>
+    <table class="rr-adjt"><tr><th></th><th>Runde</th><th>Konto</th></tr>${sh.players.map(p=>`<tr><td>${who(p)}</td><td>${adj(p,"round")}</td><td>${adj(p,"total")}</td></tr>`).join("")}</table>
     <div class="row" style="margin-top:16px"><button class="ghost" data-rr="finish">🏁 Show jetzt beenden</button><button class="danger" data-rr="abort">✕ Show abbrechen</button></div>
     <p class="hint">Abbrechen löscht nur die laufende Show – Olympiade, Rätsel und Einstellungen bleiben.</p>`);
 }
@@ -416,8 +416,8 @@ function rrSetupHTML(){
       <div class="rr-sub">Die Buchstaben-Show der Familien-Olympiade</div><span class="pill">📅 ${esc(set.event)}</span></div>
     <div class="admin">
       <section class="panel"><h2 class="h">Kandidaten <small>${manual ? "Reihenfolge = Antipp-Reihenfolge" : "Reihenfolge wird ausgelost"}</small></h2>
-        <div class="chips">${src.map(p=>{ const i = pick.indexOf(p.id); return `<button class="chip player ${i>=0 ? "on" : ""}" data-rr="pick" data-id="${esc(p.id)}" aria-pressed="${i>=0}">${manual && i>=0 ? `<b>${i+1}.</b> ` : ""}${esc(p.emoji)} ${esc(p.name)}</button>`; }).join("")}</div>
-        <p class="hint">${O() ? "Es spielen die Spieler der laufenden Olympiade. " : ""}2 bis 6 Spieler · ${pick.length} gewählt.</p></section>
+        ${pickerHTML("rr", src, 6, manual)}
+        <p class="hint">${O() ? "Zur Auswahl stehen die Spieler der laufenden Olympiade. " : ""}2 bis 6 Spieler · ${pick.length} gewählt.</p></section>
       <section class="panel"><h2 class="h">So läuft's</h2><ul class="rr-rules">
         <li>Drehen, Konsonant wählen: Feldwert × Treffer. Treffer = nochmal dran.</li>
         <li>Vokal kaufen kostet ${rrFmt(set.vowelPrice)} Punkte – auch ohne Treffer.</li>
@@ -432,7 +432,7 @@ function rrEndHTML(sh){
   const canT = ol && !sh.transferred && rk.some(p=>ol.roster.some(r=>r.id===p.id));
   return `<div class="rr rr-end">
     <div class="rr-hero"><div class="k">Finale · ${esc(sh.settings.event)}</div><div class="rr-logo big">${[..."SIEGEREHRUNG"].map((c,i)=>`<span style="--i:${i}">${c}</span>`).join("")}</div></div>
-    <div class="rr-final">${rk.map((p,i)=>`<div class="rr-fr ${i===0 ? "first" : ""}" style="--i:${i}"><span class="pos">${i+1}</span><span class="orb" style="--pc:${PCOL[i%PCOL.length]}">${esc(p.emoji)}</span><b>${esc(p.name)}${i===0 ? " 👑" : ""}</b><span class="sc"><b>${rrFmt(p.total)}</b><small>PKT</small></span></div>`).join("")}</div>
+    <div class="rr-final">${rk.map((p,i)=>`<div class="rr-fr ${i===0 ? "first" : ""}" style="--i:${i}"><span class="pos">${i+1}</span><span class="orb" style="--pc:${PCOL[i%PCOL.length]}">${face(p)}</span><b>${esc(p.name)}${i===0 ? " 👑" : ""}</b><span class="sc"><b>${rrFmt(p.total)}</b><small>PKT</small></span></div>`).join("")}</div>
     <div class="row center" style="margin-top:22px">
       ${canT ? `<button class="pri big" data-rr="transfer">🏆 Punkte in die Olympiade übertragen</button>` : sh.transferred ? `<span class="pill st-done">✓ In die Olympiade übertragen</span>` : `<span class="hint">Ohne laufende Olympiade werden keine Punkte übertragen.</span>`}
       <button class="ghost" data-rr="new">🔁 Neue Show</button></div>
@@ -544,7 +544,6 @@ document.addEventListener("click", e=>{
     case "tv": rrTv(!document.body.classList.contains("rrtv")); break;
     case "sound": setSound(!soundOn); renderShow(); break;
     case "fx": { const i = (RR_FX.indexOf(rrFxSetting())+1) % RR_FX.length; try{ localStorage.setItem("rr-fx", RR_FX[i]); }catch(e){} renderShow(); rrSay("Effekte: " + RR_FX[i]); break; }
-    case "pick": { const l = rrPickList().slice(), i = l.indexOf(id); if(i>=0) l.splice(i,1); else l.push(id); rrPick = l; renderShow(); break; }
     case "start": rrStart(); break;
     case "transfer": rrTransfer(); break;
     case "new": state.show = null; commit(); break;

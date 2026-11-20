@@ -221,6 +221,8 @@
   .pmenu .chip{padding:6px 12px}
   .lvl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
   .who .caret{font-size:11px;opacity:.7}
+  .pav{display:inline-grid;place-items:center;width:1.6em;height:1.6em;margin-right:.35em;border-radius:50%;overflow:hidden;vertical-align:middle;font-size:.95em;font-weight:900;background:rgba(255,255,255,.18);box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+  .pav img{width:100%;height:100%;object-fit:cover}
 </style>
 </head>
 <body>
@@ -322,6 +324,11 @@ const BOTS = [{name:"Robo", emoji:"🤖"}, {name:"Ada", emoji:"🦉"}];
 const LEVELS = {locker:"Locker", clever:"Clever"};
 let sb = null, online = false, cache = {}, firstPaint = true;
 let olyPlayers = [{name:"Yana",emoji:"🦄"},{name:"Noah",emoji:"🚀"},{name:"Papa",emoji:"🦁"}];
+// Profilbild aus den Spielerprofilen der Olympiade (sonst Initiale, KI-Gegner behalten ihr Symbol)
+function pv(o){
+  const p = olyPlayers.find(x=>x.name===o.name), ph = p && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p.photo||"") ? p.photo : "";
+  return `<span class="pav">${ph ? `<img src="${ph}" alt="">` : (o.bot || !p) && o.emoji ? esc(o.emoji) : esc([...String(o.name||"?").trim()][0]||"?").toUpperCase()}</span>${esc(o.name)}`;
+}
 let me = localStorage.getItem("mo-me") || "";
 const CID = localStorage.getItem("ll-cid") || (()=>{ const c = uid()+uid(); localStorage.setItem("ll-cid", c); return c; })();
 let setup = {picked:null, mode:"wuerfel", bots:0, level:"clever"};
@@ -348,7 +355,7 @@ async function fetchAll(){
   const {data, error} = await sb.from("olympiade_state").select("id,data").in("id",[T_ID,"nelskamp"]);
   if(error) throw error;
   for(const row of data){
-    if(row.id==="nelskamp"){ const ps = row.data && row.data.players; if(Array.isArray(ps) && ps.length) olyPlayers = ps.map(p=>({name:p.name,emoji:p.emoji})); }
+    if(row.id==="nelskamp"){ const ps = row.data && row.data.players; if(Array.isArray(ps) && ps.length) olyPlayers = ps.map(p=>({name:p.name,emoji:p.emoji,photo:p.photo})); }
     else applyRemote(row.id, row.data, true);
   }
 }
@@ -788,7 +795,7 @@ function applyZoom(){ const base = matchMedia("(max-width:520px)").matches ? 38 
 function handHTML(g){
   const actS = activeSeat(g), hs = myHandSeat(g);
   const actSt = seatOf(g, actS);
-  if(!hs) return `<div class="hint">${isBot(g,actS) ? `${esc(actSt.emoji)} ${esc(actSt.name)} überlegt …` : `Tippe unten auf deinen Namen, um deine Steine zu sehen.`}</div>${whoHTML(g)}`;
+  if(!hs) return `<div class="hint">${isBot(g,actS) ? `${pv(actSt)} überlegt …` : `Tippe unten auf deinen Namen, um deine Steine zu sehen.`}</div>${whoHTML(g)}`;
   const hand = g.hands[hs] || [], myTurn = hs===actS && canControl(g, hs), dice = g.mode==="wuerfel";
   const used = new Set(ui.pend.map(p=>p.i));
   const markMode = myTurn && ui.swap;
@@ -843,7 +850,7 @@ function resultHTML(g){
     ? `<span class="done">✓ In „${esc(g.transferred.name)}“ als Runde ${g.transferred.round} eingetragen</span>`
     : `<button data-do="transfer" ${transferring||!online?"disabled":""}>${transferring?"Wird eingetragen …":"🏅 In die Olympiade übernehmen"}</button>`;
   return `<section class="panel"><h2>${g.aborted?"Spiel abgebrochen":"Endstand"} – ${MODES[g.mode].name}</h2>
-    ${ranked.map((x,i)=>`<div class="rank"><span>${medal[i]||"🎖️"}</span><span>${esc(x.st.emoji)} ${esc(x.st.name)}</span><span class="p">${x.p} P</span></div>`).join("")}
+    ${ranked.map((x,i)=>`<div class="rank"><span>${medal[i]||"🎖️"}</span><span>${pv(x.st)}</span><span class="p">${x.p} P</span></div>`).join("")}
     <div class="row" style="margin-top:12px">${btn}<button class="ghost" data-do="rematch">↻ Revanche</button></div>
     ${!g.aborted && !g.transferred ? `<p class="mute" style="margin:8px 0 0">Trägt die Platzierung (3 / 2 / 1 Punkte) als Runde „Mosaika“ in die laufende Olympiade ein.</p>`:""}
   </section>`;
@@ -851,7 +858,7 @@ function resultHTML(g){
 function lastText(g){
   const L = g.last; if(!L) return "";
   const st = seatOf(g, L.seat); if(!st) return "";
-  const nm = `${esc(st.emoji)} ${esc(st.name)}`;
+  const nm = `${pv(st)}`;
   if(L.kind==="lay") return `Zuletzt: ${nm} legte ${L.n} ${L.n===1?"Stein":"Steine"} für <b>+${L.pts}</b>${L.six?" ✨ Sechser":""}${L.end?" 🏁":""}`;
   if(L.kind==="swap") return `Zuletzt: ${nm} tauschte ${L.n} ${L.n===1?"Stein":"Steine"}`;
   return `Zuletzt: ${nm} musste passen`;
@@ -862,28 +869,27 @@ function pickedIdx(){
   if(setup.picked && setup.pickFor===olyPlayers) return setup.picked;
   let names = null;
   if(setup.picked && setup.pickFor) names = setup.picked.map(i=>setup.pickFor[i] && setup.pickFor[i].name);
-  else try{ names = JSON.parse(localStorage.getItem("mo-picked")); }catch{}
   setup.pickFor = olyPlayers;
-  setup.picked = Array.isArray(names) ? olyPlayers.map((p,i)=>names.includes(p.name)?i:-1).filter(i=>i>=0) : olyPlayers.map((_,i)=>i);
+  setup.picked = Array.isArray(names) ? olyPlayers.map((p,i)=>names.includes(p.name)?i:-1).filter(i=>i>=0) : [];                    // niemand ist vorgemerkt – Auswahl per „+“
   return setup.picked;
 }
 function savePicked(){ try{ localStorage.setItem("mo-picked", JSON.stringify(pickedIdx().map(i=>olyPlayers[i].name))); }catch{} }
 function playersHTML(max){
   const picked = pickedIdx(), n = picked.length + setup.bots, full = n >= max;
   const rest = olyPlayers.map((_,i)=>i).filter(i=>!picked.includes(i));
-  const chips = picked.map(i=>`<span class="pchip">${esc(olyPlayers[i].emoji)} ${esc(olyPlayers[i].name)}<button class="px" data-unpick="${i}" aria-label="${esc(olyPlayers[i].name)} entfernen">×</button></span>`).join("")
+  const chips = picked.map(i=>`<span class="pchip">${pv(olyPlayers[i])}<button class="px" data-unpick="${i}" aria-label="${esc(olyPlayers[i].name)} entfernen">×</button></span>`).join("")
     + BOTS.slice(0, setup.bots).map((b,j)=>`<span class="pchip bot">${b.emoji} ${b.name}<small>KI</small>${j===setup.bots-1?`<button class="px" data-unbot="1" aria-label="${b.name} entfernen">×</button>`:""}</span>`).join("");
   const canBot = setup.bots < BOTS.length;
   const add = full || (!rest.length && !canBot) ? "" : `<button class="padd${pickOpen?" on":""}" data-do="pickopen" aria-label="Mitspieler hinzufügen" title="Mitspieler hinzufügen">${pickOpen?"×":"+"}</button>`;
-  const menu = pickOpen && add ? `<div class="pmenu"><span class="mute">Hinzufügen:</span>${rest.map(i=>`<button class="chip" data-pick="${i}">${esc(olyPlayers[i].emoji)} ${esc(olyPlayers[i].name)}</button>`).join("")}${canBot?`<button class="chip botc" data-addbot="1">${BOTS[setup.bots].emoji} ${BOTS[setup.bots].name} · KI</button>`:""}</div>` : "";
+  const menu = pickOpen && add ? `<div class="pmenu"><span class="mute">Hinzufügen:</span>${rest.map(i=>`<button class="chip" data-pick="${i}">${pv(olyPlayers[i])}</button>`).join("")}${canBot?`<button class="chip botc" data-addbot="1">${BOTS[setup.bots].emoji} ${BOTS[setup.bots].name} · KI</button>`:""}</div>` : "";
   const lvl = setup.bots ? `<div class="lvl"><span class="mute">KI-Stärke</span>${Object.entries(LEVELS).map(([k,v])=>`<button class="chip${setup.level===k?" on":""}" data-level="${k}">${k==="locker"?"🙂":"🧠"} ${v}</button>`).join("")}</div>` : "";
   return `<div class="mute">Mitspieler <small>(${n} von max. ${max})</small></div>
     <div class="plist">${chips || `<span class="mute">Noch niemand – tippe auf +</span>`}${add}</div>${menu}${lvl}`;
 }
 function whoBarHTML(humans){
-  const cur = me==="all" ? "📱 Alle an diesem Gerät" : (st => st ? `${esc(st.emoji)} ${esc(st.name)}` : null)(humans.find(x=>x.seat===me));
+  const cur = me==="all" ? "📱 Alle an diesem Gerät" : (st => st ? `${pv(st)}` : null)(humans.find(x=>x.seat===me));
   if(cur && !whoOpen) return `<div class="who">Du spielst als <button class="chip on" data-do="whoopen" title="Wechseln">${cur} <span class="caret">▾</span></button></div>`;
-  return `<div class="who">${cur?"Wechseln zu:":"<b>Wer bist du?</b>"} ${humans.map(st=>`<button class="chip${me===st.seat?" on":""}" data-me="${st.seat}">${esc(st.emoji)} ${esc(st.name)}</button>`).join("")}
+  return `<div class="who">${cur?"Wechseln zu:":"<b>Wer bist du?</b>"} ${humans.map(st=>`<button class="chip${me===st.seat?" on":""}" data-me="${st.seat}">${pv(st)}</button>`).join("")}
     <button class="chip${me==="all"?" on":""}" data-me="all">📱 Alle an diesem Gerät</button></div>`;
 }
 function pickClick(b){
@@ -963,7 +969,7 @@ function render(){
     document.body.classList.remove("playing"); fitBoard();
     if(g && g.over && !g.aborted){
       $("turnLine").innerHTML = `Endstand<small>${MODES[g.mode].name}</small>`;
-      $("scoreRow").innerHTML = ranking(g).map(x=>`<span class="pl">${esc(x.st.emoji)} ${esc(x.st.name)} <b>${x.p}</b></span>`).join("");
+      $("scoreRow").innerHTML = ranking(g).map(x=>`<span class="pl">${pv(x.st)} <b>${x.p}</b></span>`).join("");
       $("lastLine").innerHTML = lastText(g);
       ui.pend = []; ui.sel = null; renderBoard(g); fx(g);
     }
@@ -978,8 +984,8 @@ function render(){
   if(ui.pendV!==pv) resetUI();
   ui.pendV = pv;
   $("tablePanel").hidden = false; $("handPanel").hidden = false;
-  $("turnLine").innerHTML = `${esc(actSt.emoji)} ${esc(actSt.name)} ist am Zug<small>${MODES[g.mode].name}</small>`;
-  $("scoreRow").innerHTML = g.seats.map(st=>`<span class="pl${st.seat===actS?" on":""}" data-seat="${st.seat}">${esc(st.emoji)} ${esc(st.name)}${st.bot?` <small>KI</small>`:""} <b>${g.score[st.seat]||0}</b> <small>${(g.hands[st.seat]||[]).length} St.</small></span>`).join("");
+  $("turnLine").innerHTML = `${pv(actSt)} ist am Zug<small>${MODES[g.mode].name}</small>`;
+  $("scoreRow").innerHTML = g.seats.map(st=>`<span class="pl${st.seat===actS?" on":""}" data-seat="${st.seat}">${pv(st)}${st.bot?` <small>KI</small>`:""} <b>${g.score[st.seat]||0}</b> <small>${(g.hands[st.seat]||[]).length} St.</small></span>`).join("");
   $("lastLine").innerHTML = lastText(g);
   renderBoard(g);
   $("handPanel").innerHTML = handHTML(g);

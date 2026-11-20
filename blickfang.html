@@ -171,6 +171,8 @@
     body.playing .items{grid-template-columns:1fr}
   }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important} }
+  .pav{display:inline-grid;place-items:center;width:1.6em;height:1.6em;margin-right:.35em;border-radius:50%;overflow:hidden;vertical-align:middle;font-size:.95em;font-weight:900;background:rgba(255,255,255,.18);box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+  .pav img{width:100%;height:100%;object-fit:cover}
 </style>
 </head>
 <body>
@@ -258,6 +260,11 @@ const T_ID = "bf-tisch", LS = "blickfang-v1";
 const SEATS = ["s1","s2","s3","s4","s5","s6"], RID = s => "bf-" + s;
 let sb = null, online = false, cache = {}, firstPaint = true;
 let olyPlayers = [{name:"Yana",emoji:"🦄"},{name:"Noah",emoji:"🚀"},{name:"Papa",emoji:"🦁"}];
+// Profilbild aus den Spielerprofilen der Olympiade (sonst Initiale, KI-Gegner behalten ihr Symbol)
+function pv(o){
+  const p = olyPlayers.find(x=>x.name===o.name), ph = p && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p.photo||"") ? p.photo : "";
+  return `<span class="pav">${ph ? `<img src="${ph}" alt="">` : (o.bot || !p) && o.emoji ? esc(o.emoji) : esc([...String(o.name||"?").trim()][0]||"?").toUpperCase()}</span>${esc(o.name)}`;
+}
 let me = localStorage.getItem("bf-me") || "";
 const CID = localStorage.getItem("ll-cid") || (()=>{ const c = uid()+uid(); localStorage.setItem("ll-cid", c); return c; })();
 let setup = {picked:null, bots:0, n:8, dur:10, region:"de"};
@@ -283,7 +290,7 @@ async function fetchAll(){
   const {data, error} = await sb.from("olympiade_state").select("id,data").in("id",[...ROWS,"nelskamp"]);
   if(error) throw error;
   for(const row of data){
-    if(row.id==="nelskamp"){ const ps = row.data && row.data.players; if(Array.isArray(ps) && ps.length) olyPlayers = ps.map(p=>({name:p.name,emoji:p.emoji})); }
+    if(row.id==="nelskamp"){ const ps = row.data && row.data.players; if(Array.isArray(ps) && ps.length) olyPlayers = ps.map(p=>({name:p.name,emoji:p.emoji,photo:p.photo})); }
     else applyRemote(row.id, row.data, true);
   }
 }
@@ -506,25 +513,24 @@ function pickedIdx(){
   if(setup.picked && setup.pickFor===olyPlayers) return setup.picked;
   let names = null;
   if(setup.picked && setup.pickFor) names = setup.picked.map(i=>setup.pickFor[i] && setup.pickFor[i].name);
-  else try{ names = JSON.parse(localStorage.getItem("bf-picked")); }catch{}
   setup.pickFor = olyPlayers;
-  setup.picked = Array.isArray(names) ? olyPlayers.map((p,i)=>names.includes(p.name)?i:-1).filter(i=>i>=0) : olyPlayers.map((_,i)=>i);
+  setup.picked = Array.isArray(names) ? olyPlayers.map((p,i)=>names.includes(p.name)?i:-1).filter(i=>i>=0) : [];                    // niemand ist vorgemerkt – Auswahl per „+“
   return setup.picked;
 }
 function savePicked(){ try{ localStorage.setItem("bf-picked", JSON.stringify(pickedIdx().map(i=>olyPlayers[i].name))); }catch{} }
 function playersHTML(max){
   const picked = pickedIdx(), n = picked.length, full = n >= max;
   const rest = olyPlayers.map((_,i)=>i).filter(i=>!picked.includes(i));
-  const chips = picked.map(i=>`<span class="pchip">${esc(olyPlayers[i].emoji)} ${esc(olyPlayers[i].name)}<button class="px" data-unpick="${i}" aria-label="${esc(olyPlayers[i].name)} entfernen">×</button></span>`).join("");
+  const chips = picked.map(i=>`<span class="pchip">${pv(olyPlayers[i])}<button class="px" data-unpick="${i}" aria-label="${esc(olyPlayers[i].name)} entfernen">×</button></span>`).join("");
   const add = full || !rest.length ? "" : `<button class="padd${pickOpen?" on":""}" data-do="pickopen" aria-label="Mitspieler hinzufügen" title="Mitspieler hinzufügen">${pickOpen?"×":"+"}</button>`;
-  const menu = pickOpen && add ? `<div class="pmenu"><span class="mute">Hinzufügen:</span>${rest.map(i=>`<button class="chip" data-pick="${i}">${esc(olyPlayers[i].emoji)} ${esc(olyPlayers[i].name)}</button>`).join("")}</div>` : "";
+  const menu = pickOpen && add ? `<div class="pmenu"><span class="mute">Hinzufügen:</span>${rest.map(i=>`<button class="chip" data-pick="${i}">${pv(olyPlayers[i])}</button>`).join("")}</div>` : "";
   return `<div class="mute">Mitspieler <small>(${n} von max. ${max})</small></div>
     <div class="plist">${chips || `<span class="mute">Noch niemand – tippe auf +</span>`}${add}</div>${menu}`;
 }
 function whoBarHTML(g){
-  const st = seatOf(g, me), cur = st ? `${esc(st.emoji)} ${esc(st.name)}` : null;
+  const st = seatOf(g, me), cur = st ? `${pv(st)}` : null;
   if(cur && !whoOpen) return `<div class="who">Du spielst als <button class="chip on" data-do="whoopen" title="Wechseln">${cur} <span style="font-size:11px;opacity:.7">▾</span></button></div>`;
-  return `<div class="who">${cur?"Wechseln zu:":"<b>Wer bist du?</b>"} ${g.seats.map(x=>`<button class="chip${me===x.seat?" on":""}" data-me="${x.seat}">${esc(x.emoji)} ${esc(x.name)}</button>`).join("")}</div>`;
+  return `<div class="who">${cur?"Wechseln zu:":"<b>Wer bist du?</b>"} ${g.seats.map(x=>`<button class="chip${me===x.seat?" on":""}" data-me="${x.seat}">${pv(x)}</button>`).join("")}</div>`;
 }
 
 /* ============ Ergebnis in die Olympiade ============ */
@@ -612,15 +618,15 @@ function voteHTML(g){
       const src = shotSrc(s);
       return `<div class="card ${cls}">
         <button class="img" data-zoom="${st.seat}|${i}" aria-label="Foto ansehen"><span><b>👁</b>Blick ansehen</span>${src?`<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">`:""}</button>
-        <div class="cb"><div class="who2">${esc(st.emoji)} ${esc(st.name)}<span class="res">${tl.pts===1?"zählt":tl.pts===0?"zählt nicht":"½ Punkt"}</span></div>
+        <div class="cb"><div class="who2">${pv(st)}<span class="res">${tl.pts===1?"zählt":tl.pts===0?"zählt nicht":"½ Punkt"}</span></div>
         ${r.joker && r.joker.i===i ? `<span class="jtag">🃏 Joker – gesucht war: ${esc(r.joker.item)}</span>` : ""}
         ${mine && !own ? `<div class="vbtns"><button class="y${my===1?" on":""}" data-vote="${st.seat}|${i}|1">👍 zählt</button><button class="n${my===0?" on":""}" data-vote="${st.seat}|${i}|0">👎 nicht</button></div>` : own ? `<span class="tally">Dein Foto – die anderen stimmen ab</span>` : ""}
         <span class="tally">👍 ${tl.y} · 👎 ${tl.n}</span></div></div>`;
     }).join("");
     const without = g.seats.filter(st=>!withShot.includes(st));
-    return `<div class="vitem"><span class="n">${i+1}</span>${esc(it)}</div><div class="cards">${cards}</div>${without.length?`<div class="tally" style="margin-top:4px">Ohne Foto: ${without.map(st=>esc(st.emoji)+" "+esc(st.name)).join(", ")}</div>`:""}`;
+    return `<div class="vitem"><span class="n">${i+1}</span>${esc(it)}</div><div class="cards">${cards}</div>${without.length?`<div class="tally" style="margin-top:4px">Ohne Foto: ${without.map(st=>pv(st)).join(", ")}</div>`:""}`;
   }).join("");
-  const board = ranking(g, sc).map(x=>`${esc(x.st.emoji)} ${esc(x.st.name)} <b>${fmtP(x.p)}</b>`).join(" · ");
+  const board = ranking(g, sc).map(x=>`${pv(x.st)} <b>${fmtP(x.p)}</b>`).join(" · ");
   return `<section class="panel"><h2>🗳️ Wertung</h2>
     <p class="mute" style="margin:0 0 6px">Stimmt bei den Fotos der anderen ab. Mehr 👍 = 1 Punkt, mehr 👎 = 0, Gleichstand = ½ Punkt. Tippe ein Foto an, um es groß zu sehen.</p>
     <div class="hint">Zwischenstand: ${board}</div>
@@ -637,7 +643,7 @@ function resultHTML(g){
     ? `<span class="done">✓ In „${esc(g.transferred.name)}“ als Runde ${g.transferred.round} eingetragen</span>`
     : `<button data-do="transfer" ${transferring||!online?"disabled":""}>${transferring?"Wird eingetragen …":"🏅 In die Olympiade übernehmen"}</button>`;
   return `<section class="panel"><h2>${g.aborted?"Spiel abgebrochen":`Endstand – ${esc(g.start.name)}`}</h2>
-    ${g.aborted?"":ranking(g, sc).map((x,i)=>`<div class="rank"><span>${medal[i]||"🎖️"}</span><span>${esc(x.st.emoji)} ${esc(x.st.name)}</span><span class="mute" style="font-size:12.5px">${sc[x.st.seat].found} Fotos</span><span class="p">${fmtP(x.p)} P</span></div>`).join("")}
+    ${g.aborted?"":ranking(g, sc).map((x,i)=>`<div class="rank"><span>${medal[i]||"🎖️"}</span><span>${pv(x.st)}</span><span class="mute" style="font-size:12.5px">${sc[x.st.seat].found} Fotos</span><span class="p">${fmtP(x.p)} P</span></div>`).join("")}
     <div class="row" style="margin-top:12px">${btn}<button class="ghost" data-do="rematch">↻ Neue Runde, gleiche Leute</button></div>
     ${!g.aborted && !g.transferred ? `<p class="mute" style="margin:8px 0 0">Trägt die Platzierung (3 / 2 / 1 Punkte) als Runde „Blickfang“ in die laufende Olympiade ein.</p>`:""}
   </section>`;
@@ -703,7 +709,7 @@ function render(){
     if(ui.sel >= g.items.length) ui.sel = 0;
     const r = myRow(g);
     $("huntInfo").innerHTML = `Start: <b>${esc(g.start.name)}</b> · ${g.seats.map(st=>{ const pr = prow(g, st.seat), n = pr ? Object.keys(pr.shots||{}).length : 0;
-      return `${esc(st.emoji)} ${n}${pr&&pr.done?"✓":""}`; }).join(" · ")}`;
+      return `${pv(st)} ${n}${pr&&pr.done?"✓":""}`; }).join(" · ")}`;
     setupPano(g);
     $("huntSide").innerHTML = huntSideHTML(g);
     app.innerHTML = `<div class="row" style="justify-content:center;margin-bottom:18px"><button class="sm ghost" data-do="quit">${ui.confirmQuit?"Wirklich abbrechen? Nochmal tippen":"Spiel abbrechen"}</button></div>`;
@@ -733,7 +739,7 @@ document.addEventListener("click", e=>{
     const [o,i] = b.dataset.zoom.split("|"), r = prow(g, o), s = r && r.shots[i]; if(!s) return;
     const lb = $("lb"), st = seatOf(g, o);
     const live = s.pano && !s.img && gkey();
-    lb.innerHTML = `${live?`<div id="lbPano"></div>`:`<img src="${esc(shotSrc(s, 640, 640))}" alt="">`}<div class="row"><span>${esc(st.emoji)} ${esc(st.name)} · ${esc(itemFor(g, o, +i))}</span>
+    lb.innerHTML = `${live?`<div id="lbPano"></div>`:`<img src="${esc(shotSrc(s, 640, 640))}" alt="">`}<div class="row"><span>${pv(st)} · ${esc(itemFor(g, o, +i))}</span>
       ${shotLink(s)?`<a class="btn blue sm" href="${shotLink(s)}" target="_blank" rel="noopener">🗺️ In Google Maps</a>`:""}<button class="ghost sm" data-do="lbclose">Schließen</button></div>`;
     lb.hidden = false;
     if(live) loadMaps().then(()=>{

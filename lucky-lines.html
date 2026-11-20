@@ -247,6 +247,8 @@
     body.playing #tablePanel{position:sticky;top:10px;margin-bottom:0}
     body.playing #app .sheet:first-child{margin-top:16px}
   }
+  .pav{display:inline-grid;place-items:center;width:1.6em;height:1.6em;margin-right:.35em;border-radius:50%;overflow:hidden;vertical-align:middle;font-size:.95em;font-weight:900;background:rgba(255,255,255,.18);box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+  .pav img{width:100%;height:100%;object-fit:cover}
 </style>
 </head>
 <body>
@@ -348,6 +350,11 @@ const LS = "lucky-lines-v1";
 let sb = null, online = false;
 let cache = {};   // id -> data
 let olyPlayers = [{name:"Yana",emoji:"🦄"},{name:"Noah",emoji:"🚀"},{name:"Papa",emoji:"🦁"}];
+// Profilbild aus den Spielerprofilen der Olympiade (sonst Initiale, KI-Gegner behalten ihr Symbol)
+function pv(o){
+  const p = olyPlayers.find(x=>x.name===o.name), ph = p && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p.photo||"") ? p.photo : "";
+  return `<span class="pav">${ph ? `<img src="${ph}" alt="">` : (o.bot || !p) && o.emoji ? esc(o.emoji) : esc([...String(o.name||"?").trim()][0]||"?").toUpperCase()}</span>${esc(o.name)}`;
+}
 let me = localStorage.getItem("ll-me") || "";
 let setup = {picked:null, variant:"klassisch", short:false, bots:0, level:"clever"};
 const CID = localStorage.getItem("ll-cid") || (()=>{ const c = Date.now().toString(36)+Math.random().toString(36).slice(2,8); localStorage.setItem("ll-cid", c); return c; })();
@@ -375,7 +382,7 @@ async function fetchAll(){
   const {data, error} = await sb.from("olympiade_state").select("id,data").in("id",[...IDS,"nelskamp"]);
   if(error) throw error;
   for(const row of data){
-    if(row.id==="nelskamp"){ const ps = row.data && row.data.players; if(Array.isArray(ps) && ps.length) olyPlayers = ps.map(p=>({name:p.name,emoji:p.emoji})); }
+    if(row.id==="nelskamp"){ const ps = row.data && row.data.players; if(Array.isArray(ps) && ps.length) olyPlayers = ps.map(p=>({name:p.name,emoji:p.emoji,photo:p.photo})); }
     else applyRemote(row.id, row.data, true);
   }
 }
@@ -879,7 +886,7 @@ function sheetHTML(st, g){
     </div>${w1?`<button class="skipw" data-do="skip" data-s="${s}">Weißen Schritt überspringen <span>→ weiter zu ② Farbe</span></button>`:""}`;
   }
   return `<div class="sheet${isActive?" active":""}${me===s?" mine":""}${opts.size?" picking":""}">
-    <div class="shead"><span class="nm">${esc(st.emoji)} ${esc(st.name)}${st.bot?`<span class="tag kitag">KI · ${LEVELS[st.bot]||""}</span>`:""}${isActive?'<span class="tag">am Zug</span>':""}</span><div class="acts">${btns}</div><span class="tot">${sc.total} P</span></div>
+    <div class="shead"><span class="nm">${pv(st)}${st.bot?`<span class="tag kitag">KI · ${LEVELS[st.bot]||""}</span>`:""}${isActive?'<span class="tag">am Zug</span>':""}</span><div class="acts">${btns}</div><span class="tot">${sc.total} P</span></div>
     ${steps}<div class="grid">${rows}</div>
     <div class="sfoot"><div class="pens">Fehlwürfe ${[0,1,2,3].map(i=>`<div class="pen${i<sd.pen?" x":""}">${i<sd.pen?"✕":""}</div>`).join("")}</div></div>
     ${calcHTML(s, sd, sc, L, g)}
@@ -935,7 +942,7 @@ function resultHTML(g){
       : `<button data-do="transfer" ${transferring||!online?"disabled":""}>${transferring?"Wird eingetragen …":"🏅 In die Olympiade übernehmen"}</button>`;
   }
   return `<section class="panel"><h2>${g.aborted?"Spiel abgebrochen":"Endstand"} – ${VARIANTS[g.variant].name}</h2>
-    ${ranked.map((x,i)=>`<div class="rank"><span>${medal[i]||"🎖️"}</span><span>${esc(x.st.emoji)} ${esc(x.st.name)}</span><span class="p">${x.sc.total} P</span></div>`).join("")}
+    ${ranked.map((x,i)=>`<div class="rank"><span>${medal[i]||"🎖️"}</span><span>${pv(x.st)}</span><span class="p">${x.sc.total} P</span></div>`).join("")}
     <div class="row" style="margin-top:12px">${btn}<button class="ghost" data-do="rematch">↻ Revanche</button></div>
     ${!g.aborted && !g.transferred ? `<p class="mute" style="margin:8px 0 0">Trägt die Platzierung (3 / 2 / 1 Punkte) als Runde „Lucky Lines“ in die laufende Olympiade ein.</p>`:""}
   </section>`;
@@ -946,28 +953,27 @@ function pickedIdx(){
   if(setup.picked && setup.pickFor===olyPlayers) return setup.picked;
   let names = null;
   if(setup.picked && setup.pickFor) names = setup.picked.map(i=>setup.pickFor[i] && setup.pickFor[i].name);
-  else try{ names = JSON.parse(localStorage.getItem("ll-picked")); }catch{}
   setup.pickFor = olyPlayers;
-  setup.picked = Array.isArray(names) ? olyPlayers.map((p,i)=>names.includes(p.name)?i:-1).filter(i=>i>=0) : olyPlayers.map((_,i)=>i);
+  setup.picked = Array.isArray(names) ? olyPlayers.map((p,i)=>names.includes(p.name)?i:-1).filter(i=>i>=0) : [];                    // niemand ist vorgemerkt – Auswahl per „+“
   return setup.picked;
 }
 function savePicked(){ try{ localStorage.setItem("ll-picked", JSON.stringify(pickedIdx().map(i=>olyPlayers[i].name))); }catch{} }
 function playersHTML(max){
   const picked = pickedIdx(), n = picked.length + setup.bots, full = n >= max;
   const rest = olyPlayers.map((_,i)=>i).filter(i=>!picked.includes(i));
-  const chips = picked.map(i=>`<span class="pchip">${esc(olyPlayers[i].emoji)} ${esc(olyPlayers[i].name)}<button class="px" data-unpick="${i}" aria-label="${esc(olyPlayers[i].name)} entfernen">×</button></span>`).join("")
+  const chips = picked.map(i=>`<span class="pchip">${pv(olyPlayers[i])}<button class="px" data-unpick="${i}" aria-label="${esc(olyPlayers[i].name)} entfernen">×</button></span>`).join("")
     + BOTS.slice(0, setup.bots).map((b,j)=>`<span class="pchip bot">${b.emoji} ${b.name}<small>KI</small>${j===setup.bots-1?`<button class="px" data-unbot="1" aria-label="${b.name} entfernen">×</button>`:""}</span>`).join("");
   const canBot = setup.bots < BOTS.length;
   const add = full || (!rest.length && !canBot) ? "" : `<button class="padd${pickOpen?" on":""}" data-do="pickopen" aria-label="Mitspieler hinzufügen" title="Mitspieler hinzufügen">${pickOpen?"×":"+"}</button>`;
-  const menu = pickOpen && add ? `<div class="pmenu"><span class="mute">Hinzufügen:</span>${rest.map(i=>`<button class="chip" data-pick="${i}">${esc(olyPlayers[i].emoji)} ${esc(olyPlayers[i].name)}</button>`).join("")}${canBot?`<button class="chip botc" data-addbot="1">${BOTS[setup.bots].emoji} ${BOTS[setup.bots].name} · KI</button>`:""}</div>` : "";
+  const menu = pickOpen && add ? `<div class="pmenu"><span class="mute">Hinzufügen:</span>${rest.map(i=>`<button class="chip" data-pick="${i}">${pv(olyPlayers[i])}</button>`).join("")}${canBot?`<button class="chip botc" data-addbot="1">${BOTS[setup.bots].emoji} ${BOTS[setup.bots].name} · KI</button>`:""}</div>` : "";
   const lvl = setup.bots ? `<div class="lvl"><span class="mute">KI-Stärke</span>${Object.entries(LEVELS).map(([k,v])=>`<button class="chip${setup.level===k?" on":""}" data-level="${k}">${k==="locker"?"🙂":"🧠"} ${v}</button>`).join("")}</div>` : "";
   return `<div class="mute">Mitspieler <small>(${n} von max. ${max})</small></div>
     <div class="plist">${chips || `<span class="mute">Noch niemand – tippe auf +</span>`}${add}</div>${menu}${lvl}`;
 }
 function whoBarHTML(humans){
-  const cur = me==="all" ? "📱 Alle an diesem Gerät" : (st => st ? `${esc(st.emoji)} ${esc(st.name)}` : null)(humans.find(x=>x.seat===me));
+  const cur = me==="all" ? "📱 Alle an diesem Gerät" : (st => st ? `${pv(st)}` : null)(humans.find(x=>x.seat===me));
   if(cur && !whoOpen) return `<div class="who">Du spielst als <button class="chip on" data-do="whoopen" title="Wechseln">${cur} <span class="caret">▾</span></button></div>`;
-  return `<div class="who">${cur?"Wechseln zu:":"<b>Wer bist du?</b>"} ${humans.map(st=>`<button class="chip${me===st.seat?" on":""}" data-me="${st.seat}">${esc(st.emoji)} ${esc(st.name)}</button>`).join("")}
+  return `<div class="who">${cur?"Wechseln zu:":"<b>Wer bist du?</b>"} ${humans.map(st=>`<button class="chip${me===st.seat?" on":""}" data-me="${st.seat}">${pv(st)}</button>`).join("")}
     <button class="chip${me==="all"?" on":""}" data-me="all">📱 Alle an diesem Gerät</button></div>`;
 }
 function pickClick(b){
@@ -997,7 +1003,7 @@ function render(){
   if(!document.body.classList.contains("playing")){ document.body.classList.add("playing"); if(!firstPaint) requestAnimationFrame(()=>scrollTo({top:0, behavior:"smooth"})); }
   const actS = activeSeat(g), actSt = g.seats.find(x=>x.seat===actS);
   const inGame = me==="all" || g.seats.some(x=>x.seat===me);
-  $("turnLine").innerHTML = `${esc(actSt.emoji)} ${esc(actSt.name)} ist am Zug<small>${VARIANTS[g.variant].name}${g.short?" · kurzes Spiel":""}</small>`;
+  $("turnLine").innerHTML = `${pv(actSt)} ist am Zug<small>${VARIANTS[g.variant].name}${g.short?" · kurzes Spiel":""}</small>`;
   updateTray(g);
   $("tableInfo").innerHTML = `${inGame?`<div class="hint">${hintFor(g)}</div>`:""}
     ${g.roll?`<div class="waiting">Noch nicht fertig: ${g.seats.filter(st=>{const a=act(st.seat);return !a||!a.done;}).map(st=>esc(st.name)).join(", ")||"–"}</div>`:""}
