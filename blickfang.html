@@ -96,6 +96,10 @@
   .item .t{flex:1}
   .item .th{width:54px;height:36px;border-radius:7px;object-fit:cover;flex:none;background:#000}
   .item.got .n{background:var(--lime);color:#122}
+  .item .jk{flex:none;font-size:11px;font-weight:900;padding:2px 7px;border-radius:99px;background:linear-gradient(135deg,#b44dff,#ff5d6c);color:#fff}
+  .jokerbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:13px;color:var(--mute)}
+  .jokerbar button{background:linear-gradient(135deg,#b44dff,#ff5d6c);color:#fff}
+  .card .jtag{display:block;margin-top:3px;font-size:12.5px;font-weight:900;color:#e9b8ff}
   .item.sel{border-color:var(--sun);background:linear-gradient(135deg,rgba(255,178,30,.25),rgba(255,93,108,.18));box-shadow:0 0 0 1px var(--sun),0 0 18px rgba(255,178,30,.3)}
   .shoot{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
   .shoot .big{flex:1;font-size:17px;padding:13px 16px;min-width:180px}
@@ -314,6 +318,8 @@ const prow = (g,s) => { const r = cache[RID(s)]; return r && r.gid===g.gid ? r :
 const myRow = g => prow(g, me) || {gid:g.gid, shots:{}, votes:{}, done:false};
 const inGame = g => g && g.seats.some(x=>x.seat===me);
 const gkey = () => table().key || "";
+// Joker: jede Person darf genau einen Gegenstand gegen einen neuen tauschen (gilt nur für sie)
+const itemFor = (g, s, i) => { const r = s===me && inGame(g) ? myRow(g) : prow(g, s); return r && r.joker && r.joker.i===i ? r.joker.item : g.items[i]; };
 
 function tally(g, o, i){
   let y = 0, n = 0;
@@ -363,6 +369,17 @@ function saveMine(fn){
 }
 function setShot(i, shot){ saveMine(r=>{ r.shots[i] = {...shot, at:Date.now()}; r.done = false; }); }
 function delShot(i){ saveMine(r=>{ delete r.shots[i]; }); }
+function useJoker(i){
+  const g = game(); if(!g || !inGame(g)) return;
+  const r = myRow(g);
+  if(r.joker) return toast("Dein Joker ist schon verbraucht");
+  if(r.shots && r.shots[i]) return toast("Erst das Foto löschen, dann tauschen");
+  const taken = new Set([...g.items, ...g.seats.map(st=>{ const pr = prow(g, st.seat); return pr && pr.joker ? pr.joker.item : ""; })]);
+  const free = POOL.filter(x=>!taken.has(x)); if(!free.length) return toast("Keine Gegenstände mehr übrig");
+  const item = free[Math.floor(Math.random()*free.length)], old = g.items[i];
+  saveMine(r=>{ r.joker = {i, item, old}; });
+  toast(`🃏 „${old}“ getauscht gegen „${item}“`);
+}
 function setDone(v){ saveMine(r=>{ r.done = v; }); }
 function vote(o, i, v){ saveMine(r=>{ const k = o+"|"+i; if(r.votes[k]===v) delete r.votes[k]; else r.votes[k] = v; }); }
 function toVote(){
@@ -446,7 +463,7 @@ function snapshot(){
   const id = pano.getPano(); if(!id) return toast("Street View lädt noch …");
   setShot(ui.sel, {pano:id, h:pv.heading, p:pv.pitch, f, lat:pos&&pos.lat(), lng:pos&&pos.lng()});
   const fl = $("flash"); fl.classList.remove("go"); void fl.offsetWidth; fl.classList.add("go"); shutter();
-  toast(`📸 „${g.items[ui.sel]}“ festgehalten`);
+  toast(`📸 „${itemFor(g, me, ui.sel)}“ festgehalten`);
   nextOpen(g);
 }
 function nextOpen(g){
@@ -469,7 +486,7 @@ function compress(file){
 $("fileIn").addEventListener("change", async e=>{
   const f = e.target.files && e.target.files[0]; e.target.value = "";
   const g = game(); if(!f || !g || ui.upFor==null) return;
-  try{ const img = await compress(f); setShot(ui.upFor, {img}); shutter(); toast(`📷 Bild für „${g.items[ui.upFor]}“ gespeichert`); ui.sel = ui.upFor; nextOpen(g); }
+  try{ const img = await compress(f); setShot(ui.upFor, {img}); shutter(); toast(`📷 Bild für „${itemFor(g, me, ui.upFor)}“ gespeichert`); ui.sel = ui.upFor; nextOpen(g); }
   catch(err){ console.error(err); toast("⚠️ Das Bild ließ sich nicht lesen"); }
 });
 let actx = null;
@@ -561,9 +578,10 @@ function huntSideHTML(g){
   const r = myRow(g), shots = r.shots || {}, got = Object.keys(shots).length;
   const live = !!pano && panoFor===g.gid && mapsState==="ok" && streetOn();
   const onMap = !!map && panoFor===g.gid && mapsState==="ok" && !streetOn();
-  const items = g.items.map((it,i)=>{ const s = shots[i], src = s ? shotSrc(s, 120, 80) : "";
-    return `<button class="item${s?" got":""}${ui.sel===i?" sel":""}" data-item="${i}"><span class="n">${s?"✓":i+1}</span><span class="t">${esc(it)}</span>${src?`<img class="th" src="${esc(src)}" alt="" onerror="this.remove()">`:""}</button>`; }).join("");
-  const cur = g.items[ui.sel], has = !!shots[ui.sel];
+  const jk = r.joker;
+  const items = g.items.map((it,i)=>{ const s = shots[i], src = s ? shotSrc(s, 120, 80) : "", isJ = jk && jk.i===i;
+    return `<button class="item${s?" got":""}${ui.sel===i?" sel":""}" data-item="${i}"><span class="n">${s?"✓":i+1}</span><span class="t">${esc(isJ?jk.item:it)}</span>${isJ?`<span class="jk">🃏</span>`:""}${src?`<img class="th" src="${esc(src)}" alt="" onerror="this.remove()">`:""}</button>`; }).join("");
+  const cur = itemFor(g, me, ui.sel), has = !!shots[ui.sel];
   return `<div class="items">${items}</div>
     ${onMap?`<div class="hint">🗺️ Du bist auf der Karte. <b>Zieh das gelbe Männchen</b> (unten rechts) auf eine blau markierte Straße – dann bist du in Street View. Mit „🗺️ Zur Karte“ kommst du zurück.</div>`:""}
     <div class="shoot">
@@ -571,6 +589,8 @@ function huntSideHTML(g){
       <button class="${live||onMap?"ghost":"big blue"}" data-do="upload">📷 ${live||onMap?"Bild":`Screenshot für „${esc(cur)}“`} hochladen</button>
       ${has?`<button class="ghost sm" data-do="delshot">✕ Foto löschen</button>`:""}
     </div>
+    <div class="jokerbar">${jk ? `🃏 Joker eingesetzt: „${esc(jk.old)}“ → „${esc(jk.item)}“`
+      : has ? `🃏 Joker noch frei – für einen Gegenstand ohne Foto` : `<button class="sm" data-do="joker">🃏 Joker: „${esc(cur)}“ tauschen</button><span>einmal pro Spiel</span>`}</div>
     <div class="row" style="justify-content:space-between;margin-top:6px">
       <span class="mute">${got} von ${g.items.length} gefunden</span>
       <button class="${r.done?"ghost":"blue"} sm" data-do="done">${r.done?"↶ Doch weitersuchen":"✓ Ich bin fertig"}</button>
@@ -593,6 +613,7 @@ function voteHTML(g){
       return `<div class="card ${cls}">
         <button class="img" data-zoom="${st.seat}|${i}" aria-label="Foto ansehen"><span><b>👁</b>Blick ansehen</span>${src?`<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">`:""}</button>
         <div class="cb"><div class="who2">${esc(st.emoji)} ${esc(st.name)}<span class="res">${tl.pts===1?"zählt":tl.pts===0?"zählt nicht":"½ Punkt"}</span></div>
+        ${r.joker && r.joker.i===i ? `<span class="jtag">🃏 Joker – gesucht war: ${esc(r.joker.item)}</span>` : ""}
         ${mine && !own ? `<div class="vbtns"><button class="y${my===1?" on":""}" data-vote="${st.seat}|${i}|1">👍 zählt</button><button class="n${my===0?" on":""}" data-vote="${st.seat}|${i}|0">👎 nicht</button></div>` : own ? `<span class="tally">Dein Foto – die anderen stimmen ab</span>` : ""}
         <span class="tally">👍 ${tl.y} · 👎 ${tl.n}</span></div></div>`;
     }).join("");
@@ -712,7 +733,7 @@ document.addEventListener("click", e=>{
     const [o,i] = b.dataset.zoom.split("|"), r = prow(g, o), s = r && r.shots[i]; if(!s) return;
     const lb = $("lb"), st = seatOf(g, o);
     const live = s.pano && !s.img && gkey();
-    lb.innerHTML = `${live?`<div id="lbPano"></div>`:`<img src="${esc(shotSrc(s, 640, 640))}" alt="">`}<div class="row"><span>${esc(st.emoji)} ${esc(st.name)} · ${esc(g.items[i])}</span>
+    lb.innerHTML = `${live?`<div id="lbPano"></div>`:`<img src="${esc(shotSrc(s, 640, 640))}" alt="">`}<div class="row"><span>${esc(st.emoji)} ${esc(st.name)} · ${esc(itemFor(g, o, +i))}</span>
       ${shotLink(s)?`<a class="btn blue sm" href="${shotLink(s)}" target="_blank" rel="noopener">🗺️ In Google Maps</a>`:""}<button class="ghost sm" data-do="lbclose">Schließen</button></div>`;
     lb.hidden = false;
     if(live) loadMaps().then(()=>{
@@ -731,6 +752,7 @@ document.addEventListener("click", e=>{
     case "snap": return snapshot();
     case "upload": ui.upFor = ui.sel; return $("fileIn").click();
     case "delshot": return delShot(ui.sel);
+    case "joker": return useJoker(ui.sel);
     case "done": return setDone(!myRow(g).done);
     case "home": if(map && g){ pano.setVisible(false); map.setCenter({lat:g.start.lat, lng:g.start.lng}); map.setZoom(17); } return;
     case "tomap": if(pano){ const pos = pano.getPosition(); pano.setVisible(false); if(pos && map) map.setCenter(pos); } return;

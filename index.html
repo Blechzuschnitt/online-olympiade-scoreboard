@@ -129,6 +129,39 @@
   .hint{text-align:center;color:var(--mute);font-size:13px;min-height:18px}
   .result{text-align:center;min-height:10px;margin-top:6px;font-family:Bungee;font-size:22px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;color:var(--gold);text-shadow:0 0 10px rgba(255,210,63,.6)}
   .result.pop{animation:popin .55s cubic-bezier(.2,1.6,.4,1)}
+  .wlegend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:12px;color:var(--mute);margin-top:4px}
+  .wlegend b{color:var(--gold)}
+  .veto{margin-top:12px;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.25);border:1px dashed rgba(255,255,255,.25)}
+  .veto .vt{font-size:13px;color:#cfeedd;margin-bottom:8px}
+  .veto .vbtns{display:flex;gap:6px;flex-wrap:wrap}
+  .veto .vbtn{font-family:Nunito,sans-serif;font-weight:900;font-size:13px;padding:6px 12px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);box-shadow:none;color:#fff}
+  .veto .vbtn.on{background:linear-gradient(180deg,#ff3550,#a3001f);border-color:#ffb3bf}
+  /* Siegerehrung */
+  .cere{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px 14px;
+    background:radial-gradient(ellipse at 50% 30%,#3a0d5e,#12031f 70%,#05010a);overflow:hidden}
+  .cere[hidden]{display:none}
+  .cere canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .cere .spot{position:absolute;top:-20%;width:46%;height:120%;background:linear-gradient(180deg,rgba(255,246,196,.18),transparent 75%);filter:blur(6px);transform-origin:50% 0;animation:sweep 5s ease-in-out infinite alternate}
+  .cere .spot.l{left:0;transform:rotate(-18deg)}.cere .spot.r{right:0;transform:rotate(18deg);animation-delay:-2.5s}
+  @keyframes sweep{to{opacity:.4}}
+  .cere h2{position:relative;font-family:Bungee;font-weight:400;font-size:clamp(22px,6vw,40px);color:var(--gold);text-shadow:0 0 18px rgba(255,210,63,.7);margin:0;text-align:center}
+  .cere .sub{position:relative;color:var(--mute);font-weight:800;font-size:14px;text-align:center}
+  .cere .pod{position:relative;display:flex;align-items:flex-end;justify-content:center;gap:clamp(6px,2vw,16px);width:min(640px,100%);margin-top:16px}
+  .cere .pl{flex:1;max-width:200px;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transform:translateY(40px) scale(.8);transition:opacity .6s,transform .8s cubic-bezier(.2,1.5,.4,1)}
+  .cere .pl.show{opacity:1;transform:none}
+  .cere .av{font-size:clamp(40px,11vw,74px);line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+  .cere .pl.p1 .av{font-size:clamp(54px,15vw,100px)}
+  .cere .nm{font-family:Bungee;font-size:clamp(14px,3.6vw,22px);color:#fff;text-align:center;word-break:break-word}
+  .cere .pp{font-weight:900;color:var(--gold);font-size:clamp(13px,3vw,17px)}
+  .cere .ped{width:100%;border-radius:14px 14px 4px 4px;display:grid;place-items:start center;padding-top:10px;font-family:Bungee;font-size:clamp(26px,7vw,46px);color:rgba(0,0,0,.4)}
+  .cere .p1 .ped{height:clamp(120px,26vh,210px);background:linear-gradient(180deg,#fff6c4,var(--gold) 40%,var(--gold2))}
+  .cere .p2 .ped{height:clamp(90px,19vh,150px);background:linear-gradient(180deg,#ffffff,#cfd6e6 45%,#8b93a7)}
+  .cere .p3 .ped{height:clamp(66px,14vh,110px);background:linear-gradient(180deg,#ffd6a8,#cd7f32 50%,#7a4512)}
+  .cere .crown{display:block;text-align:center;font-size:.55em;animation:crown 1.2s ease-in-out infinite alternate}
+  @keyframes crown{to{transform:translateY(-6px) rotate(6deg)}}
+  .cere .rest{position:relative;color:var(--mute);font-weight:800;font-size:13px;text-align:center;opacity:0;transition:opacity .8s}
+  .cere .rest.show{opacity:1}
+  .cere .cbtns{position:relative;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
   @keyframes popin{from{transform:scale(.5);opacity:0}}
 
   /* Würfel (Casino-rot) */
@@ -326,6 +359,7 @@
     <button id="spinBtn" class="hub">SPIN</button>
   </div>
   <div class="hint" id="wheelHint"></div>
+  <div class="wlegend" id="wheelLegend"></div>
   <div class="result" id="wheelResult" aria-live="polite"></div>
 
   <div class="sublabel">🎡 Im Rad</div>
@@ -376,6 +410,7 @@
 <footer>♠ Viel Glück – das Haus gewinnt nicht immer! ♦</footer>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<div class="cere" id="cere" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script>
@@ -536,6 +571,7 @@ function applyRemote(d){
   try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
   render();
   maybeRemoteSpin();
+  maybeRemoteCeremony();
 }
 async function fetchRemote(){
   const { data, error } = await sb.from("olympiade_state").select("data").eq("id",SB_ROW).maybeSingle();
@@ -587,7 +623,19 @@ function standings(ol){
 function playedIds(){ return new Set(O() ? O().rounds.map(r=>r.gameId) : []); }
 function wheelCandidates(){
   const played = playedIds();
-  return state.wheel.map(game).filter(Boolean).filter(g=>!(O() && state.removePlayed && played.has(g.id)));
+  const ol = O(), vetoed = ol && state.veto && state.veto.round===ol.rounds.length+1 ? state.veto.gameId : null;
+  const list = state.wheel.map(game).filter(Boolean).filter(g=>!(ol && state.removePlayed && played.has(g.id)));
+  const rest = list.filter(g=>g.id!==vetoed);
+  return rest.length ? rest : list;                      // per Veto abgelehntes Spiel kommt diese Runde nicht dran
+}
+// Fairness: Favoriten bekommen ein größeres Feld, schon Gespieltes (falls nicht entfernt) ein kleineres
+function wheelWeight(g){
+  const played = O() && playedIds().has(g.id);
+  return (g.fav ? 1.6 : 1) * (played ? .5 : 1);
+}
+function wheelBounds(w){
+  const sum = w.reduce((a,b)=>a+b,0) || 1; let acc = 0;
+  return w.map(x=>{ const a0 = acc*360/sum; acc += x; return [a0, acc*360/sum]; });
 }
 const pname = (ol,pid) => { const p = ol.roster.find(p=>p.id===pid); return p ? `${p.emoji} ${p.name}` : "?"; };
 
@@ -624,7 +672,7 @@ function renderBoard(){
 }
 
 /* ---------- Glücksrad ---------- */
-let wheelRot = 0, spinning = false, wheelKey = null, wheelItems = [];
+let wheelRot = 0, spinning = false, wheelKey = null, wheelItems = [], wheelW = [];
 function pt(a,r){ const t=a*Math.PI/180; return [(r*Math.sin(t)).toFixed(2),(-r*Math.cos(t)).toFixed(2)]; }
 // Kurzname fürs Rad: ohne Emojis, ohne Klammern, ohne Zusatz nach „–“ oder „:“
 function wheelName(name){
@@ -655,8 +703,9 @@ function fitText(name, seg){
   return {lines:one, fs:f1};
 }
 const SEGCOL = [["#ff3b5c","#a3001f"],["#ffd23f","#c48a00"],["#2fb7ff","#0a4f9e"],["#38e07b","#0b7a3b"],["#b46bff","#5b1ca8"],["#ff8a2a","#b84a00"],["#ff4fd8","#9c0f80"],["#22e4d0","#08756c"]];
-function renderWheel(force, override){
+function renderWheel(force, override, overrideW){
   const items = override || wheelCandidates();
+  const weights = overrideW || items.map(wheelWeight);
   const ol = O();
   const hub = $("spinBtn");
   hub.disabled = spinning || !ol || !items.length || !!state.pending;
@@ -666,10 +715,12 @@ function renderWheel(force, override){
     !items.length ? "Alle Spiele im Rad sind gespielt! 🎉 Beende die Olympiade oder lege neue Spiele ins Rad." :
     state.pending ? "Erst die aktuelle Runde eintragen." : "Drück SPIN – oder tippe ein Spiel unter „Im Rad“ an. Das Rad dreht sich bei allen mit.";
   if(spinning) return;
-  const key = items.map(g=>g.id+":"+g.name).join("|");
+  const key = items.map((g,i)=>g.id+":"+g.name+":"+weights[i]).join("|");
   if(!force && key===wheelKey) return;
-  wheelKey = key; wheelItems = items;
-  const n = items.length, seg = 360/Math.max(n,1);
+  wheelKey = key; wheelItems = items; wheelW = weights;
+  const n = items.length, B = wheelBounds(weights);
+  const nf = items.filter(g=>g.fav).length, np = O() ? items.filter(g=>playedIds().has(g.id)).length : 0;
+  $("wheelLegend").innerHTML = n>1 && (nf || np) ? [nf?`<span><b>★</b> Favoriten haben ein größeres Feld</span>`:"", np?`<span>Schon gespielt: kleineres Feld</span>`:""].join("") : "";
   let s = `<defs>
     <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6c4"/><stop offset=".35" stop-color="#ffd23f"/><stop offset=".7" stop-color="#b87a00"/><stop offset="1" stop-color="#ffe9a0"/></linearGradient>
     <linearGradient id="rim2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a4a00"/><stop offset="1" stop-color="#3a2000"/></linearGradient>
@@ -684,7 +735,7 @@ function renderWheel(force, override){
       <text y="50" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="800" font-size="8" fill="#cfeedd">Spiele unten hinzufügen</text>`;
   }
   items.forEach((g,i)=>{
-    const a0=i*seg, a1=(i+1)*seg, c=(a0+a1)/2;
+    const [a0,a1] = B[i], c=(a0+a1)/2, seg = a1-a0;
     let ci = i % SEGCOL.length;
     if(n>1 && i===n-1 && ci===0) ci = 3;                  // nie zwei gleiche Farben nebeneinander
     const [x0,y0]=pt(a0,90),[x1,y1]=pt(a1,90);
@@ -697,11 +748,11 @@ function renderWheel(force, override){
       fill="${dark?"#2a1400":"#fff"}" stroke="${dark?"rgba(255,255,255,.35)":"rgba(0,0,0,.35)"}" stroke-width="${(fs*.06).toFixed(2)}" paint-order="stroke">${tsp}</text></g>`;
   });
   // Trennlinien, Ränder, Stifte, Lichter
-  if(n>1) items.forEach((_,i)=>{ const [x,y]=pt(i*seg,90); s += `<line x1="0" y1="0" x2="${x}" y2="${y}" stroke="#fff3c4" stroke-width=".9" opacity=".9"/>`; });
+  if(n>1) items.forEach((_,i)=>{ const [x,y]=pt(B[i][0],90); s += `<line x1="0" y1="0" x2="${x}" y2="${y}" stroke="#fff3c4" stroke-width=".9" opacity=".9"/>`; });
   s += `<circle r="90" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1.5"/>
     <circle r="94.5" fill="none" stroke="url(#rim)" stroke-width="8"/>
     <circle r="98.6" fill="none" stroke="#5a3a00" stroke-width="1.2"/>`;
-  if(n>1) items.forEach((_,i)=>{ const [x,y]=pt(i*seg,87.2); s += `<circle cx="${x}" cy="${y}" r="2.3" fill="url(#stud)" stroke="#444" stroke-width=".4"/>`; });
+  if(n>1) items.forEach((_,i)=>{ const [x,y]=pt(B[i][0],87.2); s += `<circle cx="${x}" cy="${y}" r="2.3" fill="url(#stud)" stroke="#444" stroke-width=".4"/>`; });
   for(let i=0;i<32;i++){ const [bx,by]=pt(i*360/32+5.6,94.5); s+=`<circle class="bulb b${i%2+1}" cx="${bx}" cy="${by}" r="1.7"/>`; }
   $("wheel").innerHTML = s;
   $("wheel").style.transform = `rotate(${wheelRot}deg)`;
@@ -724,12 +775,14 @@ let lastSpinId = null;
 function animateSpin(sp, done){
   const items = sp.items.map(game).filter(Boolean);
   if(items.length !== sp.items.length){ done && done(); return; }
-  renderWheel(true, items);
+  const W = sp.w && sp.w.length===items.length ? sp.w : items.map(()=>1);
+  renderWheel(true, items, W);
   spinning = true;
   $("spinBtn").disabled = true; $("wheel").parentElement.classList.add("spinning");
-  const n = items.length, seg = 360/n;
+  const n = items.length, B = wheelBounds(W), seg = B[sp.idx][1]-B[sp.idx][0];
+  const segAt = a => { const t = (((-a)%360)+360)%360; let i = B.findIndex(b=>t<b[1]); return i<0 ? n-1 : i; };
   const start = ((wheelRot%360)+360)%360;
-  const target = -((sp.idx+.5)*seg + sp.jit*seg*.7);
+  const target = -((B[sp.idx][0]+B[sp.idx][1])/2 + sp.jit*seg*.7);
   const total = 360*sp.turns + ((((target-start)%360)+360)%360);
   const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const dur = reduce ? 500 : sp.dur;
@@ -737,14 +790,14 @@ function animateSpin(sp, done){
   const ease = x => 1 - Math.pow(1-x, 3.4);
   const ptr = $("pointer"), r = $("wheelResult");
   r.className = "result"; r.textContent = "🥁 …";
-  let lastPeg = Math.floor((start)/seg), flap = 0, prevA = start;
+  let lastPeg = segAt(start), flap = 0, prevA = start;
   const frame = now => {
     let x = Math.min(1, (now - t0)/dur), a = start + total*ease(x);
     // kleines Nachfedern am Ende
     if(x >= 1){ const k = (now - t0 - dur)/420; a = start + total - Math.sin(Math.min(1,k)*Math.PI)*Math.min(1.6, seg*.08)*(1-Math.min(1,k)); }
     wheelRot = a;
     $("wheel").style.transform = `rotate(${a}deg)`;
-    const peg = Math.floor(a/seg), speed = Math.abs(a - prevA); prevA = a;
+    const peg = segAt(a), speed = Math.abs(a - prevA); prevA = a;
     if(n>1 && peg !== lastPeg){ lastPeg = peg; flap = Math.min(28, 10 + speed*2.2); wclick(.15 + Math.min(.45, speed/18)); }
     flap *= .78;
     ptr.style.setProperty("--flap", (-flap).toFixed(2)+"deg");
@@ -762,8 +815,10 @@ function animateSpin(sp, done){
 }
 function spin(){
   if(spinning || !wheelItems.length || !O() || state.pending) return;
-  const n = wheelItems.length;
-  const sp = {id:uid(), idx:Math.floor(Math.random()*n), jit:Math.random()-.5, turns:5+Math.floor(Math.random()*3),
+  const W = wheelW.length===wheelItems.length ? wheelW : wheelItems.map(()=>1);
+  let r = Math.random()*W.reduce((a,b)=>a+b,0), idx = 0;
+  while(idx < W.length-1 && r >= W[idx]){ r -= W[idx]; idx++; }
+  const sp = {id:uid(), idx, w:W, jit:Math.random()-.5, turns:5+Math.floor(Math.random()*3),
     dur:5200+Math.floor(Math.random()*1400), at:Date.now(), items:wheelItems.map(g=>g.id)};
   lastSpinId = sp.id;
   state.spin = sp; save();                                 // alle anderen drehen mit
@@ -778,6 +833,88 @@ function maybeRemoteSpin(){
   if(!spinning) animateSpin(sp);
 }
 $("spinBtn").onclick = spin;
+
+/* ---------- Siegerehrung: Podest wird nacheinander enthüllt (bei allen gleichzeitig) ---------- */
+let lastCereId = null, cereTimers = [], cereRaf = 0, cereCtx = null;
+function maybeRemoteCeremony(){
+  const c = state.ceremony;
+  if(!c || c.id===lastCereId) return;
+  lastCereId = c.id;
+  if(Date.now() - c.at > 60000) return;                   // verpasst – nicht nachträglich aufploppen
+  const a = state.archive.find(a=>a.id===c.ol); if(a) ceremony(a);
+}
+function cereAudio(){ try{ cereCtx = cereCtx || new (window.AudioContext||window.webkitAudioContext)(); return cereCtx; }catch(e){ return null; } }
+function drumroll(sec){
+  const ac = cereAudio(); if(!ac) return;
+  const t0 = ac.currentTime;
+  for(let k=0;k<sec*22;k++){
+    const t = t0 + k/22, n = Math.floor(ac.sampleRate*.04), b = ac.createBuffer(1,n,ac.sampleRate), d = b.getChannelData(0);
+    for(let i=0;i<n;i++) d[i] = (Math.random()*2-1)*Math.pow(1-i/n,3);
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    s.buffer = b; f.type = "lowpass"; f.frequency.value = 1400; g.gain.value = .08 + .32*k/(sec*22);
+    s.connect(f).connect(g).connect(ac.destination); s.start(t);
+  }
+}
+function fanfare(big){
+  const ac = cereAudio(); if(!ac) return;
+  const t0 = ac.currentTime + .02, notes = big ? [[523,0,.18],[659,.18,.18],[784,.36,.18],[1047,.54,.9]] : [[659,0,.16],[880,.18,.5]];
+  for(const [fr, at, len] of notes) for(const mul of [1, 1.5, 2]){
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = mul===1 ? "sawtooth" : "triangle"; o.frequency.value = fr*mul;
+    g.gain.setValueAtTime(0, t0+at); g.gain.linearRampToValueAtTime(.07/mul, t0+at+.03); g.gain.exponentialRampToValueAtTime(.0005, t0+at+len);
+    o.connect(g).connect(ac.destination); o.start(t0+at); o.stop(t0+at+len+.05);
+  }
+}
+function confettiRain(cv, ms){
+  const ctx = cv.getContext("2d"), dpr = Math.min(2, devicePixelRatio||1);
+  const fit = () => { cv.width = cv.clientWidth*dpr; cv.height = cv.clientHeight*dpr; };
+  fit();
+  const cols = ["#ffd23f","#ff3b5c","#2fb7ff","#38e07b","#b46bff","#ff8a2a","#ffffff"];
+  const P = [], until = performance.now() + ms;
+  const add = n => { for(let i=0;i<n;i++) P.push({x:Math.random()*cv.width, y:-20*dpr - Math.random()*cv.height*.4, vx:(Math.random()-.5)*2*dpr, vy:(2+Math.random()*3)*dpr,
+    r:Math.random()*6.28, vr:(Math.random()-.5)*.3, w:(6+Math.random()*7)*dpr, h:(4+Math.random()*5)*dpr, c:cols[Math.floor(Math.random()*cols.length)]}); };
+  add(160);
+  cancelAnimationFrame(cereRaf);
+  const step = now => {
+    if(cv.width !== cv.clientWidth*dpr) fit();
+    ctx.clearRect(0,0,cv.width,cv.height);
+    if(now < until && P.length < 400) add(3);
+    for(const q of P){ q.x += q.vx + Math.sin(q.y/40)*dpr*.6; q.y += q.vy; q.r += q.vr;
+      ctx.save(); ctx.translate(q.x,q.y); ctx.rotate(q.r); ctx.fillStyle = q.c; ctx.fillRect(-q.w/2,-q.h/2,q.w,q.h*Math.abs(Math.cos(q.r*1.7))); ctx.restore(); }
+    for(let i=P.length-1;i>=0;i--) if(P[i].y > cv.height+30) P.splice(i,1);
+    if(P.length) cereRaf = requestAnimationFrame(step);
+  };
+  cereRaf = requestAnimationFrame(step);
+}
+function ceremony(ol){
+  closeCeremony();
+  const st = standings(ol), top = st.slice(0,3), rest = st.slice(3);
+  const box = $("cere");
+  const slot = k => { const x = top[k]; if(!x) return `<div class="pl"></div>`;
+    return `<div class="pl p${k+1}" data-k="${k}"><div class="av">${k===0?'<span class="crown">👑</span>':""}${esc(x.p.emoji)}</div><div class="nm">${esc(x.p.name)}</div>
+      <div class="pp">${x.pts} Punkte · 🥇${x.g}</div><div class="ped">${k+1}</div></div>`; };
+  box.innerHTML = `<canvas id="cereCv"></canvas><div class="spot l"></div><div class="spot r"></div>
+    <h2>🏆 Siegerehrung</h2><div class="sub">${esc(ol.name)} · ${ol.rounds.length} ${ol.rounds.length===1?"Runde":"Runden"}</div>
+    <div class="pod">${slot(1)}${slot(0)}${slot(2)}</div>
+    ${rest.length?`<div class="rest" id="cereRest">${rest.map((x,i)=>`${i+4}. ${esc(x.p.emoji)} ${esc(x.p.name)} (${x.pts})`).join(" · ")}</div>`:""}
+    <div class="cbtns"><button class="ghost sm" data-act="cereclose">Schließen</button></div>`;
+  box.hidden = false;
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const show = k => { const el = box.querySelector(`.pl[data-k="${k}"]`); if(el) el.classList.add("show"); };
+  if(reduce){ [2,1,0].forEach(show); const r = $("cereRest"); if(r) r.classList.add("show"); return; }
+  const T = (ms, fn) => cereTimers.push(setTimeout(fn, ms));
+  let t = 900;
+  if(top[2]){ T(t-0, ()=>drumroll(1.4)); t += 1500; T(t, ()=>{ show(2); fanfare(false); }); t += 1600; }
+  if(top[1]){ T(t, ()=>drumroll(1.6)); t += 1700; T(t, ()=>{ show(1); fanfare(false); }); t += 1800; }
+  T(t, ()=>drumroll(2.6)); t += 2700;
+  T(t, ()=>{ show(0); fanfare(true); confettiRain($("cereCv"), 6000); toast(`👑 ${top[0].p.name} gewinnt die Olympiade!`); });
+  T(t+1200, ()=>{ const r = $("cereRest"); if(r) r.classList.add("show"); });
+}
+function closeCeremony(){
+  cereTimers.forEach(clearTimeout); cereTimers = []; cancelAnimationFrame(cereRaf);
+  const box = $("cere"); box.hidden = true; box.innerHTML = "";
+}
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !$("cere").hidden) closeCeremony(); });
 
 function renderWheelChips(){
   const played = playedIds();
@@ -824,7 +961,15 @@ function renderRound(){
     <div class="row" style="margin-top:14px;justify-content:space-between">
       <label class="toggle"><input type="checkbox" data-act="double" ${p.double?"checked":""}> Doppelte Punkte (×2)</label>
       <div class="row"><button class="ghost sm" data-act="cancelround">Abbrechen</button><button class="gold" data-act="saveround" ${p.order.length?"":"disabled"}>💾 Runde speichern</button></div>
-    </div></div>`;
+    </div>
+    ${vetoHTML(p, ol, n)}</div>`;
+}
+function vetoHTML(p, ol, n){
+  if(p.order.length) return "";
+  if(state.veto && state.veto.round===n) return `<div class="veto"><div class="vt">🙅 Das Veto für diese Runde ist schon verbraucht.</div></div>`;
+  const v = p.veto || [], need = Math.floor(ol.roster.length/2)+1;
+  return `<div class="veto"><div class="vt">🙅 <b>Keine Lust auf ${esc(wheelName(p.gameName))}?</b> Wer dagegen ist, tippt sich an. Ab ${need} von ${ol.roster.length} Stimmen wird neu gedreht (einmal pro Runde).</div>
+    <div class="vbtns">${ol.roster.map(pl=>`<button class="vbtn ${v.includes(pl.id)?"on":""}" data-act="veto" data-id="${pl.id}">${esc(pl.emoji)} ${esc(pl.name)}</button>`).join("")}<span class="hint" style="align-self:center">${v.length} / ${need}</span></div></div>`;
 }
 
 function renderLibrary(){
@@ -918,15 +1063,17 @@ function renderLog(){
       const st = standings(a);
       st.forEach((x,i)=>{
         const k = x.p.name;
-        et[k] = et[k] || {emoji:x.p.emoji, name:k, titles:0, g:0, pts:0, n:0};
+        et[k] = et[k] || {emoji:x.p.emoji, name:k, titles:0, g:0, pts:0, n:0, best:{}};
         et[k].g += x.g; et[k].pts += x.pts; et[k].n++;
         if(i===0 && x.pts>0) et[k].titles++;
       });
+      a.rounds.forEach(r=>{ const w = a.roster.find(p=>p.id===r.order[0]); if(w && et[w.name]){ const b = et[w.name].best; b[r.gameName] = (b[r.gameName]||0)+1; } });
     });
+    const parade = r => { const e = Object.entries(r.best).sort((a,b)=>b[1]-a[1])[0]; return e && e[1]>1 ? `${esc(wheelName(e[0]))} <span class="hint">(${e[1]}×)</span>` : "–"; };
     const rows = Object.values(et).sort((a,b)=>b.titles-a.titles||b.g-a.g||b.pts-a.pts);
     h += `<div class="sublabel">👑 Ewige Tabelle</div>
-      <table class="eternal"><tr><th>Spieler</th><th>Titel</th><th>🥇</th><th>Punkte</th><th>Teilnahmen</th></tr>
-      ${rows.map(r=>`<tr><td><b>${esc(r.emoji)} ${esc(r.name)}</b></td><td>${"🏆".repeat(Math.min(r.titles,5))||"–"}${r.titles>5?" ×"+r.titles:""}</td><td>${r.g}</td><td>${r.pts}</td><td>${r.n}</td></tr>`).join("")}
+      <table class="eternal"><tr><th>Spieler</th><th>Titel</th><th>🥇</th><th>Punkte</th><th>Teilnahmen</th><th>Paradespiel</th></tr>
+      ${rows.map(r=>`<tr><td><b>${esc(r.emoji)} ${esc(r.name)}</b></td><td>${"🏆".repeat(Math.min(r.titles,5))||"–"}${r.titles>5?" ×"+r.titles:""}</td><td>${r.g}</td><td>${r.pts}</td><td>${r.n}</td><td>${parade(r)}</td></tr>`).join("")}
       </table>
       <div class="sublabel">🗄️ Beendete Olympiaden</div>
       ${[...state.archive].reverse().map(a=>{
@@ -934,7 +1081,7 @@ function renderLog(){
         return `<details class="arch"><summary>🏆 ${esc(a.name)} — ${w&&w.pts>0?`${esc(w.p.emoji)} ${esc(w.p.name)} (${w.pts} P.)`:"ohne Sieger"} <span class="date">${a.rounds.length} Runden · ${fmtTime(a.ended)}</span></summary>
           <table class="stand" style="margin-top:8px">${st.map((x,i)=>`<tr><td class="rk">${i+1}</td><td class="nm">${esc(x.p.emoji)} ${esc(x.p.name)}</td><td class="med">🥇${x.g}</td><td class="med">🥈${x.s}</td><td class="med">🥉${x.b}</td><td><span class="pts">${x.pts}</span></td></tr>`).join("")}</table>
           <ul class="log">${[...a.rounds].reverse().map(r=>roundLi(a,r,false)).join("")}</ul>
-          <div class="row center" style="margin-top:10px"><button class="ghost sm" data-act="delarch" data-id="${a.id}">🗑 Aus dem Archiv löschen</button></div>
+          <div class="row center" style="margin-top:10px">${w&&w.pts>0?`<button class="gold sm" data-act="cere" data-id="${a.id}">🎉 Siegerehrung ansehen</button>`:""}<button class="ghost sm" data-act="delarch" data-id="${a.id}">🗑 Aus dem Archiv löschen</button></div>
         </details>`;
       }).join("")}`;
   }
@@ -1011,6 +1158,17 @@ document.addEventListener("click", e=>{
       const i = p.order.indexOf(id);
       if(i>=0) p.order.splice(i,1); else p.order.push(id);
       commit(); break; }
+    case "veto": {
+      const p = state.pending, ol = O(); if(!p || !ol) break;
+      p.veto = p.veto || [];
+      const i = p.veto.indexOf(id); if(i>=0) p.veto.splice(i,1); else p.veto.push(id);
+      if(p.veto.length >= Math.floor(ol.roster.length/2)+1){
+        state.veto = {round:ol.rounds.length+1, gameId:p.gameId};
+        state.pending = null; $("wheelResult").textContent = "";
+        commit(); toast(`🙅 Veto! ${wheelName(p.gameName)} fällt diese Runde raus – neu drehen …`);
+        setTimeout(spin, 900);
+      } else commit();
+      break; }
     case "cancelround":
       state.pending = null; $("wheelResult").textContent=""; commit(); break;
     case "saveround": {
@@ -1024,7 +1182,11 @@ document.addEventListener("click", e=>{
     case "delround":
       confirmTap(el, ()=>{ const ol=O(); ol.rounds = ol.rounds.filter(r=>r.id!==id); ol.rounds.forEach((r,i)=>r.n=i+1); commit(); }); break;
     case "end":
-      confirmTap(el, ()=>{ const ol=O(); ol.ended=Date.now(); if(ol.rounds.length) state.archive.push(ol); const w=standings(ol)[0]; state.olympiad=null; state.pending=null; $("wheelResult").textContent=""; commit(); if(ol.rounds.length && w) toast(`👑 ${w.p.name} gewinnt die Olympiade!`); }); break;
+      confirmTap(el, ()=>{ const ol=O(); ol.ended=Date.now(); if(ol.rounds.length) state.archive.push(ol); const w=standings(ol)[0]; state.olympiad=null; state.pending=null; $("wheelResult").textContent="";
+        if(ol.rounds.length && w && w.pts>0){ state.ceremony = {id:uid(), at:Date.now(), ol:ol.id}; lastCereId = state.ceremony.id; commit(); ceremony(ol); }
+        else commit(); }); break;
+    case "cere": { const a = state.archive.find(a=>a.id===id); if(a) ceremony(a); break; }
+    case "cereclose": closeCeremony(); break;
     case "delarch":
       confirmTap(el, ()=>{ state.archive = state.archive.filter(a=>a.id!==id); commit(); }); break;
     case "edit":
