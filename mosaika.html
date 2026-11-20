@@ -73,7 +73,7 @@
   .lastl b{color:var(--lime)}
 
   /* Spielfläche */
-  .boardwrap{position:relative;overflow:auto;max-height:min(62vh,560px);min-height:220px;border-radius:16px;
+  .boardwrap{position:relative;display:grid;overflow:auto;max-height:min(62vh,560px);min-height:220px;border-radius:16px;
     background:radial-gradient(circle,rgba(255,255,255,.07) 1px,transparent 1.5px) 0 0/22px 22px,radial-gradient(ellipse at 50% 40%,#22145a,#0d0726 85%);
     box-shadow:inset 0 2px 16px rgba(0,0,0,.7),0 0 0 2px rgba(180,77,255,.55),0 0 30px rgba(180,77,255,.25);
     -webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,61,154,.6) transparent}
@@ -83,8 +83,9 @@
   .cell.legal{cursor:pointer;background:rgba(34,228,255,.18);box-shadow:inset 0 0 0 2.5px var(--cyan),0 0 14px rgba(34,228,255,.55);animation:pulse 1.1s ease-in-out infinite}
   .cell.legal:hover{background:rgba(34,228,255,.4)}
   @keyframes pulse{50%{box-shadow:inset 0 0 0 2.5px rgba(34,228,255,.45),0 0 4px rgba(34,228,255,.2);transform:scale(.92)}}
-  .zoom{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
-  .zoom button{padding:4px 12px}
+  .boardbox{position:relative}
+  .zoom{position:absolute;right:8px;bottom:8px;display:flex;gap:5px;z-index:6}
+  .zoom button{padding:5px 11px;background:rgba(15,8,40,.82);backdrop-filter:blur(4px)}
   .pop{position:absolute;z-index:5;pointer-events:none;font-family:var(--head);font-weight:700;font-size:30px;color:#fff;white-space:nowrap;
     text-shadow:0 0 2px #000,0 3px 0 #b0135f,0 0 18px var(--pink);transform:translate(-50%,-50%);animation:popup 1.6s ease-out forwards}
   .pop.big{font-size:40px;color:var(--gold);text-shadow:0 0 2px #000,0 3px 0 #a35b00,0 0 24px var(--gold)}
@@ -178,6 +179,33 @@
   .hrow span:first-child{color:var(--mute);min-width:48px}
   .hrow span:nth-child(2){color:var(--cyan);min-width:90px}
   .sound{position:absolute;right:0;top:6px;font-size:16px;padding:4px 8px}
+  /* Kompakt während des Spiels: alles ohne Scrollen sichtbar */
+  body.playing{padding-top:10px;padding-bottom:16px}
+  body.playing .back{margin-bottom:2px;font-size:13px}
+  body.playing .sign{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 8px;padding:0 44px 0 0;max-width:none}
+  body.playing .sign h1{font-size:30px}
+  body.playing .sign h1 span{animation:none}
+  body.playing .sign .sub{display:none}
+  body.playing .sign .live{margin-top:0}
+  body.playing .sound{top:50%;transform:translateY(-50%)}
+  body.playing .panel{padding:12px;margin-bottom:10px;border-radius:16px}
+  body.playing .turn{font-size:18px;margin-bottom:6px}
+  body.playing .scorerow{margin-bottom:4px}
+  body.playing .pl{padding:4px 9px}
+  body.playing .lastl{margin-bottom:6px;font-size:13px}
+  body.playing .boardwrap{max-height:none}
+  body.playing .modes{margin-bottom:4px}
+  body.playing .mtab{padding:8px 6px}
+  body.playing .rack{margin:6px 0 8px;padding:14px 8px}
+  body.playing .hint{margin:0 0 8px;padding:8px 11px;font-size:14px;min-height:3.2em}
+  body.playing .acts{min-height:50px}
+  @media (min-width:900px) and (orientation:landscape){
+    body.playing .wrap{max-width:1280px}
+    body.playing .play{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:12px;align-items:start}
+    body.playing .play .panel{margin-bottom:0}
+    body.playing #handPanel{position:sticky;top:10px}
+    body.playing .rack{gap:7px;padding:14px 6px} body.playing .rack .tile{--cs:47px}
+  }
   @media (max-width:520px){ :root{--cs:38px} .rack .tile{--cs:42px} .rack{gap:6px;padding:16px 6px} .mtab{font-size:14px;padding:10px 6px} .acts .big{font-size:17px;padding:12px 18px} }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important} }
 </style>
@@ -192,14 +220,16 @@
     <button class="ghost sound" id="soundBtn" title="Ton an/aus" aria-label="Ton an oder aus">🔊</button>
   </div>
 
+  <div class="play" id="playArea">
   <section class="panel" id="tablePanel" hidden>
     <div class="turn" id="turnLine"></div>
     <div class="scorerow" id="scoreRow"></div>
     <div class="lastl" id="lastLine"></div>
-    <div class="boardwrap" id="boardWrap"><div class="board" id="board"></div></div>
-    <div class="zoom"><button class="ghost sm" data-zoom="-1" aria-label="Kleiner">−</button><button class="ghost sm" data-zoom="1" aria-label="Größer">+</button><button class="ghost sm" data-do="center">⌖ Mitte</button></div>
+    <div class="boardbox"><div class="boardwrap" id="boardWrap"><div class="board" id="board"></div></div>
+    <div class="zoom"><button class="ghost sm" data-zoom="-1" aria-label="Kleiner">−</button><button class="ghost sm" data-zoom="1" aria-label="Größer">+</button><button class="ghost sm" data-do="center" aria-label="Zur Mitte">⌖</button></div></div>
   </section>
   <section class="panel" id="handPanel" hidden></section>
+  </div>
 
   <div id="app"></div>
 
@@ -721,6 +751,21 @@ function renderBoard(g){
   if(!prev || prev.gid!==g.gid || centered!==g.gid){ centerBoard(); centered = g.gid; }
   else { wrap.scrollLeft = sl + (prev.minX-minX)*step; wrap.scrollTop = st + (prev.minY-minY)*step; }
 }
+// Brett so hoch machen, dass Brett und eigene Würfel zusammen auf den Bildschirm passen
+const sideBySide = () => matchMedia("(min-width:900px) and (orientation:landscape)").matches;
+function fitBoard(){
+  const tp = $("tablePanel"), hp = $("handPanel"), wrap = $("boardWrap");
+  if(tp.hidden){ wrap.style.height = ""; return; }
+  const vh = window.visualViewport ? visualViewport.height : innerHeight;
+  const other = tp.offsetHeight - wrap.offsetHeight;
+  let need = other + tp.getBoundingClientRect().top + scrollY;
+  if(!hp.hidden && !sideBySide()){
+    const acts = hp.querySelector(".acts");
+    need += 10 + (acts ? acts.getBoundingClientRect().bottom - hp.getBoundingClientRect().top + 12 : hp.offsetHeight);
+  }
+  const h = Math.max(200, Math.round(vh - need - 20));
+  if(Math.abs(wrap.offsetHeight - h) > 2) wrap.style.height = h + "px";
+}
 function centerBoard(){
   const wrap = $("boardWrap");
   requestAnimationFrame(()=>{ wrap.scrollLeft = (wrap.scrollWidth-wrap.clientWidth)/2; wrap.scrollTop = (wrap.scrollHeight-wrap.clientHeight)/2; });
@@ -864,13 +909,14 @@ function confetti(n){
 }
 function rattle(){ for(let i=0;i<5;i++) setTimeout(clack, i*70 + Math.random()*40); }
 
-let notified = null;
+let notified = null, scrolledFor = null;
 function render(){
   const g = game(), app = $("app");
   checkEvents(g);
   botTick();
   if(!g || g.over){
     $("tablePanel").hidden = !(g && g.over && !g.aborted); $("handPanel").hidden = true; document.title = "Mosaika";
+    document.body.classList.remove("playing"); fitBoard();
     if(g && g.over && !g.aborted){
       $("turnLine").innerHTML = `Endstand<small>${MODES[g.mode].name}</small>`;
       $("scoreRow").innerHTML = ranking(g).map(x=>`<span class="pl">${esc(x.st.emoji)} ${esc(x.st.name)} <b>${x.p}</b></span>`).join("");
@@ -893,6 +939,9 @@ function render(){
   $("lastLine").innerHTML = lastText(g);
   renderBoard(g);
   $("handPanel").innerHTML = handHTML(g);
+  document.body.classList.add("playing");
+  fitBoard();
+  if(scrolledFor!==g.gid){ scrolledFor = g.gid; if(!firstPaint) requestAnimationFrame(()=>scrollTo({top:0, behavior:"smooth"})); }
   fx(g);
   app.innerHTML = `<div class="row" style="justify-content:center;margin-bottom:18px"><button class="sm ghost" data-do="quit">${ui.confirmQuit?"Wirklich abbrechen? Nochmal tippen":"Spiel abbrechen"}</button></div>`;
   const mine = me!=="all" && me===actS;
@@ -946,7 +995,7 @@ document.addEventListener("click", e=>{
 function paintSound(){ $("soundBtn").textContent = soundOn ? "🔊" : "🔇"; }
 $("soundBtn").addEventListener("click", e=>{ e.stopPropagation(); soundOn = !soundOn; localStorage.setItem("ll-sound", soundOn?"1":"0"); paintSound(); if(soundOn) clack(); });
 paintSound(); applyZoom();
-addEventListener("resize", applyZoom);
+addEventListener("resize", ()=>{ applyZoom(); fitBoard(); });
 connect();
 </script>
 </body>
