@@ -159,6 +159,21 @@
   .pen{width:20px;height:20px;border-radius:4px;border:1px solid rgba(35,29,23,.45);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink)}
   .pen.x{background:var(--warn);border-color:var(--warn);color:#fff}
   .scores{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  /* Punkteberechnung */
+  .calc{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px 0 4px;padding:8px 6px;border-top:2px dotted rgba(90,67,24,.3)}
+  .calc .op{font-style:normal;font-weight:800;font-size:18px;color:#6b6253;min-width:12px;text-align:center}
+  .cbox{display:flex;flex-direction:column;align-items:center;min-width:48px;padding:3px 6px 4px;border-radius:7px;background:#fffaf0;
+    border:2px solid var(--rc,var(--ink));box-shadow:inset 0 -3px 0 color-mix(in srgb,var(--rc,var(--ink)) 25%,transparent)}
+  .cbox small{font-size:10.5px;font-weight:700;color:#7b705d;line-height:1.1;white-space:nowrap}
+  .cbox b{font-family:var(--serif);font-size:20px;line-height:1.1;color:var(--ink)}
+  .cbox.pen{--rc:var(--warn)} .cbox.pen b{color:var(--warn)}
+  .cbox.tot{--rc:var(--ink);background:var(--ink);min-width:58px} .cbox.tot b{color:#f3e2b3;font-size:22px} .cbox.tot small{color:#d9c9a8}
+  .cbox.chg{animation:cbump .7s ease-out}
+  @keyframes cbump{30%{transform:scale(1.18);box-shadow:0 0 0 4px rgba(201,164,92,.55)}}
+  .scale{display:grid;grid-template-columns:auto repeat(var(--n,12),minmax(0,1fr));gap:2px;font-size:10.5px;color:#7b705d;text-align:center;margin:2px 4px 0}
+  .scale span{padding:1px 0;border-radius:3px}
+  .scale .sl{text-align:left;padding-right:6px;font-weight:700}
+  .scale span.hit{background:rgba(201,164,92,.35);color:var(--ink);font-weight:800}
   .scores span{min-width:30px;text-align:center;padding:2px 8px;border-radius:5px;font-weight:700;color:#fff}
   .scores em{font-style:normal;color:#6b6253}
   .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -866,9 +881,26 @@ function sheetHTML(st, g){
   return `<div class="sheet${isActive?" active":""}${me===s?" mine":""}${opts.size?" picking":""}">
     <div class="shead"><span class="nm">${esc(st.emoji)} ${esc(st.name)}${st.bot?`<span class="tag kitag">KI · ${LEVELS[st.bot]||""}</span>`:""}${isActive?'<span class="tag">am Zug</span>':""}</span><div class="acts">${btns}</div><span class="tot">${sc.total} P</span></div>
     ${steps}<div class="grid">${rows}</div>
-    <div class="sfoot"><div class="pens">Fehlwürfe ${[0,1,2,3].map(i=>`<div class="pen${i<sd.pen?" x":""}">${i<sd.pen?"✕":""}</div>`).join("")}</div>
-      <div class="scores">${sc.rows.map((p,r)=>`<span style="background:${CVAR(lockColor(L,r))}">${p}</span>`).join("")}${sd.pen?`<span style="background:var(--warn)">−${sc.pen}</span>`:""}</div></div>
+    <div class="sfoot"><div class="pens">Fehlwürfe ${[0,1,2,3].map(i=>`<div class="pen${i<sd.pen?" x":""}">${i<sd.pen?"✕":""}</div>`).join("")}</div></div>
+    ${calcHTML(s, sd, sc, L, g)}
   </div>`;
+}
+// Punkteberechnung unten auf dem Zettel – live bei jedem Kreuz
+const calcPrev = {};
+function calcHTML(s, sd, sc, L, g){
+  const counts = [0,1,2,3].map(r=>rowCount(sd, r, g.variant));
+  const vals = [...sc.rows, sc.pen, sc.total], prev = calcPrev[s+":"+g.gid];
+  calcPrev[s+":"+g.gid] = vals;
+  const chg = i => prev && prev[i]!==vals[i] ? " chg" : "";
+  const box = (r) => `<span class="cbox${chg(r)}" style="--rc:${CVAR(lockColor(L,r))}"><small>${counts[r]} ✕</small><b>${sc.rows[r]}</b></span>`;
+  const maxN = Math.max(12, ...counts);
+  return `<div class="calc" aria-label="Punkteberechnung">
+      ${[0,1,2,3].map(box).join('<i class="op">+</i>')}
+      <i class="op">−</i><span class="cbox pen${chg(4)}"><small>${sd.pen} × 5</small><b>${sc.pen}</b></span>
+      <i class="op">=</i><span class="cbox tot${chg(5)}"><small>Summe</small><b>${sc.total}</b></span>
+    </div>
+    <div class="scale" style="--n:${maxN}"><span class="sl">Kreuze</span>${Array.from({length:maxN},(_,i)=>`<span class="${counts.includes(i+1)?"hit":""}">${i+1}</span>`).join("")}
+      <span class="sl">Punkte</span>${Array.from({length:maxN},(_,i)=>`<span class="${counts.includes(i+1)?"hit":""}">${tri(i+1)}</span>`).join("")}</div>`;
 }
 function hintFor(g){
   if(g.over) return "";

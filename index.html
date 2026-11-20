@@ -222,6 +222,7 @@
     color:#fff;background:rgba(10,2,20,.72);border:1.5px solid rgba(255,255,255,.35);box-shadow:none}
   .favbtn.on{color:var(--gold);border-color:var(--gold);text-shadow:0 0 8px rgba(255,210,63,.9);box-shadow:0 0 10px rgba(255,210,63,.5)}
   .favbtn:active:not(:disabled){transform:scale(.9);box-shadow:none}
+  .game .tools .favbtn{position:static;width:40px;height:36px;font-size:19px;border-radius:50%}
   .game.fav{border-left:4px solid var(--gold)}
   .favsep{font-family:Bungee;font-size:12px;color:var(--gold);margin:6px 2px 0;text-shadow:0 0 8px rgba(255,210,63,.5)}
   .game input.txt{font-size:14px;padding:7px 9px;border-radius:10px;width:100%}
@@ -759,8 +760,7 @@ function gameRow(g, inWheel){
     const own = isOwnGame(g);
     return `<div class="game ${w?"inwheel":""} ${g.fav?"fav":""} ${own?"own":""}" data-gid="${g.id}">
       ${g.double?'<span class="tag">×2 PUNKTE</span>':''}
-      <div class="thumb" data-icon="${esc(g.icon)}">${g.url?`<a class="tlink" href="${esc(g.url)}" target="_blank" rel="noopener noreferrer" title="${esc(g.name)} öffnen" aria-label="${esc(g.name)} öffnen">${thumb}</a>`:thumb}${own?'<span class="ownrib">EIGENBAU</span>':""}${metaLoading.has(g.id)?'<span class="loading" style="position:absolute;bottom:4px;right:6px">lädt…</span>':""}
-        <button class="favbtn ${g.fav?"on":""}" data-act="fav" data-id="${g.id}" aria-pressed="${!!g.fav}" title="${g.fav?"Favorit entfernen":"Als Favorit markieren"}" aria-label="${esc(g.name)} ${g.fav?"nicht mehr favorisieren":"favorisieren"}">${g.fav?"★":"☆"}</button></div>
+      <div class="thumb" data-icon="${esc(g.icon)}">${g.url?`<a class="tlink" href="${esc(g.url)}" target="_blank" rel="noopener noreferrer" title="${esc(g.name)} öffnen" aria-label="${esc(g.name)} öffnen">${thumb}</a>`:thumb}${own?'<span class="ownrib">EIGENBAU</span>':""}${metaLoading.has(g.id)?'<span class="loading" style="position:absolute;bottom:4px;right:6px">lädt…</span>':""}</div>
       <div class="gmeta">
         <span class="gn">${esc(g.name)}</span>
         ${(own||g.players||g.time)?`<span class="gfacts">${own?`<span class="ownbadge" title="Von uns selbst gebaut">🛠️ Selbst gebaut</span>`:""}${g.players?`<span class="gfact" title="Spielerzahl">👥 ${esc(g.players)} Spieler</span>`:""}${g.time?`<span class="gfact" title="Ungefähre Spieldauer">⏱ ca. ${esc(g.time)}</span>`:""}</span>`:""}
@@ -769,6 +769,7 @@ function gameRow(g, inWheel){
       </div>
       <div class="tools">
         <button class="${w?"gold":""} sm wbtn" data-act="wheel" data-id="${g.id}">${w?"★ Im Rad":"+ Ins Rad"}</button>
+        <button class="sm ic favbtn ${g.fav?"on":""}" data-act="fav" data-id="${g.id}" aria-pressed="${!!g.fav}" title="${g.fav?"Favorit entfernen":"Als Favorit markieren"}" aria-label="${esc(g.name)} ${g.fav?"nicht mehr favorisieren":"favorisieren"}">${g.fav?"★":"☆"}</button>
         <button class="ghost sm ic" data-act="edit" data-id="${g.id}" title="Bearbeiten" aria-label="${esc(g.name)} bearbeiten">✏️</button>
         <button class="ghost sm ic" data-act="delgame" data-id="${g.id}" title="Löschen" aria-label="${esc(g.name)} löschen">🗑️</button>
       </div></div>`;
