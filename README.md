@@ -43,3 +43,6 @@ Jede Person öffnet die Seite auf dem eigenen Handy und tippt auf ihren Namen �
 
 Varianten: Klassisch, Farbenmix, Zahlenmix, Doppel-Mix, Bonusreihen, dazu zuschaltbar „Kurzes Spiel“.
 Die vollständigen Regeln stehen auf der Spielseite unter „Spielregeln & Varianten“.
+
+Extras: Ansagen bei Sperren, Fehlwürfen und Spielende auf allen Geräten · Statistik (Siege, Bestwerte, Rekorde, letzte Partien)
+· „Revanche“ mit denselben Leuten · „In die Olympiade übernehmen“ trägt die Platzierung als Runde (3/2/1 Punkte, ggf. ×2) ein.
