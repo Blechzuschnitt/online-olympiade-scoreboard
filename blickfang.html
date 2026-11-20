@@ -418,7 +418,9 @@ function setupPano(g){
     if(!map){
       // Start auf der 2D-Karte – das Männchen unten rechts auf eine blaue Straße ziehen
       map = new google.maps.Map($("pano"), {center, zoom:17, streetViewControl:true, mapTypeControl:false, fullscreenControl:false,
-        clickableIcons:false, gestureHandling:"greedy", rotateControl:false});
+        clickableIcons:false, gestureHandling:"greedy", rotateControl:false,
+        // keine Geschäfte & Sehenswürdigkeiten auf der Karte – gesucht wird in Street View
+        styles:[{featureType:"poi", stylers:[{visibility:"off"}]}, {featureType:"transit", elementType:"labels.icon", stylers:[{visibility:"off"}]}]});
       pano = map.getStreetView();
       pano.setOptions({addressControl:false, fullscreenControl:false, motionTracking:false, motionTrackingControl:false,
         showRoadLabels:false, enableCloseButton:true, panControl:false, zoomControl:false});
