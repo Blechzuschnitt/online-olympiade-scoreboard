@@ -46,3 +46,4 @@ Die vollständigen Regeln stehen auf der Spielseite unter „Spielregeln & Varia
 
 Extras: Ansagen bei Sperren, Fehlwürfen und Spielende auf allen Geräten · Statistik (Siege, Bestwerte, Rekorde, letzte Partien)
 · „Revanche“ mit denselben Leuten · „In die Olympiade übernehmen“ trägt die Platzierung als Runde (3/2/1 Punkte, ggf. ×2) ein.
+KI-Gegner: beim Start 1–2 Computer-Mitspieler (🤖 Robo, 🦉 Ada) dazunehmen, Stärke „Locker“ oder „Clever“. Gesteuert werden sie vom Gerät, das das Spiel gestartet hat (ist es weg, übernimmt nach ~10 s ein anderes).

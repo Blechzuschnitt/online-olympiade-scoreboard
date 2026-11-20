@@ -102,6 +102,7 @@
   .sheet.active{box-shadow:0 1px 0 #fff inset,0 14px 30px rgba(0,0,0,.4),0 0 0 3px var(--brass)}
   .shead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
   .shead .nm{font-family:var(--serif);font-weight:700;font-size:19px}
+  .shead .nm .tag.kitag{color:#4a5b6e}
   .shead .nm .tag{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7a5d27;margin-left:6px}
   .shead .tot{font-family:var(--serif);font-weight:700;font-size:20px;color:#5a4318}
   .sheet button.ghost{color:var(--ink);border-color:rgba(35,29,23,.3)}
@@ -270,7 +271,10 @@ let sb = null, online = false;
 let cache = {};   // id -> data
 let olyPlayers = [{name:"Yana",emoji:"🦄"},{name:"Noah",emoji:"🚀"},{name:"Papa",emoji:"🦁"}];
 let me = localStorage.getItem("ll-me") || "";
-let setup = {picked:null, variant:"klassisch", short:false};
+let setup = {picked:null, variant:"klassisch", short:false, bots:0, level:"clever"};
+const CID = localStorage.getItem("ll-cid") || (()=>{ const c = Date.now().toString(36)+Math.random().toString(36).slice(2,8); localStorage.setItem("ll-cid", c); return c; })();
+const BOTS = [{name:"Robo", emoji:"🤖"}, {name:"Ada", emoji:"🦉"}];
+const LEVELS = {locker:"Locker", clever:"Clever"};
 let confirmNew = false, advancing = null;
 
 function loadLocal(){ try{ cache = JSON.parse(localStorage.getItem(LS)) || {}; }catch{ cache = {}; } }
@@ -325,7 +329,9 @@ function seatData(s){
 const clone = o => JSON.parse(JSON.stringify(o));
 const lastIdx = (sd,r) => sd.marks[r].length ? Math.max(...sd.marks[r]) : -1;
 const activeSeat = g => g.seats[g.turn % g.seats.length].seat;
-const canControl = s => me==="all" || me===s;
+const seatOf = s => { const g = game(); return g && g.seats.find(x=>x.seat===s); };
+const isBot = s => { const st = seatOf(s); return !!(st && st.bot); };
+const canControl = s => !isBot(s) && (me==="all" || me===s);
 
 function lockedRows(exceptRid){       // Reihen, die (vor diesem Wurf) gesperrt wurden
   const g = game(), set = new Set();
@@ -380,9 +386,9 @@ function score(s){
 }
 
 /* ---- Aktionen ---- */
-function doCross(s, r, k){
+function doCross(s, r, k, bot){
   const g = game(), opts = options(s), kind = opts.get(r+"-"+k);
-  if(!kind || !canControl(s)) return;
+  if(!kind || !(bot || canControl(s))) return;
   const sd = clone(seatData(s)), a = act(s), L = layout(g.variant);
   sd.marks[r].push(k);
   const cr = {r, k, lock:false, bx:[]};
@@ -415,17 +421,17 @@ function undo(s){
 function skipWhite(s){
   const sd = clone(seatData(s)), a = act(s); a.step = "c"; sd.act = a; put(SID(s), sd);
 }
-function finish(s){
-  if(!canControl(s)) return;
+function finish(s, bot){
+  if(!(bot || canControl(s))) return;
   const g = game(), sd = clone(seatData(s)), a = act(s);
   if(!a || a.done) return;
   a.done = true;
   if(s===activeSeat(g) && !a.w && !a.c){ a.pen = true; sd.pen++; }
   sd.act = a; put(SID(s), sd);
 }
-function roll(){
+function roll(bot){
   const g = game(); if(!g || g.roll || g.over) return;
-  if(!canControl(activeSeat(g))) return;
+  if(!(bot ? isBot(activeSeat(g)) : canControl(activeSeat(g)))) return;
   const L = layout(g.variant), gone = new Set([...allLocked()].map(r=>lockColor(L,r)));
   const t = clone(g);
   t.roll = {id:uid(), w:[d6(),d6()], c:[0,1,2,3].map(i=> gone.has(i) ? null : d6())};
@@ -453,10 +459,10 @@ function maybeAdvance(){
   }, 700);
 }
 function startGame(people, variant, short){
-  const seats = people.slice(0,6).map((p,i)=>({seat:SEATS[i], name:p.name, emoji:p.emoji}));
+  const seats = people.slice(0,6).map((p,i)=>Object.assign({seat:SEATS[i], name:p.name, emoji:p.emoji}, p.bot?{bot:p.bot}:{}));
   const gid = uid(), history = table().history || [];
   for(const st of seats) put(SID(st.seat), {gid, marks:[[],[],[],[]], bonus:[[],[]], locks:[], pen:0, act:null});
-  put(T_ID, {gid, variant, short, seats, turn:Math.floor(Math.random()*seats.length), roll:null, over:false, started:Date.now(), history});
+  put(T_ID, {gid, variant, short, seats, turn:Math.floor(Math.random()*seats.length), roll:null, over:false, started:Date.now(), history, host:CID});
   confirmNew = false;
   if(me && me!=="all" && !seats.some(x=>x.seat===me)) me = "";
   toast("🎲 Neues Spiel – viel Glück!");
@@ -464,12 +470,115 @@ function startGame(people, variant, short){
 function newGame(){
   const picked = setup.picked || olyPlayers.map((_,i)=>i);
   if(picked.length < 1) return toast("Mindestens eine Person auswählen");
-  startGame(picked.map(i=>olyPlayers[i]), setup.variant, setup.short);
+  const nb = Math.min(setup.bots, 6 - Math.min(picked.length, 6));
+  const bots = BOTS.slice(0, nb).map(b=>({...b, bot:setup.level}));
+  startGame([...picked.slice(0, 6 - nb).map(i=>olyPlayers[i]), ...bots], setup.variant, setup.short);
 }
 function rematch(){
   const g = table(); if(!g.seats) return;
   // dieselben Leute behalten ihre Plätze, damit „Wer bist du?“ auf jedem Handy stimmt
-  startGame(g.seats.map(st=>({name:st.name, emoji:st.emoji})), g.variant, !!g.short);
+  startGame(g.seats.map(st=>({name:st.name, emoji:st.emoji, bot:st.bot})), g.variant, !!g.short);
+}
+
+/* ============ KI-Gegner ============ */
+// Wahrscheinlichkeit einer Zweiwürfel-Summe – seltene Zahlen zu überspringen kostet weniger
+const PSUM = n => (6 - Math.abs(7 - n)) / 36;
+function sheetTotal(sd, vk){ return [0,1,2,3].reduce((a,r)=>a+tri(rowCount(sd,r,vk)),0) - sd.pen*5; }
+function botCands(sd, sum, color, rid){
+  const out = [];
+  for(let r=0;r<4;r++) for(let k=0;k<11;k++) if(canCross(sd,r,k,sum,color,rid)) out.push({r,k});
+  return out;
+}
+function botApply(sd, c, g){
+  const n = clone(sd); n.marks[c.r].push(c.k);
+  if(c.k===10) n.locks.push({r:c.r, rid:"sim"});
+  if(VARIANTS[g.variant].bonus){ const b = c.r<2?0:1; if(n.marks[c.r^1].includes(c.k) && !n.bonus[b].includes(c.k)) n.bonus[b].push(c.k); }
+  return n;
+}
+// Nutzen eines Kreuzes: Punkte jetzt minus verschenkte Felder links davon
+function botValue(sd, c, s, g, lvl){
+  const L = layout(g.variant), last = lastIdx(sd, c.r);
+  const others = g.seats.filter(x=>x.seat!==s).map(x=>score(x.seat).total);
+  const best = others.length ? Math.max(...others) : -999;
+  const late = allLocked().size>0 || g.seats.some(x=>seatData(x.seat).pen>=3) || sd.marks[c.r].length>=7;
+  let loss = 0;
+  for(let j=last+1;j<c.k;j++) loss += 0.5 + 13*PSUM(L[c.r][j].n);
+  loss *= late ? 0.45 : 1;
+  const after = botApply(sd, c, g);
+  let v = sheetTotal(after, g.variant) - sheetTotal(sd, g.variant) - loss;
+  if(c.k===10){                       // Schloss: beendet es das Spiel?
+    const need = g.short ? 1 : 2;
+    if(allLocked().size + 1 >= need) v += sheetTotal(after, g.variant) > best ? 25 : -25;
+  }
+  if(lvl==="locker") v = v*0.6 + 1.2 + (Math.random()*3 - 1.5);
+  return v;
+}
+function penaltyCost(sd, s, g){
+  if(sd.pen >= 3){                    // der vierte Fehlwurf beendet das Spiel
+    const others = g.seats.filter(x=>x.seat!==s).map(x=>score(x.seat).total);
+    return sheetTotal(sd, g.variant) - 5 > Math.max(...others, -999) ? 2 : 30;
+  }
+  return 5.5;
+}
+function botPlan(s){
+  const g = game(), sd = seatData(s), roll = g.roll, lvl = seatOf(s).bot;
+  const ws = roll.w[0]+roll.w[1], active = s===activeSeat(g);
+  const whites = [null, ...botCands(sd, ws, null, roll.id)];
+  let bestP = {w:null, c:null, v: active ? -penaltyCost(sd, s, g) : 0};
+  for(const w of whites){
+    const vw = w ? botValue(sd, w, s, g, lvl) : 0;
+    const sd2 = w ? botApply(sd, w, g) : sd;
+    const colors = [null];
+    if(active) for(let i=0;i<4;i++){ if(roll.c[i]==null) continue;
+      for(const wd of roll.w) for(const c of botCands(sd2, wd+roll.c[i], i, roll.id)) colors.push(c); }
+    for(const c of colors){
+      if(!w && !c) continue;
+      const v = vw + (c ? botValue(sd2, c, s, g, lvl) : 0);
+      if(v > bestP.v) bestP = {w, c, v};
+    }
+  }
+  return bestP;
+}
+let botTimer = null, botKey = null, botPlans = {}, takeTimer = null;
+const isDriver = g => !online || g.host===CID;
+function botStep(s){
+  const g = game(); if(!g || !g.roll || g.over) return;
+  const a = act(s), active = s===activeSeat(g), pk = s+":"+g.roll.id;
+  if(!a || a.done) return;
+  const plan = botPlans[pk] || (botPlans[pk] = botPlan(s));
+  const opts = options(s);
+  if(a.step==="w" && !a.w){
+    if(plan.w && opts.has(plan.w.r+"-"+plan.w.k)) return doCross(s, plan.w.r, plan.w.k, true);
+    return active ? skipWhite(s) : finish(s, true);
+  }
+  if(active && a.step==="c" && !a.c && plan.c && opts.has(plan.c.r+"-"+plan.c.k)) return doCross(s, plan.c.r, plan.c.k, true);
+  finish(s, true);
+}
+function botTick(){
+  const g = game();
+  let job = null;
+  if(g && !g.over && g.seats.some(x=>x.bot)){
+    const actS = activeSeat(g);
+    if(!g.roll){ if(isBot(actS)) job = {k:`r:${g.gid}:${g.last||"0"}:${g.turn}`, d:1400, f:()=>roll(true)}; }
+    else for(const st of g.seats){ if(!st.bot) continue;
+      const a = act(st.seat); if(a.done) continue;
+      const first = !a.w && a.step==="w";
+      job = {k:`p:${st.seat}:${g.roll.id}:${a.step}:${!!a.w}:${!!a.c}`, d: first ? 1900 + Math.random()*900 : 1000, f:()=>botStep(st.seat)};
+      break;
+    }
+  }
+  if(!job){ clearTimeout(botTimer); clearTimeout(takeTimer); botKey = null; return; }
+  if(job.k===botKey) return;
+  botKey = job.k; clearTimeout(botTimer); clearTimeout(takeTimer);
+  if(isDriver(g)) botTimer = setTimeout(()=>{ botKey = null; job.f(); }, job.d);
+  else {
+    // Das Startgerät steuert die KI. Ist es weg, übernimmt nach einer Weile dieses Gerät.
+    const k = job.k;
+    takeTimer = setTimeout(()=>{
+      if(botKey!==k || document.hidden) return;
+      const t = clone(table()); t.host = CID; botKey = null; put(T_ID, t);
+    }, 9000 + Math.random()*4000);
+  }
 }
 function quitGame(){ const t = clone(table()); t.over = true; t.aborted = true; t.roll = null; put(T_ID, t); confirmNew = false; }
 
@@ -684,7 +793,7 @@ function sheetHTML(st, g){
   } else if(a && a.done && !g.over) btns = `<span class="mute">✓ fertig</span>`;
 
   return `<div class="sheet${isActive?" active":""}${me===s?" mine":""}">
-    <div class="shead"><span class="nm">${esc(st.emoji)} ${esc(st.name)}${isActive?'<span class="tag">am Zug</span>':""}</span><div class="acts">${btns}</div><span class="tot">${sc.total} P</span></div>
+    <div class="shead"><span class="nm">${esc(st.emoji)} ${esc(st.name)}${st.bot?`<span class="tag kitag">KI · ${LEVELS[st.bot]||""}</span>`:""}${isActive?'<span class="tag">am Zug</span>':""}</span><div class="acts">${btns}</div><span class="tot">${sc.total} P</span></div>
     <div class="grid">${rows}</div>
     <div class="sfoot"><div class="pens">Fehlwürfe ${[0,1,2,3].map(i=>`<div class="pen${i<sd.pen?" x":""}">${i<sd.pen?"✕":""}</div>`).join("")}</div>
       <div class="scores">${sc.rows.map((p,r)=>`<span style="background:${CVAR(lockColor(L,r))}">${p}</span>`).join("")}${sd.pen?`<span style="background:var(--warn)">−${sc.pen}</span>`:""}</div></div>
@@ -710,6 +819,9 @@ function setupHTML(){
   return `<section class="panel"><h2>Neues Spiel</h2>
     <div class="mute">Wer spielt mit?</div>
     <div class="chips">${olyPlayers.map((p,i)=>`<button class="chip${picked.includes(i)?" on":""}" data-pick="${i}">${esc(p.emoji)} ${esc(p.name)}</button>`).join("")}</div>
+    <div class="mute">KI-Gegner</div>
+    <div class="chips">${[0,1,2].map(n=>`<button class="chip${setup.bots===n?" on":""}" data-bots="${n}">${n?BOTS.slice(0,n).map(b=>b.emoji+" "+b.name).join(" + "):"Keine"}</button>`).join("")}
+      ${setup.bots?`<span style="width:100%"></span>${Object.entries(LEVELS).map(([k,v])=>`<button class="chip${setup.level===k?" on":""}" data-level="${k}">${k==="locker"?"🙂":"🧠"} ${v}</button>`).join("")}`:""}</div>
     <div class="mute">Variante</div>
     <div class="variants">${Object.entries(VARIANTS).map(([k,v])=>`<button class="var${setup.variant===k?" on":""}" data-var="${k}"><b>${v.name}</b>${v.desc}</button>`).join("")}</div>
     <label class="chk"><input type="checkbox" id="shortChk" ${setup.short?"checked":""}> Kurzes Spiel – Ende schon nach der ersten gesperrten Reihe</label>
@@ -733,6 +845,7 @@ function resultHTML(g){
 function render(){
   const g = game(), app = $("app"), tp = $("tablePanel");
   checkEvents(g);
+  botTick();
   if(!g || g.over){
     tp.hidden = true; trayKey = null; document.title = "Lucky Lines";
     let h = "";
@@ -749,7 +862,7 @@ function render(){
   updateTray(g);
   $("tableInfo").innerHTML = `${inGame?`<div class="hint">${hintFor(g)}</div>`:""}
     ${g.roll?`<div class="waiting">Noch nicht fertig: ${g.seats.filter(st=>{const a=act(st.seat);return !a||!a.done;}).map(st=>esc(st.name)).join(", ")||"–"}</div>`:""}
-    <div class="who">Wer bist du? ${g.seats.map(st=>`<button class="chip${me===st.seat?" on":""}" data-me="${st.seat}">${esc(st.emoji)} ${esc(st.name)}</button>`).join("")}
+    <div class="who">Wer bist du? ${g.seats.filter(st=>!st.bot).map(st=>`<button class="chip${me===st.seat?" on":""}" data-me="${st.seat}">${esc(st.emoji)} ${esc(st.name)}</button>`).join("")}
       <button class="chip${me==="all"?" on":""}" data-me="all">📱 Alle an diesem Gerät</button></div>`;
   const order = [...g.seats].sort((a,b)=>(b.seat===me)-(a.seat===me));
   app.innerHTML = order.map(st=>sheetHTML(st,g)).join("") + `<div class="row" style="justify-content:center;margin-bottom:18px">
@@ -764,6 +877,8 @@ document.addEventListener("click", e=>{
   if(b.dataset.pick!=null){ const i=+b.dataset.pick, cur = setup.picked || olyPlayers.map((_,j)=>j);
     setup.picked = cur.includes(i) ? cur.filter(x=>x!==i) : [...cur,i].sort((a,b)=>a-b); return render(); }
   if(b.dataset.var){ setup.variant = b.dataset.var; return render(); }
+  if(b.dataset.bots!=null){ setup.bots = +b.dataset.bots; return render(); }
+  if(b.dataset.level){ setup.level = b.dataset.level; return render(); }
   if(b.dataset.me){ me = b.dataset.me; localStorage.setItem("ll-me", me); return render(); }
   const s = b.dataset.s;
   switch(b.dataset.do){
