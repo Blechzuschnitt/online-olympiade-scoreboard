@@ -258,6 +258,19 @@
     .game .tools .wbtn{flex:1}
     .panel{padding:16px 12px}
   }
+  /* Bereiche ein-/ausklappen */
+  section.panel > h2{cursor:pointer;user-select:none;-webkit-user-select:none;position:relative;padding-right:36px}
+  section.panel > h2::after{content:"▾";position:absolute;right:2px;top:50%;width:28px;height:28px;margin-top:-14px;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;background:rgba(255,255,255,.08);color:var(--gold);font-size:16px;text-shadow:none;transition:transform .2s}
+  section.panel.closed > h2::after{transform:rotate(-90deg)}
+  #rad:not(.closed) > h2{padding-right:120px} #rad:not(.closed) > h2::after{right:84px}
+  section.panel.closed > :not(h2){display:none!important}
+  section.panel.closed{padding-bottom:14px}
+  section.panel > h2:focus-visible{outline:2px solid var(--gold);outline-offset:4px;border-radius:8px}
+  /* Spielbild öffnet das Spiel */
+  .thumb a.tlink{position:absolute;inset:0;display:grid;place-items:center;color:inherit;text-decoration:none;cursor:pointer}
+  .thumb a.tlink:hover{filter:brightness(1.12)}
+  .thumb .favbtn{z-index:2}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -726,7 +739,7 @@ function gameRow(g, inWheel){
       : esc(g.icon);
     return `<div class="game ${w?"inwheel":""} ${g.fav?"fav":""}" data-gid="${g.id}">
       ${g.double?'<span class="tag">×2 PUNKTE</span>':''}
-      <div class="thumb" data-icon="${esc(g.icon)}">${thumb}${metaLoading.has(g.id)?'<span class="loading" style="position:absolute;bottom:4px;right:6px">lädt…</span>':""}
+      <div class="thumb" data-icon="${esc(g.icon)}">${g.url?`<a class="tlink" href="${esc(g.url)}" target="_blank" rel="noopener noreferrer" title="${esc(g.name)} öffnen" aria-label="${esc(g.name)} öffnen">${thumb}</a>`:thumb}${metaLoading.has(g.id)?'<span class="loading" style="position:absolute;bottom:4px;right:6px">lädt…</span>':""}
         <button class="favbtn ${g.fav?"on":""}" data-act="fav" data-id="${g.id}" aria-pressed="${!!g.fav}" title="${g.fav?"Favorit entfernen":"Als Favorit markieren"}" aria-label="${esc(g.name)} ${g.fav?"nicht mehr favorisieren":"favorisieren"}">${g.fav?"★":"☆"}</button></div>
       <div class="gmeta">
         <span class="gn">${esc(g.name)}</span>
@@ -941,6 +954,37 @@ function loadLocal(){
 }
 loadLocal();
 connect();
+
+/* ============ Bereiche ein-/ausklappen ============ */
+(function(){
+  const KEY = "oly-closed";
+  let closed = []; try{ closed = JSON.parse(localStorage.getItem(KEY)) || []; }catch{}
+  const panels = () => [...document.querySelectorAll("section.panel[id]")];
+  function mark(){
+    for(const sec of panels()){
+      sec.classList.toggle("closed", closed.includes(sec.id));
+      const h = sec.querySelector(":scope > h2"); if(!h) continue;
+      h.tabIndex = 0; h.setAttribute("role","button"); h.setAttribute("aria-expanded", String(!closed.includes(sec.id)));
+    }
+  }
+  function toggle(sec){
+    closed = closed.includes(sec.id) ? closed.filter(x=>x!==sec.id) : [...closed, sec.id];
+    try{ localStorage.setItem(KEY, JSON.stringify(closed)); }catch{}
+    mark();
+  }
+  document.addEventListener("click", e=>{
+    const h = e.target.closest("section.panel[id] > h2"); if(!h) return;
+    if(e.target.closest("button,a,input,select,label")) return;
+    toggle(h.parentElement);
+  });
+  document.addEventListener("keydown", e=>{
+    if(e.key!=="Enter" && e.key!==" ") return;
+    const h = e.target.closest && e.target.closest("section.panel[id] > h2"); if(!h || e.target!==h) return;
+    e.preventDefault(); toggle(h.parentElement);
+  });
+  new MutationObserver(mark).observe($("board"), {childList:true});
+  mark();
+})();
 </script>
 </body>
 </html>
