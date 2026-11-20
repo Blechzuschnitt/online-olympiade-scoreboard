@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="raetselrad.css">
 <style>
 /* ============ Design-System ============ */
 :root{
@@ -396,6 +397,12 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
   .dock button{flex:1;width:auto;min-width:0;padding:9px 0 7px;font-size:7.5px;letter-spacing:.02em}
   .dock button.on::before{left:30%;right:30%;top:-6px;bottom:auto;width:auto;height:3px}
   .dock .dot{right:calc(50% - 18px)}
+}
+@media (max-width:520px){
+  .dock button:not(.on){font-size:0;gap:0}            /* 7 Bereiche: nur Symbole, aktiver mit Namen */
+  .dock button.on{flex:1.7;font-size:7px}
+}
+@media (max-width:900px){
   .bar{padding:16px 16px 8px}
   main{padding:8px 16px 30px}
   .crest{width:48px;height:48px}.crest svg{width:32px;height:32px}
@@ -434,6 +441,7 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
   <symbol id="i-rangliste" viewBox="0 0 24 24"><path d="M3 20h18M4.5 20v-6h5v6M9.5 20V8h5v12M14.5 20v-9h5v9M12 3.5l.9 1.8 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3z"/></symbol>
   <symbol id="i-runden" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5M3.5 3.5v5h5M12 7.5V12l3 2.5"/></symbol>
   <symbol id="i-verwaltung" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+  <symbol id="i-show" viewBox="0 0 24 24"><rect x="2.5" y="5" width="5.5" height="8" rx="1"/><rect x="9.25" y="5" width="5.5" height="8" rx="1"/><rect x="16" y="5" width="5.5" height="8" rx="1"/><path d="M5 17.5h14M8 20.5h8"/></symbol>
   <symbol id="crestsym" viewBox="0 0 48 48"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00F5FF"/><stop offset="1" stop-color="#FF00E5"/></linearGradient></defs>
     <path d="M7 34 L5 14 L16 23 L24 8 L32 23 L43 14 L41 34 Z" fill="none" stroke="url(#cg)" stroke-width="3" stroke-linejoin="round"/><path d="M9 40h30" stroke="url(#cg)" stroke-width="3" stroke-linecap="round"/>
     <circle cx="24" cy="8" r="2.8" fill="#FFD84D"/><circle cx="5" cy="14" r="2.3" fill="#00F5FF"/><circle cx="43" cy="14" r="2.3" fill="#FF00E5"/></symbol>
@@ -453,6 +461,7 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
 <nav class="dock" aria-label="Bereiche">
   <button data-view="arena"><svg><use href="#i-arena"/></svg>Arena</button>
   <button data-view="rad"><svg><use href="#i-rad"/></svg>Glücksrad<span class="dot" hidden></span></button>
+  <button data-view="show"><svg><use href="#i-show"/></svg>Rätselrad</button>
   <button data-view="spiele"><svg><use href="#i-spiele"/></svg>Spiele</button>
   <button data-view="rangliste"><svg><use href="#i-rangliste"/></svg>Rangliste</button>
   <button data-view="runden"><svg><use href="#i-runden"/></svg>Runden</button>
@@ -489,6 +498,8 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
     </div>
   </div>
 </section>
+
+<section class="view" id="v-show"><div id="rrRoot"></div></section>
 
 <section class="view" id="v-spiele">
   <section class="panel"><h2 class="h">Spielebibliothek <small id="libCount"></small></h2>
@@ -530,6 +541,7 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
       </section>
     </div>
   </div>
+  <section class="panel" id="rrAdmin" style="margin-top:22px"></section>
 </section>
 </main>
 
@@ -614,7 +626,7 @@ function gameFromUrl(raw){
 // Spiele, die hier im Projekt selbst gebaut wurden (liegen auf unserer eigenen Seite)
 function isOwnGame(g){
   const u = String(g.url||"").trim(); if(!u) return false;
-  if(/^[\w-]+\.html$/i.test(u)) return true;
+  if(/^#|^[\w-]+\.html$/i.test(u)) return true;
   try{ const x = new URL(u, location.href);
     return x.origin===location.origin && !/index\.html$|\/$/.test(x.pathname) || /blechzuschnitt\.github\.io\/online-olympiade-scoreboard\//i.test(x.href);
   }catch{ return false; }
@@ -680,7 +692,7 @@ function pushRemote(){
 }
 function applyRemote(d){
   if(!valid(d) || d._rev===state._rev) return;
-  if(spinning || editingId){ applyRemote.queued = d; return; }   // später übernehmen
+  if(spinning || editingId || (typeof rrBusy==="function" && rrBusy())){ applyRemote.queued = d; return; }   // später übernehmen
   setState(d); keepLocal(); render();
   maybeRemoteSpin(); maybeRemoteCeremony();
 }
@@ -697,6 +709,7 @@ async function connect(){
     const remote = await fetchRemote();
     if(valid(remote)) applyRemote(remote); else pushRemote();      // erste Nutzung: lokalen Stand hochladen
     setLive("online");
+    if(typeof ensureShowGame==="function" && ensureShowGame()) commit();   // Rätselrad einmalig in die Bibliothek
     sb.channel("olympiade")
       .on("postgres_changes",{event:"UPDATE",schema:"public",table:"olympiade_state"}, p=>{ if(p.new && p.new.id===SB_ROW) applyRemote(p.new.data); })
       .subscribe();
@@ -707,7 +720,7 @@ document.addEventListener("visibilitychange", async()=>{
   if(document.visibilityState!=="visible" || !sb) return;
   try{ applyRemote(await fetchRemote()); if(!online) setLive("online"); }catch(e){}
 });
-setInterval(()=>{ if(applyRemote.queued && !spinning && !editingId){ const d = applyRemote.queued; applyRemote.queued = null; applyRemote(d); } }, 1000);
+setInterval(()=>{ if(applyRemote.queued && !spinning && !editingId && !(typeof rrBusy==="function" && rrBusy())){ const d = applyRemote.queued; applyRemote.queued = null; applyRemote(d); } }, 1000);
 function commit(){ save(); render(); }
 
 /* ================= Helfer & Wertung ================= */
@@ -766,11 +779,14 @@ function catOf(g){
 }
 const catColor = g => CATS[catOf(g)][2];
 const catBadge = g => { const c = CATS[catOf(g)]; return `<span class="cat" style="--cc:${c[2]}">${c[1]} ${c[0]}</span>`; };
+// Links auf Bereiche der App (#show) bleiben im selben Tab
+const linkAttr = url => /^#/.test(url) ? "" : `target="_blank" rel="noopener noreferrer"`;
 const facts = g => (g.players ? `<span class="pill" title="Spielerzahl">👥 ${esc(g.players)}</span>` : "") + (g.time ? `<span class="pill" title="Ungefähre Spieldauer">⏱ ${esc(g.time)}</span>` : "");
 
 /* ================= Render ================= */
 function render(){
   renderHeader(); renderBoard(); renderStage(); renderWheel(); renderWheelChips(); renderLibrary(); renderLog(); renderAdmin();
+  if(typeof renderShow==="function") renderShow();          // Rätselrad (raetselrad.js)
 }
 // Ein Inhalt kann an mehreren Stellen stehen (Arena, Glücksrad, TV …) – nur neu zeichnen, wenn er sich ändert
 const slotCache = new WeakMap();
@@ -857,7 +873,7 @@ function sceneHTML(){
     <div class="row"><span class="pill">RUNDE ${n}</span>${catBadge(g)}${p.double ? '<span class="x2">×2 PUNKTE</span>' : ""}${facts(g)}</div>
     <h3><span class="gi">${esc(g.icon)}</span><span>${esc(g.name)}</span></h3>
     ${g.info ? `<p>${esc(g.info)}</p>` : ""}
-    ${g.url ? `<a class="btn pri" href="${esc(g.url)}" target="_blank" rel="noopener noreferrer">▶ Spiel starten</a>` : ""}
+    ${g.url ? `<a class="btn pri" href="${esc(g.url)}" ${linkAttr(g.url)}>▶ Spiel starten</a>` : ""}
     <div class="how"><b>Wertung:</b> Spieler in der Reihenfolge ihrer Platzierung antippen (nochmal = zurücknehmen) · 🥇 ${PTS[0]*mult} · 🥈 ${PTS[1]*mult} · 🥉 ${PTS[2]*mult} Punkte</div>
     <div class="places">${ol.roster.map(pl=>{ const i = p.order.indexOf(pl.id);
       return `<button class="place ${i>=0 ? "set" : ""}" data-act="place" data-id="${pl.id}" style="--pc:${pcol(ol,pl.id)}"><span class="pav">${esc(pl.emoji)}</span><span class="pn">${esc(pl.name)}</span>
@@ -1161,14 +1177,14 @@ function gameCard(g, inWheel){
     : logo ? `<img class="solo" src="${esc(logo)}" alt="" referrerpolicy="no-referrer" onerror="this.insertAdjacentText('afterend',this.closest('.art').dataset.icon);this.remove()">` : esc(g.icon);
   const nm = esc(g.name);
   return `<article class="gc tilt ${w ? "in" : ""}" data-gid="${g.id}" style="--cc:${catColor(g)}">
-    <div class="art" data-icon="${esc(g.icon)}">${g.url ? `<a href="${esc(g.url)}" target="_blank" rel="noopener noreferrer" title="${nm} öffnen" aria-label="${nm} öffnen">${thumb}</a>` : thumb}
+    <div class="art" data-icon="${esc(g.icon)}">${g.url ? `<a href="${esc(g.url)}" ${linkAttr(g.url)} title="${nm} öffnen" aria-label="${nm} öffnen">${thumb}</a>` : thumb}
       <div class="rib">${own ? '<span class="pill">🛠️ EIGENBAU</span>' : ""}${g.double ? '<span class="x2">×2 PUNKTE</span>' : ""}${metaLoading.has(g.id) ? '<span class="pill">lädt…</span>' : ""}</div></div>
     <div class="gb">
       <div class="row">${catBadge(g)}${w ? `<span class="pill st-in">Im Rad</span>` : ""}${played ? `<span class="pill st-done">✓ Gespielt</span>` : ""}</div>
       <h3>${esc(g.icon)} ${nm}</h3>
       ${g.players || g.time ? `<div class="row">${facts(g)}</div>` : ""}
       ${g.info ? `<div class="gd">${esc(g.info)}</div>` : ""}
-      ${g.url ? `<a class="gl" href="${esc(g.url)}" target="_blank" rel="noopener noreferrer" title="${esc(g.url)}">🔗 ${esc(host(g.url))}</a>` : ""}
+      ${g.url ? `<a class="gl" href="${esc(g.url)}" ${linkAttr(g.url)} title="${esc(g.url)}">${/^#/.test(g.url) ? "▶ In der App spielen" : "🔗 " + esc(host(g.url))}</a>` : ""}
     </div>
     <div class="ga">
       <button class="${w ? "pri" : "ghost"} sm" data-act="wheel" data-id="${g.id}">${w ? "✓ Im Rad" : "+ Ins Rad"}</button>
@@ -1223,6 +1239,15 @@ function renderLog(){
 }
 
 /* ================= Aktionen ================= */
+// Platzierung der laufenden Runde werten (auch vom Rätselrad genutzt). Gibt den Sieger zurück.
+function saveRound(){
+  const p = state.pending, ol = O(); if(!p || !ol || !p.order.length) return false;
+  const points = {};
+  p.order.forEach((pid,i)=>{ points[pid] = (PTS[i]||0) * (p.double ? 2 : 1); });
+  ol.rounds.push({id:uid(), n:ol.rounds.length+1, gameId:p.gameId, gameName:p.gameName, icon:p.icon, at:Date.now(), order:[...p.order], double:p.double, points});
+  state.pending = null; clearResult();
+  return ol.roster.find(x=>x.id===p.order[0]) || null;
+}
 function startRound(gameId){
   const g = game(gameId); if(!g || !O()) return;
   state.pending = {gameId, gameName:g.name, icon:g.icon, order:[], double:!!g.double};
@@ -1292,12 +1317,7 @@ document.addEventListener("click", e=>{
       break; }
     case "cancelround": state.pending = null; clearResult(); commit(); break;
     case "saveround": {
-      if(!p || !ol || !p.order.length) break;
-      const points = {};
-      p.order.forEach((pid,i)=>{ points[pid] = (PTS[i]||0) * (p.double ? 2 : 1); });
-      ol.rounds.push({id:uid(), n:ol.rounds.length+1, gameId:p.gameId, gameName:p.gameName, icon:p.icon, at:Date.now(), order:[...p.order], double:p.double, points});
-      const w = ol.roster.find(x=>x.id===p.order[0]);
-      state.pending = null; clearResult();
+      const w = saveRound(); if(w===false) break;
       if(curView==="rad" && $("tv").hidden) go("arena");      // Rangliste zeigen, damit man die Punkte einlaufen sieht
       commit(); toast(`🏆 ${w ? w.name : "?"} gewinnt ${wheelName(p.gameName)}!`); confetti($("fx")); break; }
     case "delround":
@@ -1326,7 +1346,7 @@ document.addEventListener("click", e=>{
       Object.assign(g, {icon:v("icon").value.trim() || "🎮", name:nn, info:ni, double:v("double").checked,
         players:v("players").value.trim().replace(/\s*Spieler$/i,"").replace(/(\d)\s*-\s*(\d)/,"$1–$2"),
         time:v("time").value.trim().replace(/^ca\.?\s*/i,"")});
-      const u = normUrl(v("url").value); g.url = u ? u.href : "";
+      const raw = v("url").value.trim(), u = normUrl(raw); g.url = /^#/.test(raw) ? raw : u ? u.href : "";
       const c = v("cat").value; if(c) g.cat = c; else delete g.cat;
       editingId = null; commit(); break; }
     case "delgame": confirmTap(el, ()=>{ state.library = state.library.filter(g=>g.id!==id); state.wheel = state.wheel.filter(x=>x!==id); commit(); }); break;
@@ -1359,7 +1379,7 @@ $("dice").onclick = ()=>{
 };
 
 /* ================= Navigation & Live-Modus ================= */
-const VIEWS = ["arena","rad","spiele","rangliste","runden","verwaltung"];
+const VIEWS = ["arena","rad","show","spiele","rangliste","runden","verwaltung"];
 let curView = "arena";
 function go(v, keepScroll){
   if(!VIEWS.includes(v)) v = "arena";
@@ -1400,6 +1420,8 @@ if(matchMedia("(hover:hover) and (prefers-reduced-motion:no-preference)").matche
   }); }, {passive:true});
 }
 
+addEventListener("hashchange", ()=>{ const h = location.hash.slice(1); if(VIEWS.includes(h) && h!==curView) go(h); });
+
 /* ================= Start ================= */
 const startHash = location.hash.slice(1);
 { let v = startHash; try{ if(!VIEWS.includes(v)) v = localStorage.getItem("oly-view") || "arena"; }catch(e){} go(v, true); }
@@ -1408,5 +1430,7 @@ render();
 connect();
 if(startHash==="live" || startHash==="tv") tvOn(true);
 </script>
+<script src="raetselrad-logic.js"></script>
+<script src="raetselrad.js"></script>
 </body>
 </html>
