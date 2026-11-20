@@ -133,24 +133,24 @@
   .box.ok:hover{transform:scale(1.14)}
   @keyframes glow{50%{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--gl,var(--cyan)),0 0 26px 6px var(--gl,rgba(0,245,255,.8))}}
   .line.dead{filter:grayscale(.75);opacity:.65}
-  .steps{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 10px}
-  .step{border-radius:8px;padding:6px 9px;border:1.5px dashed rgba(40,45,70,.3);color:#6a6f84;line-height:1.2}
-  .step b{display:block;font-size:14px}
-  .step small{font-size:11.5px}
-  .step.on{border-style:solid;border-color:var(--print);background:#fff;color:var(--print);box-shadow:0 2px 6px rgba(0,0,0,.12)}
-  .step.done{opacity:.65}
-  .step.must{border-color:var(--red);background:#fff0f2}
-  .step.must small{color:#c0213d;font-weight:700}
-  .skipw{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:10px 14px;border-radius:10px;font-size:15px}
+  .steps{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0 6px}
+  .step{border-radius:10px;padding:5px 9px;border:1.5px dashed var(--ln2);color:var(--mu);line-height:1.2}
+  .step b{display:block;font-size:13px}
+  .step small{font-size:11px}
+  .step.on{border-style:solid;border-color:var(--cyan);color:var(--tx);background:rgba(0,245,255,.08)}
+  .step.done{opacity:.6}
+  .step.must{border-color:var(--red);background:rgba(255,77,109,.12)}
+  .step.must small{color:#ff9aa9;font-weight:700}
+  .skipw{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 4px;padding:9px 12px;border-radius:10px;font-size:14px}
   .skipw span{font-weight:600;font-size:13px;opacity:.8}
   .bline{display:grid;grid-template-columns:repeat(11,minmax(0,1fr)) minmax(0,1.05fr);gap:3px;padding:0 4px}
   .bbox{position:relative;height:18px;border-radius:3px;border:1.5px dashed rgba(40,45,70,.4);display:flex;align-items:center;justify-content:center;font-size:10px;color:#9a98a8;background:#fff}
-  .sfoot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:13px;color:#6a6f84;font-weight:600}
+  .sfoot{display:flex;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:8px;border-top:2px dotted rgba(40,45,70,.25);font-size:13px;color:#6a6f84;font-weight:600}
   .pens{display:flex;gap:6px;align-items:center}
   .pen{position:relative;width:28px;height:28px;border-radius:3px;border:1.5px solid var(--print);background:#fff}
   .scores{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   /* Punkteberechnung – wie mit dem Stift eingetragen */
-  .calc{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;margin:10px 0 4px;padding:10px 6px 4px;border-top:2px dotted rgba(40,45,70,.25)}
+  .calc{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;margin:0;padding:0}
   .calc .op{font-style:normal;font-weight:800;font-size:18px;color:#6a6f84;min-width:12px;text-align:center}
   .cbox{display:flex;flex-direction:column;align-items:center;min-width:52px;padding:3px 8px 2px;border-radius:4px;background:#fff;border:1.5px solid var(--rc,var(--print))}
   .cbox small{font:700 10.5px var(--fb);color:#6a6f84;line-height:1.2;white-space:nowrap}
@@ -177,7 +177,7 @@
   .sheet.mini .line,.sheet.mini .bline{gap:2px;padding:2px}
   .sheet.mini .box{font-size:clamp(9px,1.1vw,12px);border-width:1px}
   .sheet.mini .pen{width:20px;height:20px}
-  .sheet.mini .sfoot{margin-top:6px;font-size:12px}
+  .mpen{font:700 11px var(--fb);color:#c0213d;margin-right:8px;vertical-align:middle}
 
   /* Ergebnis & Statistik */
   .rank{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:rgba(8,11,20,.5);box-shadow:inset 0 0 0 1px var(--ln);margin-bottom:8px;font-weight:600}
@@ -241,15 +241,40 @@
   body.playing .hint{margin:8px 0 4px;padding:7px 11px;font-size:14px}
   body.playing .who{margin-top:6px}
   body.playing .wrap{max-width:1180px}
+  /* Im Spiel soll alles auf einen Bildschirm (iPad quer und hoch): Blattgröße richtet sich nach der Höhe */
+  body.playing .back{position:absolute;left:16px;top:16px;margin:0}
+  body.playing .sheet{margin:20px 2px 10px}
+  body.playing .sheet:not(.mini) .grid{width:min(100%, calc((100dvh - 470px) * 2.6));margin:0 auto}
+  body.playing .sheet:not(.mini) .shead{margin-bottom:6px}
+  body.playing .sfoot{flex-wrap:nowrap;margin-top:8px;padding-top:6px}
+  body.playing .calc{flex-wrap:nowrap;gap:3px}
+  body.playing .cbox{min-width:40px;padding:2px 5px 1px}
+  body.playing .cbox b{font-size:23px}
+  body.playing .cbox.cpen{min-width:62px}
+  body.playing .cbox.tot{min-width:52px} body.playing .cbox.tot b{font-size:26px}
+  body.playing .pen{width:24px;height:24px}
+  body.playing .sheet.mini{padding:16px 8px 6px}
+  body.playing .others .sheet.mini{margin:18px 2px 6px}
   @media (min-width:960px){
-    body.playing .top{grid-template-columns:350px minmax(0,1fr);gap:18px;align-items:start}
-    body.playing #tablePanel{position:sticky;top:10px;margin-top:14px}
+    body.playing .top{grid-template-columns:330px minmax(0,1fr);gap:16px;align-items:start}
+    body.playing #tablePanel{margin-top:12px}
+    body.playing .dslot{--s:36px}
+    body.playing .tray{gap:8px;min-height:64px;padding:12px 8px 10px}
+    body.playing .others{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
   }
   @media (max-width:700px){
     .others{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 12px;gap:10px}
     .others .sheet.mini{flex:0 0 min(300px,84vw);scroll-snap-align:center}
     .otitle{margin-bottom:-10px}
   }
+  @media (min-width:701px) and (max-width:959px){            /* iPad hoch: Würfel und Infos nebeneinander, Mitspieler in einer Reihe */
+    body.playing #tablePanel:not([hidden]){display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:16px;align-items:start}
+    body.playing #turnLine{grid-column:1/-1}
+    body.playing .dslot{--s:36px}
+    body.playing .tray{gap:8px;min-height:64px;padding:12px 8px 10px}
+    body.playing .others{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 10px}
+  }
+  @media (max-width:700px){ body.playing .sfoot,body.playing .calc{flex-wrap:wrap} }
   @media (max-width:520px){ body.playing .sign h1{font-size:20px} body.playing .sign{padding-right:44px;gap:8px} .line,.bline{gap:2px;padding:3px} .dslot{--s:40px} .tray{padding:16px 8px 12px} .cbox{min-width:44px;padding:3px 5px 2px} .cbox.cpen{min-width:64px} .cbox b{font-size:24px} }
   @media (prefers-reduced-motion:reduce){ .box.ok{animation:none} .ann{transition:opacity .2s} .box.x::after{animation:none} }
 </style>
@@ -257,7 +282,7 @@
 <body>
 <div class="bgfx" aria-hidden="true"></div>
 <div class="wrap">
-  <a class="back" href="index.html">← Zur Nelskamp Olympiade</a>
+  <a class="back" href="index.html">← Olympiade</a>
   <div class="sign">
     <h1>Lucky Lines</h1>
     <div class="sub">WÜRFELN · KREUZEN · SPERREN</div>
@@ -902,20 +927,10 @@ function sheetHTML(st, g, mini){
     if(hasUndo) btns += `<button class="sm ghost" data-do="undo" data-s="${s}">↶</button>`;
   } else if(a && a.done && !g.over) btns = `<span class="mute">✓ fertig</span>`;
 
-  // Schritt-Anzeige für die Person am Zug: ① Weiß (freiwillig) → ② Farbe
-  let steps = "";
-  if(!mini && isActive && g.roll && a && !a.done && canControl(s)){
-    const w1 = a.step==="w", none = !a.w && !a.c;
-    steps = `<div class="steps">
-      <div class="step${w1?" on":" done"}"><b>① Weiße Würfel</b><small>${w1?"freiwillig – darf übersprungen werden":a.w?"✓ angekreuzt":"übersprungen"}</small></div>
-      <div class="step${w1?"":" on"}${!w1&&none?" must":""}"><b>② Farbe</b><small>${!w1&&!none?"freiwillig – du hast schon angekreuzt":"Pflicht, wenn bei ① nichts angekreuzt – sonst Fehlwurf"}</small></div>
-    </div>${w1?`<button class="skipw" data-do="skip" data-s="${s}">Weißen Schritt überspringen <span>→ weiter zu ② Farbe</span></button>`:""}`;
-  }
   return `<div class="sheet${mini?" mini":""}${isActive?" active":""}${me===s?" mine":""}${opts.size?" picking":""}">
-    <div class="shead"><span class="nm">${pv(st)}${st.bot?`<span class="tag kitag">KI · ${LEVELS[st.bot]||""}</span>`:""}${isActive?'<span class="tag">am Zug</span>':""}</span><div class="acts">${btns}</div><span class="tot">${sc.total} P</span></div>
-    ${steps}<div class="grid">${rows}</div>
-    <div class="sfoot"><div class="pens">Fehlwürfe ${[0,1,2,3].map(i=>`<div class="pen${i<sd.pen?" x":""}" style="${scrawl(80+i)}"></div>`).join("")}</div></div>
-    ${mini ? "" : calcHTML(s, sd, sc, L, g)}
+    <div class="shead"><span class="nm">${pv(st)}${st.bot?`<span class="tag kitag">KI · ${LEVELS[st.bot]||""}</span>`:""}${isActive?'<span class="tag">am Zug</span>':""}</span><div class="acts">${btns}</div><span class="tot">${mini && sd.pen ? `<small class="mpen">${sd.pen}× Fehlwurf</small>` : ""}${sc.total} P</span></div>
+    <div class="grid">${rows}</div>
+    ${mini ? "" : `<div class="sfoot"><div class="pens">Fehlwürfe ${[0,1,2,3].map(i=>`<div class="pen${i<sd.pen?" x":""}" style="${scrawl(80+i)}"></div>`).join("")}</div>${calcHTML(s, sd, sc, L, g)}</div>`}
   </div>`;
 }
 // Punkteberechnung unten auf dem Zettel – live bei jedem Kreuz
@@ -932,8 +947,18 @@ function calcHTML(s, sd, sc, L, g){
       <i class="op">−</i><span class="cbox cpen${chg(4)}"><small>Fehlwürfe ${sd.pen} × 5</small><b>${sc.pen}</b></span>
       <i class="op">=</i><span class="cbox tot${chg(5)}"><small>Summe</small><b>${sc.total}</b></span>
     </div>
-    <div class="scale" style="--n:${maxN}"><span class="sl">Kreuze</span>${Array.from({length:maxN},(_,i)=>`<span class="${counts.includes(i+1)?"hit":""}">${i+1}</span>`).join("")}
-      <span class="sl">Punkte</span>${Array.from({length:maxN},(_,i)=>`<span class="${counts.includes(i+1)?"hit":""}">${tri(i+1)}</span>`).join("")}</div>`;
+    ${!g.over ? "" : `<div class="scale" style="--n:${maxN}"><span class="sl">Kreuze</span>${Array.from({length:maxN},(_,i)=>`<span class="${counts.includes(i+1)?"hit":""}">${i+1}</span>`).join("")}
+      <span class="sl">Punkte</span>${Array.from({length:maxN},(_,i)=>`<span class="${counts.includes(i+1)?"hit":""}">${tri(i+1)}</span>`).join("")}</div>`}`;
+}
+// Schritt-Anzeige für die Person am Zug: ① Weiß (freiwillig) → ② Farbe – kompakt bei den Würfeln
+function stepsHTML(g){
+  const s = activeSeat(g), a = act(s);
+  if(!g.roll || isBot(s) || !canControl(s) || !a || a.done) return "";
+  const w1 = a.step==="w", none = !a.w && !a.c;
+  return `<div class="steps">
+      <div class="step${w1?" on":" done"}"><b>① Weiß</b><small>${w1?"freiwillig":a.w?"✓ angekreuzt":"übersprungen"}</small></div>
+      <div class="step${w1?"":" on"}${!w1&&none?" must":""}"><b>② Farbe</b><small>${!w1&&!none?"freiwillig":"Pflicht, sonst Fehlwurf"}</small></div>
+    </div>${w1 && options(s).size ? `<button class="skipw" data-do="skip" data-s="${s}">Weiß überspringen <span>→ ② Farbe</span></button>` : ""}`;
 }
 function hintFor(g){
   if(g.over) return "";
@@ -1033,14 +1058,14 @@ function render(){
   const inGame = me==="all" || g.seats.some(x=>x.seat===me);
   $("turnLine").innerHTML = `${pv(actSt)} ist am Zug<small>${VARIANTS[g.variant].name}${g.short?" · kurzes Spiel":""}</small>`;
   updateTray(g);
-  $("tableInfo").innerHTML = `${inGame?`<div class="hint">${hintFor(g)}</div>`:""}
+  $("tableInfo").innerHTML = `${inGame?`<div class="hint">${hintFor(g)}</div>`:""}${stepsHTML(g)}
     ${g.roll?`<div class="waiting">Noch nicht fertig: ${g.seats.filter(st=>{const a=act(st.seat);return !a||!a.done;}).map(st=>esc(st.name)).join(", ")||"–"}</div>`:""}
     ${whoBarHTML(g.seats.filter(st=>!st.bot))}`;
   // groß: das eigene Blatt (am gemeinsamen Gerät das von dem, der dran ist), die anderen klein daneben
   const big = g.seats.some(x=>x.seat===me) ? me : actS;
   $("mine").innerHTML = sheetHTML(g.seats.find(x=>x.seat===big), g);
   const rest = g.seats.filter(x=>x.seat!==big);
-  $("others").innerHTML = rest.length ? `<div class="otitle" style="grid-column:1/-1">MITSPIELER</div>` + rest.map(st=>sheetHTML(st,g,true)).join("") : "";
+  $("others").innerHTML = rest.length ? rest.map(st=>sheetHTML(st,g,true)).join("") : "";
   app.innerHTML = `<div class="row" style="justify-content:center;margin-bottom:18px">
     <button class="sm ghost" data-do="quit">${confirmNew?"Wirklich abbrechen? Nochmal tippen":"Spiel abbrechen"}</button></div>`;
   notifyTurn(g);
