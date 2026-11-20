@@ -429,10 +429,6 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
   .dock button.on::before{left:30%;right:30%;top:-6px;bottom:auto;width:auto;height:3px}
   .dock .dot{right:calc(50% - 18px)}
 }
-@media (max-width:520px){
-  .dock button:not(.on){font-size:0;gap:0}            /* 7 Bereiche: nur Symbole, aktiver mit Namen */
-  .dock button.on{flex:1.7;font-size:7px}
-}
 @media (max-width:900px){
   .bar{padding:16px 16px 8px}
   main{padding:8px 16px 30px}
@@ -472,7 +468,6 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
   <symbol id="i-rangliste" viewBox="0 0 24 24"><path d="M3 20h18M4.5 20v-6h5v6M9.5 20V8h5v12M14.5 20v-9h5v9M12 3.5l.9 1.8 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3z"/></symbol>
   <symbol id="i-runden" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5M3.5 3.5v5h5M12 7.5V12l3 2.5"/></symbol>
   <symbol id="i-verwaltung" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
-  <symbol id="i-show" viewBox="0 0 24 24"><rect x="2.5" y="5" width="5.5" height="8" rx="1"/><rect x="9.25" y="5" width="5.5" height="8" rx="1"/><rect x="16" y="5" width="5.5" height="8" rx="1"/><path d="M5 17.5h14M8 20.5h8"/></symbol>
   <symbol id="crestsym" viewBox="0 0 48 48"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00F5FF"/><stop offset="1" stop-color="#FF00E5"/></linearGradient></defs>
     <path d="M7 34 L5 14 L16 23 L24 8 L32 23 L43 14 L41 34 Z" fill="none" stroke="url(#cg)" stroke-width="3" stroke-linejoin="round"/><path d="M9 40h30" stroke="url(#cg)" stroke-width="3" stroke-linecap="round"/>
     <circle cx="24" cy="8" r="2.8" fill="#FFD84D"/><circle cx="5" cy="14" r="2.3" fill="#00F5FF"/><circle cx="43" cy="14" r="2.3" fill="#FF00E5"/></symbol>
@@ -492,7 +487,6 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
 <nav class="dock" aria-label="Bereiche">
   <button data-view="arena"><svg><use href="#i-arena"/></svg>Arena</button>
   <button data-view="rad"><svg><use href="#i-rad"/></svg>Glücksrad<span class="dot" hidden></span></button>
-  <button data-view="show"><svg><use href="#i-show"/></svg>Rätselrad</button>
   <button data-view="spiele"><svg><use href="#i-spiele"/></svg>Spiele</button>
   <button data-view="rangliste"><svg><use href="#i-rangliste"/></svg>Rangliste</button>
   <button data-view="runden"><svg><use href="#i-runden"/></svg>Runden</button>
@@ -1529,7 +1523,8 @@ function go(v, keepScroll){
   if(!VIEWS.includes(v)) v = "arena";
   const changed = v!==curView; curView = v;
   document.querySelectorAll("main .view").forEach(s=>s.classList.toggle("on", s.id==="v-"+v));
-  document.querySelectorAll(".dock [data-view]").forEach(b=>{ b.classList.toggle("on", b.dataset.view===v); b.toggleAttribute("aria-current", b.dataset.view===v); });
+  const nav = v==="show" ? "spiele" : v;                              // das Rätselrad gehört zu den Spielen
+  document.querySelectorAll(".dock [data-view]").forEach(b=>{ b.classList.toggle("on", b.dataset.view===nav); b.toggleAttribute("aria-current", b.dataset.view===nav); });
   try{ localStorage.setItem("oly-view", v); if($("tv").hidden) history.replaceState(null, "", "#"+v); }catch(e){}
   if(changed && !keepScroll) scrollTo(0,0);
 }

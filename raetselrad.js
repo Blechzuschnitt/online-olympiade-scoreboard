@@ -153,6 +153,7 @@ function rrSkeleton(){
       <button class="ghost sm" data-rr="fx" id="rrFx" title="Effektstufe wechseln"></button>
       <button class="ghost sm" data-rr="tv" id="rrTvBtn">📺 Studio</button>
       <button class="ghost sm" data-rr="host">🎛️ Spielleitung</button>
+      <button class="ghost sm" data-view="spiele">← Spiele</button>
     </div>
   </div>
   <div class="rr-ticker" id="rrTicker" aria-live="polite"><b></b><span></span></div>
@@ -424,7 +425,7 @@ function rrSetupHTML(){
         <li>Bankrott: Rundenpunkte weg. Joker verzeiht einen Fehlversuch.</li>
         <li>Wer löst, bringt seine Rundenpunkte aufs Konto. ${set.rounds} Runden, ${free} Rätsel bereit.</li></ul></section>
     </div>
-    <div class="row center" style="margin-top:22px"><button class="pri big" data-rr="start" ${pick.length>=2 && pick.length<=6 ? "" : "disabled"}>🎬 Show starten</button><button class="ghost" data-view="verwaltung">Rätsel &amp; Einstellungen</button></div>
+    <div class="row center" style="margin-top:22px"><button class="pri big" data-rr="start" ${pick.length>=2 && pick.length<=6 ? "" : "disabled"}>🎬 Show starten</button><button class="ghost" data-view="verwaltung">Rätsel &amp; Einstellungen</button><button class="ghost" data-view="spiele">← Zurück zu den Spielen</button></div>
   </div>`;
 }
 function rrEndHTML(sh){
@@ -435,7 +436,7 @@ function rrEndHTML(sh){
     <div class="rr-final">${rk.map((p,i)=>`<div class="rr-fr ${i===0 ? "first" : ""}" style="--i:${i}"><span class="pos">${i+1}</span><span class="orb" style="--pc:${PCOL[i%PCOL.length]}">${face(p)}</span><b>${esc(p.name)}${i===0 ? " 👑" : ""}</b><span class="sc"><b>${rrFmt(p.total)}</b><small>PKT</small></span></div>`).join("")}</div>
     <div class="row center" style="margin-top:22px">
       ${canT ? `<button class="pri big" data-rr="transfer">🏆 Punkte in die Olympiade übertragen</button>` : sh.transferred ? `<span class="pill st-done">✓ In die Olympiade übertragen</span>` : `<span class="hint">Ohne laufende Olympiade werden keine Punkte übertragen.</span>`}
-      <button class="ghost" data-rr="new">🔁 Neue Show</button></div>
+      <button class="ghost" data-rr="new">🔁 Neue Show</button><button class="ghost" data-view="spiele">← Spiele</button></div>
   </div>`;
 }
 
