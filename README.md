@@ -37,7 +37,7 @@ Ganz unten in der App gibt es `spiele-sammlung.pdf`: die deutsche Fassung einer 
 
 ## Lucky Lines – unser eigenes Würfelspiel
 
-`lucky-lines.html` ist ein Kreuzchen-Würfelspiel nur für uns (2 weiße + 4 farbige Würfel, vier Reihen, Schlösser, Fehlwürfe).
+`lucky-lines.html` ist ein Kreuzchen-Würfelspiel nur für uns (2 weiße + 4 farbige Würfel, vier Reihen, Schlösser, Fehlwürfe) im Spieltisch-Look mit 3D-Würfeln und Würfelgeräusch (abschaltbar).
 Jede Person öffnet die Seite auf dem eigenen Handy und tippt auf ihren Namen – alles läuft live über Supabase
 (Zeilen `ll-tisch` und `ll-s1` … `ll-s6` in `olympiade_state`). Ohne Verbindung geht „Alle an diesem Gerät“.
 
