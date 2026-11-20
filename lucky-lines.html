@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucky Lines</title>
+<link rel="icon" href="lucky-lines-icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Monoton&family=Bungee&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07020f;--pink:#ff2fd1;--cyan:#25f4ff;--gold:#ffd23f;--gold2:#f5a700;--gold3:#a86b00;
+    --red:#e3122f;--red2:#8e0018;--green:#19d27a;--text:#fff6e6;--mute:#cdbbe9;
+    --panel:rgba(20,6,38,.85);--line:rgba(255,210,63,.38);
+    --c0:#ff2fd1;--c1:#ffd23f;--c2:#6dff5a;--c3:#25f4ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--text);font-family:Nunito,system-ui,sans-serif;font-weight:600;
+    background:radial-gradient(1000px 480px at 50% -160px,rgba(255,47,209,.28),transparent 60%),
+      radial-gradient(800px 480px at 0% 100%,rgba(37,244,255,.12),transparent 60%),var(--bg);
+    background-attachment:fixed;padding:18px 16px 48px}
+  .wrap{max-width:900px;margin:0 auto}
+  h2{font-family:Bungee;font-weight:400}
+  .back{display:inline-block;margin-bottom:10px;color:var(--cyan);font-weight:800;text-decoration:none;font-size:14px}
+  .sign{text-align:center;margin:0 auto 16px;padding:12px;border-radius:24px;max-width:560px;
+    background:radial-gradient(ellipse at 50% 0%,#2a0846,#12031f 70%);border:5px dotted var(--gold);
+    animation:bulbs 1.1s steps(1) infinite;box-shadow:0 0 30px rgba(255,47,209,.3)}
+  @keyframes bulbs{50%{border-color:#fff4b8}}
+  .sign h1{margin:0;font-family:Monoton;font-weight:400;font-size:clamp(34px,9vw,64px);color:#ffe6fb;
+    text-shadow:0 0 4px #fff,0 0 12px var(--pink),0 0 28px var(--pink)}
+  .sign .sub{font-family:Bungee;font-size:12px;letter-spacing:.25em;color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
+  .live{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:3px 11px;border-radius:99px;background:rgba(0,0,0,.35);border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--mute)}
+  .live i{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+  .live.on i{background:var(--green);box-shadow:0 0 8px var(--green)}
+  .panel{background:var(--panel);border:2px solid var(--line);border-radius:22px;padding:16px 14px;margin-bottom:18px;
+    box-shadow:0 0 26px rgba(255,47,209,.12),0 14px 34px rgba(0,0,0,.45)}
+  .panel h2{margin:0 0 8px;font-size:20px;color:var(--gold);text-shadow:0 0 10px rgba(255,210,63,.5)}
+  .mute{color:var(--mute);font-size:14px}
+  button{font-family:Bungee,Nunito,sans-serif;font-weight:400;font-size:13px;border-radius:99px;padding:9px 16px;cursor:pointer;
+    color:#fff;background:linear-gradient(180deg,#ff3550,var(--red) 55%,var(--red2));border:2px solid var(--gold);box-shadow:0 4px 0 #5c000f}
+  button:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #5c000f}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.gold{color:#3a2400;background:linear-gradient(180deg,#fff6c4,var(--gold) 50%,var(--gold2));border-color:#fff3b0;box-shadow:0 4px 0 var(--gold3)}
+  button.ghost{background:rgba(255,255,255,.06);color:var(--text);border:1.5px solid var(--line);box-shadow:none}
+  button.sm{font-size:11px;padding:6px 11px}
+  button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  /* Setup */
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;border:1.5px solid var(--line);background:rgba(0,0,0,.3);cursor:pointer;font-weight:800;color:var(--mute);font-family:Nunito;font-size:14px;box-shadow:none}
+  .chip.on{color:#3a2400;background:linear-gradient(180deg,#fff6c4,var(--gold));border-color:#fff3b0}
+  .variants{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:6px 0 12px}
+  .var{display:block;text-align:left;padding:10px 12px;border-radius:16px;border:1.5px solid var(--line);background:rgba(0,0,0,.3);cursor:pointer;font-family:Nunito;font-weight:600;color:var(--text);box-shadow:none;font-size:13px}
+  .var b{display:block;font-family:Bungee;font-weight:400;font-size:14px;color:var(--gold);margin-bottom:3px}
+  .var.on{border-color:var(--pink);box-shadow:0 0 0 2px var(--pink),0 0 18px rgba(255,47,209,.4);background:rgba(255,47,209,.12)}
+  label.chk{display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0;cursor:pointer}
+
+  /* Würfeltisch */
+  .turn{font-family:Bungee;font-size:16px;color:var(--pink);text-shadow:0 0 10px var(--pink);margin-bottom:8px}
+  .dice{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 12px;min-height:58px}
+  .die{width:50px;height:50px;border-radius:12px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:7px;gap:2px;
+    background:#fff;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.5)}
+  .die i{border-radius:50%;width:9px;height:9px;place-self:center;background:transparent}
+  .die i.p{background:#1a0b2a}
+  .die.col i.p{background:#14051f}
+  .die.off{opacity:.18;filter:grayscale(1)}
+  .die.rolling{animation:shake .6s ease}
+  @keyframes shake{0%{transform:rotate(0) translateY(0)}25%{transform:rotate(-18deg) translateY(-8px)}50%{transform:rotate(14deg) translateY(2px)}75%{transform:rotate(-6deg)}100%{transform:none}}
+  .sep{width:2px;height:40px;background:var(--line);margin:0 4px}
+  .hint{background:rgba(37,244,255,.08);border:1px solid rgba(37,244,255,.35);border-radius:14px;padding:9px 12px;font-size:14px;margin:8px 0}
+  .who{margin-top:10px;font-size:13px}
+  .waiting{font-size:13px;color:var(--mute);margin-top:6px}
+
+  /* Spielblatt */
+  .sheet{background:rgba(0,0,0,.35);border:2px solid var(--line);border-radius:18px;padding:10px;margin-bottom:14px}
+  .sheet.active{border-color:var(--pink);box-shadow:0 0 18px rgba(255,47,209,.35)}
+  .sheet.mine{border-color:var(--cyan)}
+  .shead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .shead .nm{font-family:Bungee;font-size:16px}
+  .shead .tot{font-family:Bungee;color:var(--gold);font-size:18px}
+  .grid{display:grid;gap:3px}
+  .line{display:grid;grid-template-columns:repeat(11,minmax(0,1fr)) minmax(0,1.05fr);gap:3px;border-radius:10px;padding:3px}
+  .box{position:relative;aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;
+    font-family:Bungee;font-size:clamp(10px,2.8vw,17px);color:#14051f;border:none;padding:0;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2);cursor:default;min-width:0}
+  .box:disabled{opacity:1;cursor:default;transform:none}
+  .box.lock{font-size:clamp(11px,3vw,18px);background:rgba(255,255,255,.12)!important;color:#fff}
+  .box.lock.lit{background:var(--gold)!important}
+  .box.x::after{content:"✕";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.1em;font-weight:900;color:#fff;-webkit-text-stroke:1.5px #14051f;text-shadow:0 0 6px rgba(0,0,0,.7)}
+  .box.gone,.box.gone:disabled{opacity:.3}
+  .box.ok{cursor:pointer;outline:3px solid #fff;outline-offset:1px;animation:pulse 1s infinite;z-index:1}
+  .box.ok.cc{outline-color:var(--cyan)}
+  @keyframes pulse{50%{outline-color:transparent;transform:scale(1.07)}}
+  .line.dead .box:not(.x):not(.lock){opacity:.22}
+  .bline{display:grid;grid-template-columns:repeat(11,minmax(0,1fr)) minmax(0,1.05fr);gap:3px;padding:0 3px}
+  .bbox{height:15px;border-radius:5px;border:1.5px dashed rgba(255,210,63,.55);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--gold)}
+  .bbox.x{background:var(--gold);color:#3a2400;border-style:solid}
+  .sfoot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:13px}
+  .pens{display:flex;gap:4px;align-items:center}
+  .pen{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--mute);display:flex;align-items:center;justify-content:center;font-size:12px}
+  .pen.x{background:var(--red);border-color:var(--red);color:#fff}
+  .scores{display:flex;gap:6px;flex-wrap:wrap}
+  .scores span{padding:2px 8px;border-radius:99px;font-weight:900;color:#14051f}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+
+  /* Ergebnis */
+  .rank{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:rgba(0,0,0,.3);margin-bottom:6px;font-weight:800}
+  .rank .p{margin-left:auto;font-family:Bungee;color:var(--gold)}
+  details{margin-top:4px}
+  summary{cursor:pointer;font-family:Bungee;color:var(--gold);font-size:16px}
+  .rules{font-size:14px;line-height:1.5}
+  .rules h3{font-family:Bungee;font-weight:400;color:var(--cyan);font-size:14px;margin:14px 0 4px}
+  .rules ul{margin:4px 0;padding-left:20px}
+  .toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,140%);background:#2a0846;border:2px solid var(--gold);padding:10px 16px;border-radius:14px;font-weight:800;transition:transform .25s;z-index:9;max-width:92vw}
+  .toast.show{transform:translate(-50%,0)}
+  @media (max-width:520px){ .line,.bline{gap:2px} .box{border-radius:5px} .die{width:42px;height:42px;padding:6px} .die i{width:7px;height:7px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Zur Nelskamp Olympiade</a>
+  <div class="sign">
+    <h1>Lucky Lines</h1>
+    <div class="sub">WÜRFELN · KREUZEN · ABRÄUMEN</div>
+    <div class="live" id="live"><i></i><span id="liveText">Verbinde …</span></div>
+  </div>
+
+  <div id="app"></div>
+
+  <section class="panel">
+    <details id="rulesBox">
+      <summary>📜 Spielregeln &amp; Varianten</summary>
+      <div class="rules">
+        <h3>Ziel</h3>
+        Möglichst viele Kreuze in den vier Farbreihen sammeln. Je mehr Kreuze in einer Reihe, desto mehr Punkte (1, 3, 6, 10, 15 … – jedes weitere Kreuz zählt eins mehr als das vorige).
+        <h3>Ablauf eines Zugs</h3>
+        <ul>
+          <li>Wer dran ist, würfelt mit 2 weißen und 4 farbigen Würfeln.</li>
+          <li><b>1. Weiße Summe – für alle:</b> Jede Person darf die Summe der beiden weißen Würfel in einer beliebigen Reihe ankreuzen (oder passen).</li>
+          <li><b>2. Farbe – nur wer dran ist:</b> Zusätzlich darf man <i>einen</i> weißen plus <i>einen</i> farbigen Würfel zusammenzählen und das Ergebnis in einem Feld dieser Farbe ankreuzen.</li>
+          <li>Kreuzt die würfelnde Person in beiden Schritten nichts an, gibt es einen <b>Fehlwurf</b> (−5 Punkte).</li>
+        </ul>
+        <h3>Ankreuzen</h3>
+        <ul>
+          <li>In jeder Reihe wird von links nach rechts gekreuzt. Übersprungene Felder sind verloren.</li>
+          <li>Das letzte Feld einer Reihe darf man erst ankreuzen, wenn in dieser Reihe schon mindestens 5 Kreuze stehen. Dann gibt es das 🔒 als Extra-Kreuz dazu und die Reihe ist <b>gesperrt</b>: ab dem nächsten Wurf kreuzt dort niemand mehr, der Würfel dieser Farbe fällt weg.</li>
+        </ul>
+        <h3>Spielende</h3>
+        Das Spiel endet nach dem Zug, in dem die zweite Reihe gesperrt wird (bei „Kurzes Spiel“ schon nach der ersten) oder jemand seinen 4. Fehlwurf bekommt. Punkte aller Reihen zusammen, minus 5 pro Fehlwurf.
+        <h3>Varianten</h3>
+        <ul>
+          <li><b>Klassisch</b> – zwei Reihen von 2 bis 12, zwei Reihen von 12 bis 2, jede Reihe in einer Farbe.</li>
+          <li><b>Farbenmix</b> – die Zahlen stehen wie gewohnt, aber jedes Feld hat seine eigene Farbe. Für den Farbschritt zählt die Farbe des Felds. Gesperrt wird eine Reihe über ihr letztes Feld; dessen Farbe fällt als Würfel weg.</li>
+          <li><b>Zahlenmix</b> – jede Reihe hat ihre Farbe, aber die Zahlen sind durcheinander. Nur das letzte Feld ist wie immer 12 bzw. 2. Langsamer, weil man suchen muss!</li>
+          <li><b>Doppel-Mix</b> – Farben <i>und</i> Zahlen gemischt. Für Profis.</li>
+          <li><b>Bonusreihen</b> – zwischen der 1./2. und der 3./4. Reihe liegt je eine Sternchenreihe. Sobald in beiden Nachbarreihen dieselbe Spalte angekreuzt ist, wird der Stern darunter automatisch gekreuzt. Jeder Stern zählt als Kreuz für <i>beide</i> Nachbarreihen – so sind sehr hohe Punkte möglich.</li>
+          <li><b>Kurzes Spiel</b> (zuschaltbar) – Ende schon, wenn die erste Reihe gesperrt ist.</li>
+        </ul>
+        <h3>Spielen auf mehreren Geräten</h3>
+        Jede Person öffnet diese Seite auf ihrem Handy und tippt auf ihren Namen. Alles läuft live synchron. Auf einem einzigen Gerät wählt man „Alle an diesem Gerät“ und reicht es herum.
+      </div>
+    </details>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const d6 = () => 1 + Math.floor(Math.random()*6);
+function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2600); }
+
+/* ============ Spielblatt-Varianten ============ */
+const COLORS = ["Pink","Gold","Lime","Cyan"];
+const CVAR = i => `var(--c${i})`;
+const ASC = [2,3,4,5,6,7,8,9,10,11,12], DESC = [...ASC].reverse();
+const SHIFT = [0,2,1,3,1,0,3,2,0,3,2];                // Farbenmix: jede Spalte enthält alle 4 Farben
+const MIXNUM = [[5,9,3,7,11,2,8,4,10,6,12],[8,3,10,6,2,9,5,11,4,7,12],
+                [9,4,12,7,10,3,6,11,5,8,2],[6,11,3,8,12,5,10,4,9,7,2]];
+const VARIANTS = {
+  klassisch:{name:"Klassisch", desc:"Das Original-Prinzip: zwei Reihen aufwärts, zwei abwärts."},
+  farbmix:{name:"Farbenmix", desc:"Zahlen normal, aber jedes Feld hat seine eigene Farbe.", col:"mix"},
+  zahlmix:{name:"Zahlenmix", desc:"Farbreihen normal, Zahlen durcheinander.", num:"mix"},
+  doppelmix:{name:"Doppel-Mix", desc:"Farben und Zahlen gemischt – für Profis.", col:"mix", num:"mix"},
+  bonus:{name:"Bonusreihen", desc:"Sternchenreihen zwischen den Farben – Punkte zählen doppelt.", bonus:true},
+};
+function layout(vk){
+  const v = VARIANTS[vk] || VARIANTS.klassisch;
+  return [0,1,2,3].map(r => Array.from({length:11}, (_,k) => ({
+    n: v.num==="mix" ? MIXNUM[r][k] : (r<2?ASC:DESC)[k],
+    c: v.col==="mix" ? (r+SHIFT[k])%4 : r })));
+}
+const lockColor = (L,r) => L[r][10].c;
+const tri = n => n*(n+1)/2;
+
+/* ============ Speicher (Supabase, sonst lokal) ============ */
+const SB_URL = "https://ktpjtmoezirsccgjbafe.supabase.co";
+const SB_KEY = "sb_publishable_JthhfbzVbUjImGFvevYXaA_j_ssZ3tB";
+const SEATS = ["s1","s2","s3","s4","s5","s6"];
+const T_ID = "ll-tisch", SID = s => "ll-"+s;
+const IDS = [T_ID, ...SEATS.map(SID)];
+const LS = "lucky-lines-v1";
+let sb = null, online = false;
+let cache = {};   // id -> data
+let olyPlayers = [{name:"Yana",emoji:"🦄"},{name:"Noah",emoji:"🚀"},{name:"Papa",emoji:"🦁"}];
+let me = localStorage.getItem("ll-me") || "";
+let setup = {picked:null, variant:"klassisch", short:false};
+let confirmNew = false, lastRid = null, advancing = null;
+
+function loadLocal(){ try{ cache = JSON.parse(localStorage.getItem(LS)) || {}; }catch{ cache = {}; } }
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(cache)); }catch{} }
+
+function put(id, d){
+  d.v = ((cache[id] && cache[id].v) || 0) + 1;
+  cache[id] = d; saveLocal(); render();
+  if(online) sb.from("olympiade_state").update({data:d}).eq("id",id).then(({error})=>{
+    if(error){ console.error(error); toast("⚠️ Speichern fehlgeschlagen – bitte neu laden"); }
+  });
+}
+function applyRemote(id, d, force){
+  if(!d || typeof d!=="object") return;
+  const cur = cache[id];
+  if(!force && cur && cur.gid===d.gid && (cur.v||0) > (d.v||0)) return;
+  cache[id] = d; saveLocal(); render();
+}
+async function fetchAll(){
+  const {data, error} = await sb.from("olympiade_state").select("id,data").in("id",[...IDS,"nelskamp"]);
+  if(error) throw error;
+  for(const row of data){
+    if(row.id==="nelskamp"){ const ps = row.data && row.data.players; if(Array.isArray(ps) && ps.length) olyPlayers = ps.map(p=>({name:p.name,emoji:p.emoji})); }
+    else applyRemote(row.id, row.data, true);
+  }
+}
+async function connect(){
+  loadLocal();
+  try{
+    sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:false, autoRefreshToken:false}});
+    await fetchAll();
+    online = true;
+    sb.channel("lucky-lines").on("postgres_changes",{event:"UPDATE",schema:"public",table:"olympiade_state"}, p=>{
+      if(p.new && IDS.includes(p.new.id)) applyRemote(p.new.id, p.new.data);
+    }).subscribe();
+    document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) fetchAll().catch(()=>{}); });
+  }catch(e){ console.warn(e); online = false; sb = null; me = "all"; }
+  $("live").classList.toggle("on", online);
+  $("liveText").textContent = online ? "Live – auf allen Geräten" : "Offline – nur dieses Gerät";
+  render();
+}
+
+/* ============ Spiellogik ============ */
+const table = () => cache[T_ID] || {};
+const game = () => { const t = table(); return t.gid ? t : null; };
+function seatData(s){
+  const t = table(), d = cache[SID(s)];
+  if(d && d.gid===t.gid) return d;
+  return {gid:t.gid, marks:[[],[],[],[]], bonus:[[],[]], locks:[], pen:0, act:null};
+}
+const clone = o => JSON.parse(JSON.stringify(o));
+const lastIdx = (sd,r) => sd.marks[r].length ? Math.max(...sd.marks[r]) : -1;
+const activeSeat = g => g.seats[g.turn % g.seats.length].seat;
+const canControl = s => me==="all" || me===s;
+
+function lockedRows(exceptRid){       // Reihen, die (vor diesem Wurf) gesperrt wurden
+  const g = game(), set = new Set();
+  if(!g) return set;
+  for(const st of g.seats) for(const L of seatData(st.seat).locks) if(L.rid!==exceptRid) set.add(L.r);
+  return set;
+}
+function allLocked(){ return lockedRows(null); }
+
+function act(s){
+  const g = game(), sd = seatData(s);
+  if(!g || !g.roll) return null;
+  if(sd.act && sd.act.rid===g.roll.id) return sd.act;
+  return {rid:g.roll.id, step:"w", w:null, c:null, done:false, pen:false};
+}
+function canCross(sd, r, k, sum, color, rid){
+  const g = game(), L = layout(g.variant);
+  if(lockedRows(rid).has(r) || sd.locks.some(x=>x.r===r)) return false;
+  if(k <= lastIdx(sd,r)) return false;
+  if(L[r][k].n !== sum) return false;
+  if(color!=null && L[r][k].c !== color) return false;
+  if(k===10 && sd.marks[r].length < 5) return false;
+  return true;
+}
+// mögliche Felder für den aktuellen Schritt: Map "r-k" -> "w"|"c"
+function options(s){
+  const g = game(); if(!g || !g.roll || g.over) return new Map();
+  const a = act(s), sd = seatData(s), out = new Map();
+  if(!a || a.done) return out;
+  const roll = g.roll, ws = roll.w[0]+roll.w[1];
+  if(a.step==="w" && !a.w){
+    for(let r=0;r<4;r++) for(let k=0;k<11;k++) if(canCross(sd,r,k,ws,null,roll.id)) out.set(r+"-"+k,"w");
+  }
+  if(a.step==="c" && !a.c && s===activeSeat(g)){
+    for(let i=0;i<4;i++){ if(roll.c[i]==null) continue;
+      for(const w of roll.w){ const sum = w+roll.c[i];
+        for(let r=0;r<4;r++) for(let k=0;k<11;k++) if(canCross(sd,r,k,sum,i,roll.id)) out.set(r+"-"+k,"c");
+      }
+    }
+  }
+  return out;
+}
+function rowCount(sd, r, vk){
+  let n = sd.marks[r].length + (sd.locks.some(x=>x.r===r) ? 1 : 0);
+  if(VARIANTS[vk] && VARIANTS[vk].bonus) n += sd.bonus[r<2?0:1].length;
+  return n;
+}
+function score(s){
+  const g = game(), sd = seatData(s);
+  const rows = [0,1,2,3].map(r => tri(rowCount(sd,r,g.variant)));
+  return {rows, pen:sd.pen*5, total: rows.reduce((a,b)=>a+b,0) - sd.pen*5};
+}
+
+/* ---- Aktionen ---- */
+function doCross(s, r, k){
+  const g = game(), opts = options(s), kind = opts.get(r+"-"+k);
+  if(!kind || !canControl(s)) return;
+  const sd = clone(seatData(s)), a = act(s), L = layout(g.variant);
+  sd.marks[r].push(k);
+  const cr = {r, k, lock:false, bx:[]};
+  if(k===10){ sd.locks.push({r, rid:g.roll.id}); cr.lock = true; }
+  if(VARIANTS[g.variant].bonus){
+    const other = r ^ 1, b = r<2?0:1;
+    if(sd.marks[other].includes(k) && !sd.bonus[b].includes(k)){ sd.bonus[b].push(k); cr.bx.push(k); }
+  }
+  if(kind==="w"){ a.w = cr; if(s===activeSeat(g)) a.step = "c"; }
+  else a.c = cr;
+  sd.act = a;
+  if(cr.lock) toast(`🔒 ${COLORS[lockColor(L,r)]}-Reihe gesperrt!`);
+  put(SID(s), sd);
+}
+function removeCross(sd, cr){
+  sd.marks[cr.r] = sd.marks[cr.r].filter(x=>x!==cr.k);
+  if(cr.lock) sd.locks = sd.locks.filter(x=>!(x.r===cr.r && x.rid===sd.act.rid));
+  const b = cr.r<2?0:1;
+  sd.bonus[b] = sd.bonus[b].filter(x=>!cr.bx.includes(x));
+}
+function undo(s){
+  if(!canControl(s)) return;
+  const sd = clone(seatData(s)), a = act(s);
+  if(!a || a.done) return;
+  sd.act = a;
+  if(a.step==="c" && a.c){ removeCross(sd,a.c); a.c = null; }
+  else if(a.step==="c"){ if(a.w){ removeCross(sd,a.w); a.w = null; } a.step = "w"; }
+  else if(a.w){ removeCross(sd,a.w); a.w = null; }
+  put(SID(s), sd);
+}
+function skipWhite(s){
+  const sd = clone(seatData(s)), a = act(s); a.step = "c"; sd.act = a; put(SID(s), sd);
+}
+function finish(s){
+  if(!canControl(s)) return;
+  const g = game(), sd = clone(seatData(s)), a = act(s);
+  if(!a || a.done) return;
+  a.done = true;
+  if(s===activeSeat(g) && !a.w && !a.c){ a.pen = true; sd.pen++; toast(`❌ Fehlwurf für ${g.seats.find(x=>x.seat===s).name}`); }
+  sd.act = a; put(SID(s), sd);
+}
+function roll(){
+  const g = game(); if(!g || g.roll || g.over) return;
+  if(!canControl(activeSeat(g))) return;
+  const L = layout(g.variant), gone = new Set([...allLocked()].map(r=>lockColor(L,r)));
+  const t = clone(g);
+  t.roll = {id:uid(), w:[d6(),d6()], c:[0,1,2,3].map(i=> gone.has(i) ? null : d6())};
+  put(T_ID, t);
+}
+function maybeAdvance(){
+  const g = game(); if(!g || !g.roll || g.over) return;
+  const rid = g.roll.id;
+  const all = g.seats.every(st => { const sd = seatData(st.seat); return sd.act && sd.act.rid===rid && sd.act.done; });
+  if(!all || advancing===rid) return;
+  advancing = rid;
+  setTimeout(()=>{
+    const g2 = game(); if(!g2 || !g2.roll || g2.roll.id!==rid) return;
+    const locked = allLocked().size;
+    const maxPen = Math.max(...g2.seats.map(st=>seatData(st.seat).pen));
+    const t = clone(g2);
+    t.last = rid; t.roll = null;
+    if(locked >= (g2.short?1:2) || maxPen >= 4){ t.over = true; t.ended = Date.now(); }
+    else t.turn = (g2.turn + 1) % g2.seats.length;
+    put(T_ID, t);
+  }, 700);
+}
+function newGame(){
+  const picked = setup.picked || olyPlayers.map((_,i)=>i);
+  if(picked.length < 1) return toast("Mindestens eine Person auswählen");
+  const seats = picked.slice(0,6).map((pi,i)=>({seat:SEATS[i], name:olyPlayers[pi].name, emoji:olyPlayers[pi].emoji}));
+  const gid = uid();
+  for(const st of seats) put(SID(st.seat), {gid, marks:[[],[],[],[]], bonus:[[],[]], locks:[], pen:0, act:null});
+  put(T_ID, {gid, variant:setup.variant, short:setup.short, seats, turn:Math.floor(Math.random()*seats.length), roll:null, over:false, started:Date.now()});
+  confirmNew = false;
+  if(me && me!=="all" && !seats.some(x=>x.seat===me)) me = "";
+  toast("🎲 Neues Spiel – viel Glück!");
+}
+function quitGame(){ const t = clone(table()); t.over = true; t.aborted = true; t.roll = null; put(T_ID, t); confirmNew = false; }
+
+/* ============ Darstellung ============ */
+const PIPS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function die(v, color, anim){
+  if(v==null) return `<div class="die col off" style="background:${CVAR(color)}" title="Würfel weg (Reihe gesperrt)"></div>`;
+  const bg = color==null ? "#fff" : CVAR(color);
+  return `<div class="die${color!=null?" col":""}${anim?" rolling":""}" style="background:${bg}" title="${color==null?"Weiß":COLORS[color]}: ${v}">${
+    Array.from({length:9},(_,i)=>`<i class="${PIPS[v].includes(i)?"p":""}"></i>`).join("")}</div>`;
+}
+function sheetHTML(st, g){
+  const s = st.seat, sd = seatData(s), L = layout(g.variant), opts = canControl(s) ? options(s) : new Map();
+  const a = act(s), isActive = !g.over && s===activeSeat(g), sc = score(s);
+  const locked = allLocked(), bonus = VARIANTS[g.variant].bonus;
+  const line = r => {
+    const last = lastIdx(sd,r), myLock = sd.locks.some(x=>x.r===r), dead = locked.has(r) && !myLock;
+    return `<div class="line${dead?" dead":""}" style="background:color-mix(in srgb, ${CVAR(lockColor(L,r))} 14%, transparent)">${
+      L[r].map((b,k)=>{ const x = sd.marks[r].includes(k), o = opts.get(r+"-"+k);
+        return `<button class="box${x?" x":""}${!x&&k<last?" gone":""}${o?" ok"+(o==="c"?" cc":""):""}" style="background:${CVAR(b.c)}"
+          ${o?`data-cross="${s}|${r}|${k}"`:"disabled"} aria-label="${COLORS[b.c]} ${b.n}${x?" angekreuzt":""}">${b.n}</button>`; }).join("")
+      }<div class="box lock${myLock||locked.has(r)?" lit":""}" title="Schloss – sperrt ${COLORS[lockColor(L,r)]}" style="border:2px solid ${CVAR(lockColor(L,r))}">${myLock?"✕":"🔒"}</div></div>`;
+  };
+  const bline = b => `<div class="bline">${Array.from({length:11},(_,k)=>`<div class="bbox${sd.bonus[b].includes(k)?" x":""}">★</div>`).join("")}<div></div></div>`;
+  let rows = "";
+  for(let r=0;r<4;r++){ rows += line(r); if(bonus && (r===0||r===2)) rows += bline(r===0?0:1); }
+
+  let btns = "";
+  if(a && !a.done && canControl(s) && !g.over){
+    const hasUndo = a.w || a.c || (a.step==="c");
+    if(isActive && a.step==="w") btns += `<button class="sm ghost" data-do="skip" data-s="${s}">Weiß auslassen →</button>`;
+    if(isActive && a.step==="c") btns += `<button class="sm${!a.w&&!a.c?"":" gold"}" data-do="finish" data-s="${s}">${!a.w&&!a.c?"❌ Fehlwurf & beenden":"✓ Zug beenden"}</button>`;
+    if(!isActive) btns += `<button class="sm gold" data-do="finish" data-s="${s}">${a.w?"✓ Fertig":"Passen"}</button>`;
+    if(hasUndo) btns += `<button class="sm ghost" data-do="undo" data-s="${s}">↶</button>`;
+  } else if(a && a.done && !g.over) btns = `<span class="mute">✓ fertig</span>`;
+
+  return `<div class="sheet${isActive?" active":""}${me===s?" mine":""}">
+    <div class="shead"><span class="nm">${esc(st.emoji)} ${esc(st.name)}${isActive?" 🎲":""}</span><div class="acts">${btns}</div><span class="tot">${sc.total} P</span></div>
+    <div class="grid">${rows}</div>
+    <div class="sfoot"><div class="pens">Fehlwürfe ${[0,1,2,3].map(i=>`<div class="pen${i<sd.pen?" x":""}">${i<sd.pen?"✕":""}</div>`).join("")}</div>
+      <div class="scores">${sc.rows.map((p,r)=>`<span style="background:${CVAR(lockColor(L,r))}">${p}</span>`).join("")}${sd.pen?`<span style="background:var(--red);color:#fff">−${sc.pen}</span>`:""}</div></div>
+  </div>`;
+}
+function hintFor(g){
+  if(g.over) return "";
+  const act0 = activeSeat(g), actName = g.seats.find(x=>x.seat===act0).name;
+  if(!g.roll) return canControl(act0) ? `Du bist dran, ${esc(actName)}! Würfeln!` : `Warte, bis ${esc(actName)} würfelt …`;
+  const ws = g.roll.w[0]+g.roll.w[1];
+  const mine = me==="all" ? null : me;
+  if(mine && g.seats.some(x=>x.seat===mine)){
+    const a = act(mine);
+    if(a.done) return "Warte auf die anderen …";
+    if(a.step==="w" && !a.w) return `<b>Weiße Summe ${ws}</b> – tippe ein leuchtendes Feld oder ${mine===act0?"lass den Schritt aus":"passe"}.`;
+    if(mine===act0) return `<b>Farbschritt:</b> ein weißer + ein farbiger Würfel. Tippe ein <span style="color:var(--cyan)">türkis</span> leuchtendes Feld oder beende den Zug.`;
+    return "Tippe auf „Fertig“.";
+  }
+  return `<b>Weiße Summe ${ws}</b> für alle – danach Farbschritt für ${esc(actName)}.`;
+}
+function setupHTML(){
+  const picked = setup.picked || olyPlayers.map((_,i)=>i);
+  return `<section class="panel"><h2>🎰 Neues Spiel</h2>
+    <div class="mute">Wer spielt mit?</div>
+    <div class="chips">${olyPlayers.map((p,i)=>`<button class="chip${picked.includes(i)?" on":""}" data-pick="${i}">${esc(p.emoji)} ${esc(p.name)}</button>`).join("")}</div>
+    <div class="mute">Variante</div>
+    <div class="variants">${Object.entries(VARIANTS).map(([k,v])=>`<button class="var${setup.variant===k?" on":""}" data-var="${k}"><b>${v.name}</b>${v.desc}</button>`).join("")}</div>
+    <label class="chk"><input type="checkbox" id="shortChk" ${setup.short?"checked":""}> Kurzes Spiel – Ende schon nach der ersten gesperrten Reihe</label>
+    <div class="row" style="margin-top:10px"><button class="gold" data-do="new">🎲 Spiel starten</button></div>
+  </section>`;
+}
+function resultHTML(g){
+  const ranked = g.seats.map(st=>({st, sc:score(st.seat)})).sort((a,b)=>b.sc.total-a.sc.total);
+  const medal = ["🥇","🥈","🥉"];
+  return `<section class="panel"><h2>🏆 ${g.aborted?"Spiel abgebrochen":"Endstand"} – ${VARIANTS[g.variant].name}</h2>
+    ${ranked.map((x,i)=>`<div class="rank"><span>${medal[i]||"🎖️"}</span><span>${esc(x.st.emoji)} ${esc(x.st.name)}</span><span class="p">${x.sc.total} P</span></div>`).join("")}
+    <p class="mute">Tipp: Die Platzierung kannst du in der Olympiade als Runde eintragen.</p></section>`;
+}
+function render(){
+  const g = game(), app = $("app");
+  let h = "";
+  if(!g || g.over){
+    if(g && g.over) h += resultHTML(g);
+    h += setupHTML();
+    if(g && g.over) h += `<section class="panel"><h2>📋 Letzte Spielblätter</h2>${g.seats.map(st=>sheetHTML(st,g)).join("")}</section>`;
+    app.innerHTML = h; return;
+  }
+  const actS = activeSeat(g), actSt = g.seats.find(x=>x.seat===actS);
+  const anim = g.roll && g.roll.id!==lastRid;
+  const inGame = me==="all" || g.seats.some(x=>x.seat===me);
+  h += `<section class="panel">
+    <div class="turn">🎲 ${esc(actSt.emoji)} ${esc(actSt.name)} ist dran · ${VARIANTS[g.variant].name}${g.short?" · kurz":""}</div>
+    <div class="dice">${g.roll ? die(g.roll.w[0],null,anim)+die(g.roll.w[1],null,anim)+`<div class="sep"></div>`+g.roll.c.map((v,i)=>die(v,i,anim)).join("")
+      : `<button class="gold" data-do="roll" ${canControl(actS)?"":"disabled"}>🎲 Würfeln</button>`}</div>
+    ${inGame?`<div class="hint">${hintFor(g)}</div>`:""}
+    ${g.roll?`<div class="waiting">Noch nicht fertig: ${g.seats.filter(st=>{const a=act(st.seat);return !a||!a.done;}).map(st=>esc(st.name)).join(", ")||"–"}</div>`:""}
+    <div class="who">Wer bist du? ${g.seats.map(st=>`<button class="chip${me===st.seat?" on":""}" data-me="${st.seat}">${esc(st.emoji)} ${esc(st.name)}</button>`).join(" ")}
+      <button class="chip${me==="all"?" on":""}" data-me="all">📱 Alle an diesem Gerät</button></div>
+  </section>`;
+  const order = [...g.seats].sort((a,b)=>(b.seat===me)-(a.seat===me));
+  h += order.map(st=>sheetHTML(st,g)).join("");
+  h += `<div class="row" style="justify-content:center;margin-bottom:18px">
+    <button class="sm ghost" data-do="quit">${confirmNew?"Wirklich abbrechen? Nochmal tippen":"⏹ Spiel abbrechen"}</button></div>`;
+  app.innerHTML = h;
+  if(g.roll) lastRid = g.roll.id;
+  maybeAdvance();
+}
+
+document.addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.cross){ const [s,r,k] = b.dataset.cross.split("|"); return doCross(s,+r,+k); }
+  if(b.dataset.pick!=null){ const i=+b.dataset.pick, cur = setup.picked || olyPlayers.map((_,j)=>j);
+    setup.picked = cur.includes(i) ? cur.filter(x=>x!==i) : [...cur,i].sort((a,b)=>a-b); return render(); }
+  if(b.dataset.var){ setup.variant = b.dataset.var; return render(); }
+  if(b.dataset.me){ me = b.dataset.me; localStorage.setItem("ll-me", me); return render(); }
+  const s = b.dataset.s;
+  switch(b.dataset.do){
+    case "roll": return roll();
+    case "skip": return skipWhite(s);
+    case "finish": return finish(s);
+    case "undo": return undo(s);
+    case "new": return newGame();
+    case "quit": if(!confirmNew){ confirmNew = true; render(); setTimeout(()=>{confirmNew=false;render();},4000); return; } return quitGame();
+  }
+});
+document.addEventListener("change", e=>{ if(e.target.id==="shortChk") setup.short = e.target.checked; });
+connect();
+</script>
+</body>
+</html>

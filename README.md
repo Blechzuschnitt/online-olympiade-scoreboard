@@ -34,3 +34,12 @@ Der Spielstand liegt online in **Supabase** (Tabelle `public.olympiade_state`, Z
 ## Spiele-Sammlung (PDF)
 
 Ganz unten in der App gibt es `spiele-sammlung.pdf`: die deutsche Fassung einer öffentlichen Liste mit 225 kostenlosen Browserspielen (Original von „nia“, Stand 2020). Das PDF hat ein anklickbares Inhaltsverzeichnis, PDF-Lesezeichen, ein Stichwortverzeichnis mit deutschen Spielnamen und durchsuchbaren Text. Alle Links wurden am 19.11.2026 geprüft, nicht mehr erreichbare sind grau markiert.
+
+## Lucky Lines – unser eigenes Würfelspiel
+
+`lucky-lines.html` ist ein Kreuzchen-Würfelspiel nur für uns (2 weiße + 4 farbige Würfel, vier Reihen, Schlösser, Fehlwürfe).
+Jede Person öffnet die Seite auf dem eigenen Handy und tippt auf ihren Namen – alles läuft live über Supabase
+(Zeilen `ll-tisch` und `ll-s1` … `ll-s6` in `olympiade_state`). Ohne Verbindung geht „Alle an diesem Gerät“.
+
+Varianten: Klassisch, Farbenmix, Zahlenmix, Doppel-Mix, Bonusreihen, dazu zuschaltbar „Kurzes Spiel“.
+Die vollständigen Regeln stehen auf der Spielseite unter „Spielregeln & Varianten“.
