@@ -208,6 +208,19 @@
   }
   @media (max-width:520px){ :root{--cs:38px} .rack .tile{--cs:42px} .rack{gap:6px;padding:16px 6px} .mtab{font-size:14px;padding:10px 6px} .acts .big{font-size:17px;padding:12px 18px} }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important} }
+
+  /* Mitspieler mit + */
+  .plist{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0 10px}
+  .pchip{display:inline-flex;align-items:center;gap:6px;padding:5px 5px 5px 13px;border-radius:99px;font-weight:700;font-size:14px;color:#06202a;background:linear-gradient(135deg,var(--cyan),#7cf7c9);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+  .pchip small{font-size:10.5px;font-weight:800;letter-spacing:.06em;opacity:.75}
+  .pchip.bot{background:linear-gradient(135deg,#c9a7ff,#8fb8ff)}
+  .pchip .px{width:24px;height:24px;padding:0;border-radius:50%;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.18);color:inherit;border:none;box-shadow:none;text-shadow:none}
+  .padd{width:40px;height:40px;padding:0;border-radius:50%;font-size:24px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+  .padd.on{background:transparent;color:var(--text);border:1.5px solid var(--line);box-shadow:none}
+  .pmenu{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;margin:-2px 0 12px;border-radius:14px;background:rgba(0,0,0,.28);border:1px dashed var(--line)}
+  .pmenu .chip{padding:6px 12px}
+  .lvl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+  .who .caret{font-size:11px;opacity:.7}
 </style>
 </head>
 <body>
@@ -480,7 +493,7 @@ function startGame(people, mode){
   toast("🧩 Neues Spiel – viel Glück!");
 }
 function newGame(){
-  const picked = setup.picked || olyPlayers.map((_,i)=>i);
+  const picked = pickedIdx();
   if(picked.length < 1) return toast("Mindestens eine Person auswählen");
   const nb = Math.min(setup.bots, 4 - Math.min(picked.length,4));
   if(picked.length + nb < 2) return toast("Mindestens zwei Mitspieler – oder einen KI-Gegner dazunehmen");
@@ -814,19 +827,10 @@ function handHTML(g){
   return `${tabs}<div class="rack${markMode?(dice?" cup":" cup swapcup"):""}">${rack}</div><div class="hint${hot?" hot":""}">${hint}</div><div class="acts">${acts}</div>
     <div class="bag" style="margin-top:10px">Im Beutel: ${g.bag.length} ${dice?"Würfel":"Steine"}</div>${whoHTML(g)}`;
 }
-function whoHTML(g){
-  const hum = g.seats.filter(st=>!st.bot);
-  return `<div class="who">Wer bist du? ${hum.map(st=>`<button class="chip${me===st.seat?" on":""}" data-me="${st.seat}">${esc(st.emoji)} ${esc(st.name)}</button>`).join("")}
-    <button class="chip${me==="all"?" on":""}" data-me="all">📱 Alle an diesem Gerät</button></div>`;
-}
+function whoHTML(g){ return whoBarHTML(g.seats.filter(st=>!st.bot)); }
 function setupHTML(){
-  const picked = setup.picked || olyPlayers.map((_,i)=>i);
   return `<section class="panel"><h2>Neues Spiel</h2>
-    <div class="mute">Wer spielt mit? (2–4 zusammen mit KI)</div>
-    <div class="chips">${olyPlayers.map((p,i)=>`<button class="chip${picked.includes(i)?" on":""}" data-pick="${i}">${esc(p.emoji)} ${esc(p.name)}</button>`).join("")}</div>
-    <div class="mute">KI-Gegner</div>
-    <div class="chips">${[0,1,2].map(n=>`<button class="chip${setup.bots===n?" on":""}" data-bots="${n}">${n?BOTS.slice(0,n).map(b=>b.emoji+" "+b.name).join(" + "):"Keine"}</button>`).join("")}
-      ${setup.bots?`<span style="width:100%"></span>${Object.entries(LEVELS).map(([k,v])=>`<button class="chip${setup.level===k?" on":""}" data-level="${k}">${k==="locker"?"🙂":"🧠"} ${v}</button>`).join("")}`:""}</div>
+    ${playersHTML(4)}
     <div class="mute">Variante</div>
     <div class="variants">${Object.entries(MODES).map(([k,v])=>`<button class="var${setup.mode===k?" on":""}" data-mode="${k}"><b>${v.name}</b>${v.desc}</button>`).join("")}</div>
     <div class="row" style="margin-top:10px"><button data-do="new">Spiel starten</button></div>
@@ -852,6 +856,46 @@ function lastText(g){
   if(L.kind==="swap") return `Zuletzt: ${nm} tauschte ${L.n} ${L.n===1?"Stein":"Steine"}`;
   return `Zuletzt: ${nm} musste passen`;
 }
+/* ============ Mitspieler-Auswahl (mit +) ============ */
+let pickOpen = false, whoOpen = false;
+function pickedIdx(){
+  if(setup.picked && setup.pickFor===olyPlayers) return setup.picked;
+  let names = null;
+  if(setup.picked && setup.pickFor) names = setup.picked.map(i=>setup.pickFor[i] && setup.pickFor[i].name);
+  else try{ names = JSON.parse(localStorage.getItem("mo-picked")); }catch{}
+  setup.pickFor = olyPlayers;
+  setup.picked = Array.isArray(names) ? olyPlayers.map((p,i)=>names.includes(p.name)?i:-1).filter(i=>i>=0) : olyPlayers.map((_,i)=>i);
+  return setup.picked;
+}
+function savePicked(){ try{ localStorage.setItem("mo-picked", JSON.stringify(pickedIdx().map(i=>olyPlayers[i].name))); }catch{} }
+function playersHTML(max){
+  const picked = pickedIdx(), n = picked.length + setup.bots, full = n >= max;
+  const rest = olyPlayers.map((_,i)=>i).filter(i=>!picked.includes(i));
+  const chips = picked.map(i=>`<span class="pchip">${esc(olyPlayers[i].emoji)} ${esc(olyPlayers[i].name)}<button class="px" data-unpick="${i}" aria-label="${esc(olyPlayers[i].name)} entfernen">×</button></span>`).join("")
+    + BOTS.slice(0, setup.bots).map((b,j)=>`<span class="pchip bot">${b.emoji} ${b.name}<small>KI</small>${j===setup.bots-1?`<button class="px" data-unbot="1" aria-label="${b.name} entfernen">×</button>`:""}</span>`).join("");
+  const canBot = setup.bots < BOTS.length;
+  const add = full || (!rest.length && !canBot) ? "" : `<button class="padd${pickOpen?" on":""}" data-do="pickopen" aria-label="Mitspieler hinzufügen" title="Mitspieler hinzufügen">${pickOpen?"×":"+"}</button>`;
+  const menu = pickOpen && add ? `<div class="pmenu"><span class="mute">Hinzufügen:</span>${rest.map(i=>`<button class="chip" data-pick="${i}">${esc(olyPlayers[i].emoji)} ${esc(olyPlayers[i].name)}</button>`).join("")}${canBot?`<button class="chip botc" data-addbot="1">${BOTS[setup.bots].emoji} ${BOTS[setup.bots].name} · KI</button>`:""}</div>` : "";
+  const lvl = setup.bots ? `<div class="lvl"><span class="mute">KI-Stärke</span>${Object.entries(LEVELS).map(([k,v])=>`<button class="chip${setup.level===k?" on":""}" data-level="${k}">${k==="locker"?"🙂":"🧠"} ${v}</button>`).join("")}</div>` : "";
+  return `<div class="mute">Mitspieler <small>(${n} von max. ${max})</small></div>
+    <div class="plist">${chips || `<span class="mute">Noch niemand – tippe auf +</span>`}${add}</div>${menu}${lvl}`;
+}
+function whoBarHTML(humans){
+  const cur = me==="all" ? "📱 Alle an diesem Gerät" : (st => st ? `${esc(st.emoji)} ${esc(st.name)}` : null)(humans.find(x=>x.seat===me));
+  if(cur && !whoOpen) return `<div class="who">Du spielst als <button class="chip on" data-do="whoopen" title="Wechseln">${cur} <span class="caret">▾</span></button></div>`;
+  return `<div class="who">${cur?"Wechseln zu:":"<b>Wer bist du?</b>"} ${humans.map(st=>`<button class="chip${me===st.seat?" on":""}" data-me="${st.seat}">${esc(st.emoji)} ${esc(st.name)}</button>`).join("")}
+    <button class="chip${me==="all"?" on":""}" data-me="all">📱 Alle an diesem Gerät</button></div>`;
+}
+function pickClick(b){
+  if(b.dataset.pick!=null){ const i = +b.dataset.pick, cur = pickedIdx(); if(!cur.includes(i)) setup.picked = [...cur, i]; savePicked(); return true; }
+  if(b.dataset.unpick!=null){ const i = +b.dataset.unpick; setup.picked = pickedIdx().filter(x=>x!==i); savePicked(); return true; }
+  if(b.dataset.addbot){ setup.bots = Math.min(BOTS.length, setup.bots+1); return true; }
+  if(b.dataset.unbot){ setup.bots = Math.max(0, setup.bots-1); return true; }
+  if(b.dataset.do==="pickopen"){ pickOpen = !pickOpen; return true; }
+  if(b.dataset.do==="whoopen"){ whoOpen = !whoOpen; return true; }
+  return false;
+}
+
 /* ============ Effekte ============ */
 let fxSeen = null;
 function fx(g){
@@ -955,12 +999,11 @@ document.addEventListener("click", e=>{
   const b = e.target.closest("button"); if(!b) return;
   const g = game();
   if(b.dataset.zoom){ zoom = Math.max(-3, Math.min(3, zoom + +b.dataset.zoom)); localStorage.setItem("mo-zoom", zoom); applyZoom(); boardBox = null; centered = null; if(g) renderBoard(g); return; }
-  if(b.dataset.pick!=null){ const i = +b.dataset.pick, cur = setup.picked || olyPlayers.map((_,j)=>j);
-    setup.picked = cur.includes(i) ? cur.filter(x=>x!==i) : [...cur,i].sort((a,b)=>a-b); return render(); }
+  if(pickClick(b)) return render();
   if(b.dataset.mode){ setup.mode = b.dataset.mode; return render(); }
   if(b.dataset.bots!=null){ setup.bots = +b.dataset.bots; return render(); }
   if(b.dataset.level){ setup.level = b.dataset.level; return render(); }
-  if(b.dataset.me){ me = b.dataset.me; localStorage.setItem("mo-me", me); resetUI(); return render(); }
+  if(b.dataset.me){ whoOpen = false; me = b.dataset.me; localStorage.setItem("mo-me", me); resetUI(); return render(); }
   if(b.dataset.hand!=null){
     const i = +b.dataset.hand;
     if(ui.swap){ ui.mark.has(i) ? ui.mark.delete(i) : ui.mark.add(i); }
