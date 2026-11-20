@@ -53,3 +53,10 @@ KI-Gegner: beim Start 1–2 Computer-Mitspieler (🤖 Robo, 🦉 Ada) dazunehmen
 `mosaika.html` – unser eigenes Legespiel mit Würfeln: Reihen bilden, in denen entweder alle dieselbe Farbe oder alle dasselbe Symbol haben (max. 6, Sechser = +6). 2–4 Mitspieler, live auf mehreren Handys (Supabase-Zeile `mo-tisch`) oder an einem Gerät, dazu 1–2 KI-Gegner (Locker/Clever).
 Varianten: **Würfel** (90 Würfel, einmal pro Zug neu werfen) und **Plättchen** (108 Steine, Tauschen statt Legen erlaubt).
 Extras wie bei Lucky Lines: Ansagen, Statistik, Revanche, „In die Olympiade übernehmen“.
+
+## Blickfang (Street View)
+
+`blickfang.html` – Street-View-Suchspiel für 2–6 Leute: Alle bekommen dieselbe Liste (5–12 Dinge) und starten am selben Ort (Deutschland, Europa oder Welt). Gefundenes wird per „📸 Festhalten“ gespeichert oder als Screenshot hochgeladen.
+Danach stimmen alle bei den Fotos der anderen ab: mehr 👍 = 1 Punkt, mehr 👎 = 0, Gleichstand = ½ Punkt.
+Street View im Spiel braucht einen Google-Maps-Schlüssel (Maps JavaScript API + Street View Static API, auf `blechzuschnitt.github.io/*` beschränkt), der im Spiel unter „Street View einrichten“ eingetragen wird. Ohne Schlüssel öffnet sich Google Maps und man lädt Screenshots hoch.
+Speicherung: Supabase-Zeilen `bf-tisch` (Spiel) und `bf-s1` … `bf-s6` (Fotos und Stimmen pro Person).

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blickfang</title>
+<link rel="icon" href="blickfang-icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#071a2b;--bg2:#0d2f45;--ink:#06131f;--text:#f2f8ff;--mute:#a9c1d6;
+    --panel:rgba(10,36,56,.86);--line:rgba(120,200,255,.25);
+    --sun:#ffb21e;--coral:#ff5d6c;--aqua:#22e0c8;--sky:#3aa8ff;--lime:#b6ff3b;--gold:#ffd43b;--warn:#ff3b5c;
+    --head:"Fredoka","Nunito",system-ui,sans-serif;
+    --sans:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--text);font-family:var(--sans);font-weight:600;
+    background:
+      radial-gradient(700px 500px at 0% 0%,rgba(255,178,30,.28),transparent 65%),
+      radial-gradient(700px 520px at 100% 10%,rgba(34,224,200,.25),transparent 65%),
+      radial-gradient(800px 600px at 50% 105%,rgba(58,168,255,.3),transparent 70%),
+      linear-gradient(180deg,var(--bg2),var(--bg));
+    background-attachment:fixed;padding:18px 16px 48px}
+  .wrap{max-width:900px;margin:0 auto}
+  .back{display:inline-block;margin-bottom:10px;color:var(--aqua);font-weight:800;text-decoration:none;font-size:14px}
+  .sign{text-align:center;margin:4px auto 18px;padding:10px 14px 8px;max-width:560px;position:relative}
+  .sign h1{margin:0;font-family:var(--head);font-weight:700;font-size:clamp(42px,11vw,72px);line-height:1.05;
+    background:linear-gradient(90deg,var(--sun),var(--coral) 45%,var(--sky));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 rgba(0,0,0,.35))}
+  .sign h1 i{font-style:normal;display:inline-block;-webkit-text-fill-color:initial;animation:peek 3.4s ease-in-out infinite}
+  @keyframes peek{0%,60%,100%{transform:none}70%{transform:translateX(-6px) rotate(-12deg)}82%{transform:translateX(6px) rotate(10deg)}}
+  .sign .sub{font-weight:900;font-size:12px;letter-spacing:.36em;color:var(--mute);margin-top:4px}
+  .live{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:4px 12px;border-radius:99px;background:rgba(0,0,0,.25);border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--mute)}
+  .live i{width:8px;height:8px;border-radius:50%;background:var(--sun)}
+  .live.on i{background:var(--lime);box-shadow:0 0 8px var(--lime)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:18px;
+    box-shadow:0 18px 44px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(6px)}
+  .panel h2{margin:0 0 10px;font-family:var(--head);font-weight:700;font-size:24px;color:#fff}
+  .panel h3{margin:14px 0 6px;font-family:var(--head);font-weight:600;font-size:18px;color:#fff}
+  .mute{color:var(--mute);font-size:14px}
+  a{color:var(--aqua)}
+  button,.btn{font-family:var(--sans);font-weight:900;font-size:14px;border-radius:12px;padding:10px 17px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;justify-content:center;text-decoration:none;
+    color:#fff;background:linear-gradient(135deg,var(--coral),var(--sun));border:none;
+    box-shadow:0 4px 0 #a8303d,0 8px 18px rgba(255,93,108,.35);transition:filter .15s,transform .08s;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+  button:hover:not(:disabled),.btn:hover{filter:brightness(1.1)}
+  button:active:not(:disabled),.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #a8303d}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.ghost,.btn.ghost{background:rgba(255,255,255,.07);color:var(--text);border:1.5px solid rgba(255,255,255,.22);box-shadow:none;text-shadow:none}
+  button.go,.btn.go{background:linear-gradient(135deg,#14d36f,#0fb3a3);box-shadow:0 4px 0 #0a6e48,0 8px 18px rgba(20,211,111,.35)}
+  button.blue,.btn.blue{background:linear-gradient(135deg,var(--sky),#6a5bff);box-shadow:0 4px 0 #2a3c9a,0 8px 18px rgba(58,168,255,.35)}
+  button.warn{background:linear-gradient(135deg,#ff5b6e,#d4143a);box-shadow:0 4px 0 #7d0b22}
+  button.sm,.btn.sm{font-size:13px;padding:6px 12px;border-radius:9px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;border:1.5px solid rgba(255,255,255,.18);background:rgba(0,0,0,.25);cursor:pointer;font-weight:800;color:var(--mute);font-size:14px;box-shadow:none;text-shadow:none}
+  .chip.on{color:#04211d;background:linear-gradient(135deg,var(--aqua),#9af7c4);border-color:transparent;box-shadow:0 0 16px rgba(34,224,200,.4)}
+  input[type=text],input[type=password]{width:100%;font:inherit;font-weight:700;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:rgba(0,0,0,.3);color:var(--text)}
+  details.cfg summary{cursor:pointer;font-weight:800;color:var(--aqua)}
+  .steps{margin:8px 0;padding-left:20px;font-size:14px;line-height:1.5}
+
+  /* Mitspieler mit + */
+  .plist{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0 10px}
+  .pchip{display:inline-flex;align-items:center;gap:6px;padding:5px 5px 5px 13px;border-radius:99px;font-weight:800;font-size:14px;color:#04211d;background:linear-gradient(135deg,var(--aqua),#9af7c4);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+  .pchip .px{width:24px;height:24px;padding:0;border-radius:50%;font-size:16px;line-height:1;background:rgba(0,0,0,.18);color:inherit;border:none;box-shadow:none;text-shadow:none}
+  .padd{width:40px;height:40px;padding:0;border-radius:50%;font-size:24px;line-height:1}
+  .padd.on{background:transparent;color:var(--text);border:1.5px solid var(--line);box-shadow:none}
+  .pmenu{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;margin:-2px 0 12px;border-radius:14px;background:rgba(0,0,0,.28);border:1px dashed var(--line)}
+  .who{margin-top:10px;font-size:13px;color:var(--mute);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .who .chip{font-size:13px;padding:5px 11px}
+
+  /* Suche */
+  .hbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .timer{font-family:var(--head);font-weight:700;font-size:26px;padding:2px 14px;border-radius:12px;background:rgba(0,0,0,.35);color:var(--gold);min-width:94px;text-align:center}
+  .timer.low{color:#fff;background:var(--warn);animation:tick 1s ease-in-out infinite}
+  @keyframes tick{50%{transform:scale(1.07)}}
+  .hbar .info{font-size:13.5px;color:var(--mute);flex:1;min-width:150px}
+  .hbar .info b{color:#fff}
+  .hgrid{display:block}
+  .panobox{position:relative;border-radius:16px;overflow:hidden;background:#04101a;box-shadow:0 0 0 2px rgba(58,168,255,.5),0 0 26px rgba(58,168,255,.25);height:420px}
+  #pano{position:absolute;inset:0}
+  .panomsg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center;font-size:15px;
+    background:radial-gradient(ellipse at 50% 30%,#123e5c,#061624)}
+  .panomsg .big{font-size:44px}
+  .panotools{position:absolute;left:8px;top:8px;display:flex;gap:6px;z-index:3}
+  .panotools .btn{background:rgba(5,20,32,.82);backdrop-filter:blur(4px)}
+  .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:4}
+  .flash.go{animation:flash .45s ease-out}
+  @keyframes flash{0%{opacity:.9}100%{opacity:0}}
+  .side{margin-top:10px}
+  .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}
+  .item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;justify-content:flex-start;padding:7px 10px;border-radius:12px;background:rgba(0,0,0,.28);border:1.5px solid rgba(255,255,255,.1);box-shadow:none;color:var(--text);font-weight:800;font-size:15px;text-shadow:none}
+  .item .n{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);font-size:13px}
+  .item .t{flex:1}
+  .item .th{width:54px;height:36px;border-radius:7px;object-fit:cover;flex:none;background:#000}
+  .item.got .n{background:var(--lime);color:#122}
+  .item.sel{border-color:var(--sun);background:linear-gradient(135deg,rgba(255,178,30,.25),rgba(255,93,108,.18));box-shadow:0 0 0 1px var(--sun),0 0 18px rgba(255,178,30,.3)}
+  .shoot{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+  .shoot .big{flex:1;font-size:17px;padding:13px 16px;min-width:180px}
+  .hint{background:rgba(0,0,0,.28);border-left:4px solid var(--aqua);border-radius:10px;padding:9px 12px;font-size:14px;margin:8px 0}
+  .hint b{color:var(--gold)}
+
+  /* Wertung */
+  .vitem{margin:14px 0 6px;font-family:var(--head);font-weight:600;font-size:19px;color:#fff;display:flex;align-items:center;gap:8px}
+  .vitem .n{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--sun);color:#3a2000;font-size:14px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+  .card{background:rgba(0,0,0,.3);border-radius:14px;overflow:hidden;border:1.5px solid rgba(255,255,255,.1);display:flex;flex-direction:column}
+  .card.yes{border-color:var(--lime);box-shadow:0 0 14px rgba(182,255,59,.25)}
+  .card.no{border-color:rgba(255,59,92,.7)}
+  .card.half{border-color:var(--gold)}
+  .card .img{aspect-ratio:16/10;background:#000 center/cover no-repeat;cursor:zoom-in;border:none;border-radius:0;padding:0;box-shadow:none;width:100%}
+  .card .none{aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:13px;background:rgba(0,0,0,.25)}
+  .card .cb{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+  .card .who2{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:14px}
+  .card .res{font-size:12px;font-weight:900;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.1)}
+  .card.yes .res{background:var(--lime);color:#122}
+  .card.no .res{background:var(--warn);color:#fff}
+  .card.half .res{background:var(--gold);color:#3a2000}
+  .vbtns{display:flex;gap:6px}
+  .vbtns button{flex:1;padding:7px 8px;font-size:14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);box-shadow:none;text-shadow:none}
+  .vbtns button.y.on{background:linear-gradient(135deg,#14d36f,#0fb3a3);border-color:transparent}
+  .vbtns button.n.on{background:linear-gradient(135deg,#ff5b6e,#d4143a);border-color:transparent}
+  .tally{font-size:12.5px;color:var(--mute)}
+  .vprog{position:sticky;bottom:10px;z-index:5;margin-top:14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:rgba(6,24,38,.94);border:1px solid var(--line);box-shadow:0 10px 26px rgba(0,0,0,.5)}
+  .lb{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+  .lb img{max-width:100%;max-height:78vh;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+  .lb[hidden]{display:none}
+
+  .rank{display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:12px;background:rgba(0,0,0,.28);margin-bottom:6px;font-weight:800}
+  .rank:first-of-type{background:linear-gradient(135deg,rgba(255,212,59,.25),rgba(255,178,30,.15));box-shadow:inset 0 0 0 1.5px rgba(255,212,59,.6)}
+  .rank .p{margin-left:auto;font-family:var(--head);font-weight:700;color:var(--gold);font-size:21px}
+  .done{color:var(--lime);font-weight:800}
+  summary{cursor:pointer}
+  .rules{font-size:14.5px;line-height:1.55;font-weight:600}
+  .rules h3{font-family:var(--head);font-weight:700;color:var(--aqua);font-size:17px;margin:16px 0 4px}
+  .rules ul{margin:4px 0;padding-left:20px}
+  .toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,170%);background:#0d2f45;color:var(--text);border:2px solid var(--aqua);padding:11px 18px;border-radius:14px;font-weight:800;transition:transform .25s;z-index:30;max-width:92vw;box-shadow:0 0 24px rgba(34,224,200,.35)}
+  .toast.show{transform:translate(-50%,0)}
+  .stats{overflow-x:auto}
+  .stats table{width:100%;border-collapse:collapse;font-size:14.5px}
+  .stats th{font-weight:800;color:var(--mute);font-size:12.5px;text-align:right;padding:4px 8px;border-bottom:1px solid var(--line)}
+  .stats td{text-align:right;padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.07);white-space:nowrap}
+  .stats td:first-child,.stats th:first-child{text-align:left}
+  .stats td b{color:var(--gold)}
+  .hrow{display:flex;gap:10px;font-size:13.5px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);flex-wrap:wrap}
+  .hrow span:first-child{color:var(--mute);min-width:48px}
+  .sel3{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+
+  /* Kompakt während der Suche */
+  body.playing{padding-top:10px;padding-bottom:16px}
+  body.playing .back{margin-bottom:2px;font-size:13px}
+  body.playing .sign{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 8px;padding:0;max-width:none}
+  body.playing .sign h1{font-size:30px}
+  body.playing .sign .sub{display:none}
+  body.playing .sign .live{margin-top:0}
+  body.playing #huntPanel{padding:12px;margin-bottom:10px}
+  @media (min-width:900px) and (orientation:landscape){
+    body.playing .wrap{max-width:1280px}
+    body.playing .hgrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items:start}
+    body.playing .side{margin-top:0}
+    body.playing .items{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Zur Nelskamp Olympiade</a>
+  <div class="sign">
+    <h1>Blickfang <i>🔎</i></h1>
+    <div class="sub">SUCHEN · KNIPSEN · WERTEN</div>
+    <div class="live" id="live"><i></i><span id="liveText">Verbinde …</span></div>
+  </div>
+
+  <section class="panel" id="huntPanel" hidden>
+    <div class="hbar"><span class="timer" id="timer">--:--</span><span class="info" id="huntInfo"></span></div>
+    <div class="hgrid">
+      <div class="panobox" id="panoBox">
+        <div id="pano"></div>
+        <div class="panomsg" id="panoMsg" hidden></div>
+        <div class="panotools" id="panoTools"></div>
+        <div class="flash" id="flash"></div>
+      </div>
+      <div class="side" id="huntSide"></div>
+    </div>
+  </section>
+
+  <div id="app"></div>
+
+  <section class="panel">
+    <details>
+      <summary class="panel-sum" style="font-family:var(--head);font-weight:700;font-size:20px">Spielregeln</summary>
+      <div class="rules">
+        <h3>Ziel</h3>
+        Alle bekommen dieselbe Liste mit Dingen – zum Beispiel „rotes Auto“, „Hund“ oder „Kirchturm“ – und starten am selben Ort in Street View. Findet so viele davon wie möglich, bevor die Zeit abläuft.
+        <h3>Suchen</h3>
+        <ul>
+          <li>In Street View kann man sich frei bewegen: Pfeile antippen, wischen zum Umschauen, zwei Finger zum Zoomen.</li>
+          <li>Hast du etwas gefunden: in der Liste antippen und auf <b>📸 Festhalten</b> – dann wird genau dieser Blick gespeichert.</li>
+          <li>Alternativ einen eigenen Screenshot machen und mit <b>📷 Bild hochladen</b> zum Gegenstand hinzufügen.</li>
+          <li>Ein neues Foto ersetzt das alte. Wer fertig ist, tippt auf „Ich bin fertig“.</li>
+        </ul>
+        <h3>Wertung</h3>
+        <ul>
+          <li>Wenn die Zeit um ist oder alle fertig sind, werden alle Fotos gezeigt.</li>
+          <li>Alle stimmen bei den Fotos der anderen ab: 👍 zählt oder 👎 zählt nicht.</li>
+          <li>Mehr 👍 als 👎 = <b>1 Punkt</b>, mehr 👎 = <b>0 Punkte</b>. <b>Bei Gleichstand entscheidet das Spiel: ½ Punkt.</b></li>
+          <li>Die meisten Punkte gewinnen. Das Ergebnis kann in die Olympiade übernommen werden.</li>
+        </ul>
+        <h3>Street View einrichten</h3>
+        Für Street View direkt im Spiel braucht es einmalig einen Google-Schlüssel (siehe „Street View einrichten“ beim neuen Spiel). Ohne Schlüssel öffnet das Spiel Street View in Google Maps, und ihr ladet eure Screenshots hoch.
+      </div>
+    </details>
+  </section>
+</div>
+<div class="lb" id="lb" hidden></div>
+<input type="file" id="fileIn" accept="image/*" hidden>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const clone = o => JSON.parse(JSON.stringify(o));
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2800); }
+
+/* ============ Inhalte ============ */
+const POOL = ["rotes Auto","gelbes Auto","Hund","Katze","Fahrrad","Motorrad","Bus","Lastwagen","Taxi","Polizeiauto","Feuerwehrauto","Ampel","Stoppschild",
+  "Zebrastreifen","Briefkasten","Kirchturm","Brücke","Wasser (Fluss, See oder Meer)","Palme","Blumenkasten am Fenster","Parkbank","Mülltonne","Graffiti","Fahne",
+  "Statue oder Denkmal","Brunnen","Spielplatz","Baukran","Baustelle","Bäckerei","Apotheke","Tankstelle","Café mit Tischen draußen","Kinderwagen","Regenschirm",
+  "Person mit Hut","Jogger","Pferd","Kuh oder Schaf","Traktor","Leiter","Hausnummer 7","Schild mit einem Tier","Uhr","Wohnmobil","Boot","Zug oder Straßenbahn",
+  "Roller","rote Tür","blaues Haus","Windrad","Berg","Strand","Turm","Bushaltestelle","Fußball oder Tor","Sonnenschirm","Einkaufswagen","Pizza-Schild","Kreisverkehr"];
+const REGIONS = {
+  de:{name:"Deutschland", places:[["Berlin",52.5219,13.4132],["Hamburg",53.5455,9.9667],["München",48.1374,11.5755],["Köln",50.9384,6.9599],["Dresden",51.0504,13.7373],
+    ["Freiburg",47.9959,7.8522],["Lübeck",53.8655,10.6866],["Heidelberg",49.4122,8.7100],["Leipzig",51.3397,12.3731],["Münster",51.9625,7.6256]]},
+  eu:{name:"Europa", places:[["Paris",48.8566,2.3522],["Amsterdam",52.3730,4.8925],["Rom",41.8986,12.4769],["Barcelona",41.3870,2.1701],["Wien",48.2085,16.3721],
+    ["Kopenhagen",55.6761,12.5683],["Lissabon",38.7110,-9.1366],["Prag",50.0870,14.4208],["Edinburgh",55.9497,-3.1909],["Dubrovnik",42.6410,18.1104]]},
+  welt:{name:"Welt", places:[["New York",40.7580,-73.9855],["Tokio",35.6595,139.7005],["Sydney",-33.8688,151.2093],["Kapstadt",-33.9221,18.4231],["Rio de Janeiro",-22.9711,-43.1822],
+    ["San Francisco",37.7955,-122.3937],["Vancouver",49.2827,-123.1207],["Buenos Aires",-34.6037,-58.3816],["Singapur",1.2834,103.8607],["Reykjavík",64.1466,-21.9426]]}
+};
+
+/* ============ Speicher & Live-Sync ============ */
+const SB_URL = "https://ktpjtmoezirsccgjbafe.supabase.co";
+const SB_KEY = "sb_publishable_JthhfbzVbUjImGFvevYXaA_j_ssZ3tB";
+const T_ID = "bf-tisch", LS = "blickfang-v1";
+const SEATS = ["s1","s2","s3","s4","s5","s6"], RID = s => "bf-" + s;
+let sb = null, online = false, cache = {}, firstPaint = true;
+let olyPlayers = [{name:"Yana",emoji:"🦄"},{name:"Noah",emoji:"🚀"},{name:"Papa",emoji:"🦁"}];
+let me = localStorage.getItem("bf-me") || "";
+const CID = localStorage.getItem("ll-cid") || (()=>{ const c = uid()+uid(); localStorage.setItem("ll-cid", c); return c; })();
+let setup = {picked:null, bots:0, n:8, dur:10, region:"de"};
+let ui = {sel:0, upFor:null, confirmEnd:false, confirmQuit:false};
+
+function loadLocal(){ try{ cache = JSON.parse(localStorage.getItem(LS)) || {}; }catch{ cache = {}; } }
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(cache)); }catch{ try{ localStorage.setItem(LS, JSON.stringify({[T_ID]:cache[T_ID]})); }catch{} } }
+function put(id, d){
+  d.v = ((cache[id] && cache[id].v) || 0) + 1;
+  cache[id] = d; saveLocal(); render();
+  if(online) sb.from("olympiade_state").update({data:d}).eq("id",id).then(({error})=>{
+    if(error){ console.error(error); toast("⚠️ Speichern fehlgeschlagen – bitte neu laden"); }
+  });
+}
+function applyRemote(id, d, force){
+  if(!d || typeof d!=="object") return;
+  const cur = cache[id];
+  if(!force && cur && cur.gid===d.gid && (cur.v||0) > (d.v||0)) return;
+  cache[id] = d; saveLocal(); render();
+}
+const ROWS = [T_ID, ...SEATS.map(RID)];
+async function fetchAll(){
+  const {data, error} = await sb.from("olympiade_state").select("id,data").in("id",[...ROWS,"nelskamp"]);
+  if(error) throw error;
+  for(const row of data){
+    if(row.id==="nelskamp"){ const ps = row.data && row.data.players; if(Array.isArray(ps) && ps.length) olyPlayers = ps.map(p=>({name:p.name,emoji:p.emoji})); }
+    else applyRemote(row.id, row.data, true);
+  }
+}
+async function fetchRow(id){
+  const {data, error} = await sb.from("olympiade_state").select("data").eq("id",id).single();
+  if(!error) applyRemote(id, data.data);
+}
+async function connect(){
+  loadLocal();
+  try{
+    sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:false, autoRefreshToken:false}});
+    await fetchAll();
+    online = true;
+    sb.channel("blickfang").on("postgres_changes",{event:"UPDATE",schema:"public",table:"olympiade_state"}, p=>{
+      const id = p.new && p.new.id; if(!id || !ROWS.includes(id)) return;
+      // Fotos können groß sein – Spielerzeilen frisch laden statt dem Ereignis zu trauen
+      if(id===T_ID && p.new.data && p.new.data.v!=null) applyRemote(id, p.new.data); else fetchRow(id);
+    }).subscribe();
+    document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) fetchAll().catch(()=>{}); });
+  }catch(e){ console.warn(e); online = false; sb = null; }
+  $("live").classList.toggle("on", online);
+  $("liveText").textContent = online ? "Live – auf allen Geräten" : "Offline – nur dieses Gerät";
+  render();
+  firstPaint = false;
+}
+
+/* ============ Spielzustand ============ */
+const table = () => cache[T_ID] || {};
+const game = () => { const t = table(); return t.gid ? t : null; };
+const seatOf = (g,s) => g.seats.find(x=>x.seat===s);
+const prow = (g,s) => { const r = cache[RID(s)]; return r && r.gid===g.gid ? r : null; };
+const myRow = g => prow(g, me) || {gid:g.gid, shots:{}, votes:{}, done:false};
+const inGame = g => g && g.seats.some(x=>x.seat===me);
+const gkey = () => table().key || "";
+
+function tally(g, o, i){
+  let y = 0, n = 0;
+  for(const st of g.seats){ if(st.seat===o) continue;
+    const r = prow(g, st.seat), v = r && r.votes ? r.votes[o+"|"+i] : undefined;
+    if(v===1) y++; else if(v===0) n++; }
+  return {y, n, pts: y>n ? 1 : n>y ? 0 : 0.5};
+}
+function scores(g){
+  const out = {};
+  for(const st of g.seats){
+    const r = prow(g, st.seat); let p = 0, found = 0;
+    g.items.forEach((_,i)=>{ if(r && r.shots && r.shots[i]){ found++; p += tally(g, st.seat, i).pts; } });
+    out[st.seat] = {p, found};
+  }
+  return out;
+}
+const ranking = (g, sc) => g.seats.map(st=>({st, p:(sc||g.final||scores(g))[st.seat].p})).sort((a,b)=>b.p-a.p);
+const fmtP = p => String(p).replace(".5","½").replace(/^0½$/,"½");
+
+/* ============ Aktionen ============ */
+function startGame(people){
+  const seats = people.slice(0,6).map((p,i)=>({seat:SEATS[i], name:p.name, emoji:p.emoji}));
+  const reg = REGIONS[setup.region] || REGIONS.de, pl = reg.places[Math.floor(Math.random()*reg.places.length)];
+  const old = table();
+  const t = {gid:uid(), seats, items:shuffle([...POOL]).slice(0, setup.n), region:setup.region,
+    start:{name:pl[0], lat:pl[1], lng:pl[2]}, phase:"hunt", dur:setup.dur, started:Date.now(), endsAt:Date.now()+setup.dur*60000,
+    host:CID, key:old.key||"", history:old.history||[]};
+  for(const st of seats) put(RID(st.seat), {gid:t.gid, shots:{}, votes:{}, done:false});
+  ui.sel = 0; panoFor = null;
+  if(me && !seats.some(x=>x.seat===me)) me = "";
+  put(T_ID, t);
+  toast(`🔎 Los geht's in ${pl[0]}!`);
+}
+function newGame(){
+  const picked = pickedIdx();
+  if(picked.length < 2) return toast("Mindestens zwei Mitspieler – tippe auf +");
+  savePicked();
+  startGame(picked.map(i=>olyPlayers[i]));
+}
+function rematch(){ const g = table(); if(g.seats){ setup.n = g.items.length; setup.dur = g.dur; setup.region = g.region||"de"; startGame(g.seats.map(st=>({name:st.name, emoji:st.emoji}))); } }
+function quitGame(){ const t = clone(table()); t.phase = "over"; t.aborted = true; put(T_ID, t); }
+function saveMine(fn){
+  const g = game(); if(!g || !inGame(g)) return;
+  const r = clone(myRow(g)); r.shots = r.shots || {}; r.votes = r.votes || {};
+  fn(r); put(RID(me), r);
+}
+function setShot(i, shot){ saveMine(r=>{ r.shots[i] = {...shot, at:Date.now()}; r.done = false; }); }
+function delShot(i){ saveMine(r=>{ delete r.shots[i]; }); }
+function setDone(v){ saveMine(r=>{ r.done = v; }); }
+function vote(o, i, v){ saveMine(r=>{ const k = o+"|"+i; if(r.votes[k]===v) delete r.votes[k]; else r.votes[k] = v; }); }
+function toVote(){
+  const g = game(); if(!g || g.phase!=="hunt") return;
+  const t = clone(g); t.phase = "vote"; t.voteAt = Date.now(); put(T_ID, t);
+}
+function finishVote(){
+  const g = game(); if(!g || g.phase!=="vote") return;
+  const t = clone(g), sc = scores(g);
+  t.phase = "over"; t.ended = Date.now(); t.final = sc;
+  const res = ranking(g, sc).map(x=>({n:x.st.name, e:x.st.emoji, p:x.p}));
+  t.history = [...(t.history||[]).filter(h=>h.gid!==t.gid), {gid:t.gid, at:t.ended, place:t.start.name, n:t.items.length, res}].slice(-150);
+  put(T_ID, t);
+}
+function saveKey(k){ const t = clone(table()); t.key = k.trim(); put(T_ID, t); mapsState = null; panoFor = null; toast(k.trim() ? "✓ Schlüssel gespeichert" : "Schlüssel entfernt"); }
+
+/* ============ Street View ============ */
+let mapsState = null, mapsKeyLoaded = "", pano = null, panoFor = null;
+window.gm_authFailure = () => { mapsState = "fail"; render(); };
+function loadMaps(){
+  const key = gkey(); if(!key) return Promise.reject("nokey");
+  if(window.google && google.maps && mapsKeyLoaded===key) return Promise.resolve();
+  if(mapsState==="loading") return loadMaps.p;
+  if(mapsKeyLoaded && mapsKeyLoaded!==key){ location.reload(); return new Promise(()=>{}); }
+  mapsState = "loading"; mapsKeyLoaded = key;
+  loadMaps.p = new Promise((res, rej)=>{
+    window.__bfReady = () => { if(mapsState!=="fail") mapsState = "ok"; res(); };
+    const s = document.createElement("script");
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&loading=async&callback=__bfReady`;
+    s.async = true; s.onerror = () => { mapsState = "fail"; rej("load"); };
+    document.head.appendChild(s);
+  });
+  return loadMaps.p;
+}
+const mapsLink = g => `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${g.start.lat},${g.start.lng}`;
+const shotLink = s => s.pano ? `https://www.google.com/maps/@?api=1&map_action=pano&pano=${encodeURIComponent(s.pano)}&heading=${Math.round(s.h)}&pitch=${Math.round(s.p)}&fov=${Math.round(s.f)}` : "";
+const shotSrc = (s, w=640, h=400) => s.img ? s.img : s.pano && gkey() ? `https://maps.googleapis.com/maps/api/streetview?size=${w}x${h}&pano=${encodeURIComponent(s.pano)}&heading=${s.h.toFixed(1)}&pitch=${s.p.toFixed(1)}&fov=${Math.round(s.f)}&key=${encodeURIComponent(gkey())}` : "";
+function setupPano(g){
+  const msg = $("panoMsg"), tools = $("panoTools");
+  if(!gkey() || mapsState==="fail"){
+    if(pano){ pano.setVisible(false); }
+    msg.hidden = false;
+    msg.innerHTML = `<div class="big">🗺️</div>
+      <div>${mapsState==="fail" ? "<b>Der Google-Schlüssel funktioniert nicht.</b> Bitte beim neuen Spiel unter „Street View einrichten“ prüfen." : "Street View ist im Spiel noch nicht eingerichtet."}<br>Öffne den Startort in Google Maps, such dort und lade deine Screenshots hier hoch.</div>
+      <a class="btn blue" href="${mapsLink(g)}" target="_blank" rel="noopener">🗺️ Street View in ${esc(g.start.name)} öffnen</a>`;
+    tools.innerHTML = ""; return;
+  }
+  if(panoFor===g.gid && pano) return;
+  msg.hidden = false; msg.innerHTML = `<div class="big">🌍</div><div>Street View lädt …</div>`;
+  loadMaps().then(()=>{
+    if(mapsState==="fail") return render();
+    const opts = {position:{lat:g.start.lat, lng:g.start.lng}, pov:{heading:Math.random()*360, pitch:0}, zoom:1,
+      addressControl:false, fullscreenControl:false, motionTracking:false, motionTrackingControl:false, showRoadLabels:false, linksControl:true, panControl:false, zoomControl:false};
+    if(!pano) pano = new google.maps.StreetViewPanorama($("pano"), opts);
+    else { pano.setOptions(opts); pano.setVisible(true); }
+    // nächstgelegenes Panorama am Startort suchen, damit alle am selben Fleck starten
+    new google.maps.StreetViewService().getPanorama({location:opts.position, radius:3000, sources:[google.maps.StreetViewSource.OUTDOOR]}, (d, st)=>{
+      if(st==="OK" && d && d.location){ pano.setPano(d.location.pano); g.startPano = d.location.pano; }
+    });
+    panoFor = g.gid; msg.hidden = true;
+    tools.innerHTML = `<button class="btn ghost sm" data-do="home" title="Zurück zum Startort">⌂ Start</button>`;
+  }).catch(()=>{ render(); });
+}
+function snapshot(){
+  const g = game(); if(!pano || !g) return;
+  const pv = pano.getPov(), z = pano.getZoom() || 1, pos = pano.getPosition();
+  const f = Math.max(15, Math.min(120, 180/Math.pow(2, z)));
+  const id = pano.getPano(); if(!id) return toast("Street View lädt noch …");
+  setShot(ui.sel, {pano:id, h:pv.heading, p:pv.pitch, f, lat:pos&&pos.lat(), lng:pos&&pos.lng()});
+  const fl = $("flash"); fl.classList.remove("go"); void fl.offsetWidth; fl.classList.add("go"); shutter();
+  toast(`📸 „${g.items[ui.sel]}“ festgehalten`);
+  nextOpen(g);
+}
+function nextOpen(g){
+  const r = myRow(g); const n = g.items.length;
+  for(let k=1;k<=n;k++){ const i = (ui.sel+k)%n; if(!(r.shots||{})[i]){ ui.sel = i; break; } }
+  render();
+}
+function compress(file){
+  return new Promise((res, rej)=>{
+    const img = new Image();
+    img.onload = () => {
+      const M = 960, sc = Math.min(1, M/Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(img.src);
+      res(c.toDataURL("image/jpeg", .62));
+    };
+    img.onerror = rej; img.src = URL.createObjectURL(file);
+  });
+}
+$("fileIn").addEventListener("change", async e=>{
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  const g = game(); if(!f || !g || ui.upFor==null) return;
+  try{ const img = await compress(f); setShot(ui.upFor, {img}); shutter(); toast(`📷 Bild für „${g.items[ui.upFor]}“ gespeichert`); ui.sel = ui.upFor; nextOpen(g); }
+  catch(err){ console.error(err); toast("⚠️ Das Bild ließ sich nicht lesen"); }
+});
+let actx = null;
+function shutter(){
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const t = actx.currentTime, n = actx.sampleRate*0.08, buf = actx.createBuffer(1,n,actx.sampleRate), d = buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i] = (Math.random()*2-1) * (i<n*.3 ? 1 : Math.pow(1-(i-n*.3)/(n*.7), 3)) * (i>n*.45&&i<n*.5 ? 0 : 1);
+    const src = actx.createBufferSource(), f = actx.createBiquadFilter(), gn = actx.createGain();
+    src.buffer = buf; f.type = "highpass"; f.frequency.value = 1800; gn.gain.value = .35;
+    src.connect(f).connect(gn).connect(actx.destination); src.start(t);
+  }catch{}
+}
+
+/* ============ Mitspieler-Auswahl (mit +) ============ */
+let pickOpen = false, whoOpen = false;
+function pickedIdx(){
+  if(setup.picked && setup.pickFor===olyPlayers) return setup.picked;
+  let names = null;
+  if(setup.picked && setup.pickFor) names = setup.picked.map(i=>setup.pickFor[i] && setup.pickFor[i].name);
+  else try{ names = JSON.parse(localStorage.getItem("bf-picked")); }catch{}
+  setup.pickFor = olyPlayers;
+  setup.picked = Array.isArray(names) ? olyPlayers.map((p,i)=>names.includes(p.name)?i:-1).filter(i=>i>=0) : olyPlayers.map((_,i)=>i);
+  return setup.picked;
+}
+function savePicked(){ try{ localStorage.setItem("bf-picked", JSON.stringify(pickedIdx().map(i=>olyPlayers[i].name))); }catch{} }
+function playersHTML(max){
+  const picked = pickedIdx(), n = picked.length, full = n >= max;
+  const rest = olyPlayers.map((_,i)=>i).filter(i=>!picked.includes(i));
+  const chips = picked.map(i=>`<span class="pchip">${esc(olyPlayers[i].emoji)} ${esc(olyPlayers[i].name)}<button class="px" data-unpick="${i}" aria-label="${esc(olyPlayers[i].name)} entfernen">×</button></span>`).join("");
+  const add = full || !rest.length ? "" : `<button class="padd${pickOpen?" on":""}" data-do="pickopen" aria-label="Mitspieler hinzufügen" title="Mitspieler hinzufügen">${pickOpen?"×":"+"}</button>`;
+  const menu = pickOpen && add ? `<div class="pmenu"><span class="mute">Hinzufügen:</span>${rest.map(i=>`<button class="chip" data-pick="${i}">${esc(olyPlayers[i].emoji)} ${esc(olyPlayers[i].name)}</button>`).join("")}</div>` : "";
+  return `<div class="mute">Mitspieler <small>(${n} von max. ${max})</small></div>
+    <div class="plist">${chips || `<span class="mute">Noch niemand – tippe auf +</span>`}${add}</div>${menu}`;
+}
+function whoBarHTML(g){
+  const st = seatOf(g, me), cur = st ? `${esc(st.emoji)} ${esc(st.name)}` : null;
+  if(cur && !whoOpen) return `<div class="who">Du spielst als <button class="chip on" data-do="whoopen" title="Wechseln">${cur} <span style="font-size:11px;opacity:.7">▾</span></button></div>`;
+  return `<div class="who">${cur?"Wechseln zu:":"<b>Wer bist du?</b>"} ${g.seats.map(x=>`<button class="chip${me===x.seat?" on":""}" data-me="${x.seat}">${esc(x.emoji)} ${esc(x.name)}</button>`).join("")}</div>`;
+}
+
+/* ============ Ergebnis in die Olympiade ============ */
+let transferring = false;
+async function transferResult(){
+  const g = game(); if(!g || g.phase!=="over" || g.aborted || g.transferred || transferring) return;
+  if(!online) return toast("Dafür braucht es eine Internetverbindung");
+  transferring = true; render();
+  try{
+    const {data, error} = await sb.from("olympiade_state").select("data").eq("id","nelskamp").single();
+    if(error) throw error;
+    const st = data.data, ol = st.olympiad;
+    if(!ol){ toast("Gerade läuft keine Olympiade – erst in der App eine erstellen"); return; }
+    const norm = x => String(x||"").trim().toLowerCase();
+    const order = [], missing = [];
+    for(const x of ranking(g)){
+      const p = (ol.roster||[]).find(r=>norm(r.name)===norm(x.st.name));
+      if(p) order.push(p.id); else missing.push(x.st.name);
+    }
+    if(!order.length){ toast("Niemand aus diesem Spiel ist in der Olympiade dabei"); return; }
+    const lib = (st.library||[]).find(l=>/blickfang/i.test(l.url||""));
+    const pend = st.pending && lib && st.pending.gameId===lib.id ? st.pending : null;
+    const dbl = pend ? !!pend.double : !!(lib && lib.double);
+    const points = {}; order.forEach((pid,i)=>{ points[pid] = ([3,2,1][i]||0) * (dbl?2:1); });
+    ol.rounds = ol.rounds || [];
+    ol.rounds.push({id:uid(), n:ol.rounds.length+1, gameId:lib?lib.id:"blickfang", gameName:"Blickfang", icon:lib?lib.icon:"🔎",
+      at:Date.now(), order, double:dbl, points});
+    if(pend) st.pending = null;
+    st._rev = uid();
+    const up = await sb.from("olympiade_state").update({data:st}).eq("id","nelskamp");
+    if(up.error) throw up.error;
+    const t = clone(table()); t.transferred = {at:Date.now(), name:ol.name||"Olympiade", round:ol.rounds.length}; put(T_ID, t);
+    toast(`✓ Als Runde ${ol.rounds.length} eingetragen` + (missing.length?` (ohne ${missing.join(", ")})`:""));
+  }catch(e){ console.error(e); toast("⚠️ Übernehmen hat nicht geklappt – bitte nochmal"); }
+  finally{ transferring = false; render(); }
+}
+
+/* ============ Darstellung ============ */
+const mmss = ms => { const s = Math.max(0, Math.ceil(ms/1000)); return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; };
+function tickTimer(){
+  const g = game(); if(!g || g.phase!=="hunt") return;
+  const left = g.endsAt - Date.now(), el = $("timer");
+  el.textContent = mmss(left); el.classList.toggle("low", left < 60000);
+  const allDone = g.seats.every(st=>{ const r = prow(g, st.seat); return r && r.done; });
+  if((left <= 0 || allDone) && (inGame(g) || !online)) toVote();
+}
+setInterval(tickTimer, 1000);
+
+function huntSideHTML(g){
+  if(!inGame(g)) return `<div class="hint">Tippe auf deinen Namen, um mitzusuchen.</div>${whoBarHTML(g)}`;
+  const r = myRow(g), shots = r.shots || {}, got = Object.keys(shots).length;
+  const live = !!pano && panoFor===g.gid && mapsState==="ok";
+  const items = g.items.map((it,i)=>{ const s = shots[i], src = s ? shotSrc(s, 120, 80) : "";
+    return `<button class="item${s?" got":""}${ui.sel===i?" sel":""}" data-item="${i}"><span class="n">${s?"✓":i+1}</span><span class="t">${esc(it)}</span>${src?`<img class="th" src="${esc(src)}" alt="">`:""}</button>`; }).join("");
+  const cur = g.items[ui.sel], has = !!shots[ui.sel];
+  return `<div class="items">${items}</div>
+    <div class="shoot">
+      ${live?`<button class="big go" data-do="snap">📸 Festhalten: ${esc(cur)}</button>`:""}
+      <button class="${live?"ghost":"big blue"}" data-do="upload">📷 ${live?"Bild":`Screenshot für „${esc(cur)}“`} hochladen</button>
+      ${has?`<button class="ghost sm" data-do="delshot">✕ Foto löschen</button>`:""}
+    </div>
+    <div class="row" style="justify-content:space-between;margin-top:6px">
+      <span class="mute">${got} von ${g.items.length} gefunden</span>
+      <button class="${r.done?"ghost":"blue"} sm" data-do="done">${r.done?"↶ Doch weitersuchen":"✓ Ich bin fertig"}</button>
+    </div>
+    ${whoBarHTML(g)}`;
+}
+function voteHTML(g){
+  const sc = scores(g), mine = inGame(g);
+  let need = 0, gave = 0;
+  const myVotes = mine ? (myRow(g).votes||{}) : {};
+  const blocks = g.items.map((it,i)=>{
+    const withShot = g.seats.filter(st=>{ const r = prow(g, st.seat); return r && r.shots && r.shots[i]; });
+    if(!withShot.length) return `<div class="vitem"><span class="n">${i+1}</span>${esc(it)}</div><div class="mute">Niemand hat das gefunden.</div>`;
+    const cards = withShot.map(st=>{
+      const r = prow(g, st.seat), s = r.shots[i];
+      const tl = tally(g, st.seat, i), cls = tl.pts===1?"yes":tl.pts===0?"no":"half";
+      const own = st.seat===me, k = st.seat+"|"+i, my = myVotes[k];
+      if(mine && !own){ need++; if(my!==undefined) gave++; }
+      const src = shotSrc(s);
+      return `<div class="card ${cls}">
+        ${src?`<button class="img" style="background-image:url('${esc(src)}')" data-zoom="${st.seat}|${i}" aria-label="Foto vergrößern"></button>`:`<div class="none">Bild nicht verfügbar</div>`}
+        <div class="cb"><div class="who2">${esc(st.emoji)} ${esc(st.name)}<span class="res">${tl.pts===1?"zählt":tl.pts===0?"zählt nicht":"½ Punkt"}</span></div>
+        ${mine && !own ? `<div class="vbtns"><button class="y${my===1?" on":""}" data-vote="${st.seat}|${i}|1">👍 zählt</button><button class="n${my===0?" on":""}" data-vote="${st.seat}|${i}|0">👎 nicht</button></div>` : own ? `<span class="tally">Dein Foto – die anderen stimmen ab</span>` : ""}
+        <span class="tally">👍 ${tl.y} · 👎 ${tl.n}</span></div></div>`;
+    }).join("");
+    const without = g.seats.filter(st=>!withShot.includes(st));
+    return `<div class="vitem"><span class="n">${i+1}</span>${esc(it)}</div><div class="cards">${cards}</div>${without.length?`<div class="tally" style="margin-top:4px">Ohne Foto: ${without.map(st=>esc(st.emoji)+" "+esc(st.name)).join(", ")}</div>`:""}`;
+  }).join("");
+  const board = ranking(g, sc).map(x=>`${esc(x.st.emoji)} ${esc(x.st.name)} <b>${fmtP(x.p)}</b>`).join(" · ");
+  return `<section class="panel"><h2>🗳️ Wertung</h2>
+    <p class="mute" style="margin:0 0 6px">Stimmt bei den Fotos der anderen ab. Mehr 👍 = 1 Punkt, mehr 👎 = 0, Gleichstand = ½ Punkt. Tippe ein Foto an, um es groß zu sehen.</p>
+    <div class="hint">Zwischenstand: ${board}</div>
+    ${blocks}
+    <div class="vprog"><span>${mine?`Du hast <b>${gave} von ${need}</b> Fotos bewertet.`:"Zuschauen – du spielst nicht mit."}</span>
+      <button class="go" data-do="finish">${ui.confirmEnd?"Wirklich beenden? Nochmal tippen":"🏁 Wertung abschließen"}</button></div>
+    ${mine?whoBarHTML(g):""}
+  </section>`;
+}
+function resultHTML(g){
+  const medal = ["🥇","🥈","🥉"], sc = g.final || scores(g);
+  let btn = "";
+  if(!g.aborted) btn = g.transferred
+    ? `<span class="done">✓ In „${esc(g.transferred.name)}“ als Runde ${g.transferred.round} eingetragen</span>`
+    : `<button data-do="transfer" ${transferring||!online?"disabled":""}>${transferring?"Wird eingetragen …":"🏅 In die Olympiade übernehmen"}</button>`;
+  return `<section class="panel"><h2>${g.aborted?"Spiel abgebrochen":`Endstand – ${esc(g.start.name)}`}</h2>
+    ${g.aborted?"":ranking(g, sc).map((x,i)=>`<div class="rank"><span>${medal[i]||"🎖️"}</span><span>${esc(x.st.emoji)} ${esc(x.st.name)}</span><span class="mute" style="font-size:12.5px">${sc[x.st.seat].found} Fotos</span><span class="p">${fmtP(x.p)} P</span></div>`).join("")}
+    <div class="row" style="margin-top:12px">${btn}<button class="ghost" data-do="rematch">↻ Neue Runde, gleiche Leute</button></div>
+    ${!g.aborted && !g.transferred ? `<p class="mute" style="margin:8px 0 0">Trägt die Platzierung (3 / 2 / 1 Punkte) als Runde „Blickfang“ in die laufende Olympiade ein.</p>`:""}
+  </section>`;
+}
+function setupHTML(){
+  const key = gkey();
+  return `<section class="panel"><h2>Neue Suche</h2>
+    ${playersHTML(6)}
+    <div class="mute">Wo geht's hin?</div>
+    <div class="sel3">${Object.entries(REGIONS).map(([k,v])=>`<button class="chip${setup.region===k?" on":""}" data-region="${k}">${k==="de"?"🇩🇪":k==="eu"?"🇪🇺":"🌍"} ${v.name}</button>`).join("")}</div>
+    <div class="mute">Wie viele Dinge?</div>
+    <div class="sel3">${[5,8,10,12].map(n=>`<button class="chip${setup.n===n?" on":""}" data-n="${n}">${n}</button>`).join("")}</div>
+    <div class="mute">Zeit</div>
+    <div class="sel3">${[5,10,15,20].map(n=>`<button class="chip${setup.dur===n?" on":""}" data-dur="${n}">${n} Min.</button>`).join("")}</div>
+    <div class="row" style="margin:6px 0 14px"><button data-do="new">🔎 Suche starten</button></div>
+    <details class="cfg"${key?"":" open"}><summary>${key?"✓ Street View ist eingerichtet":"⚙️ Street View einrichten (einmalig)"}</summary>
+      <p class="mute" style="margin:8px 0 4px">Damit Street View direkt im Spiel läuft und Fotos per Knopfdruck festgehalten werden, braucht es einen kostenlosen Google-Maps-Schlüssel. Ohne Schlüssel geht's auch: Street View öffnet sich dann in Google Maps, und ihr ladet Screenshots hoch.</p>
+      <ol class="steps">
+        <li>Auf <a href="https://console.cloud.google.com/google/maps-apis/start" target="_blank" rel="noopener">console.cloud.google.com</a> mit einem Google-Konto anmelden und ein Projekt anlegen (Google verlangt dafür ein Zahlungsmittel; bei euren Spielen bleibt man im kostenlosen Rahmen).</li>
+        <li>Unter „APIs &amp; Dienste“ die <b>Maps JavaScript API</b> und die <b>Street View Static API</b> aktivieren.</li>
+        <li>Unter „Anmeldedaten“ einen API-Schlüssel erstellen und ihn <b>auf Websites beschränken</b>: <code>blechzuschnitt.github.io/*</code></li>
+        <li>Den Schlüssel hier einfügen und speichern – er gilt dann auf allen Geräten.</li>
+      </ol>
+      <div class="row"><input type="password" id="keyIn" placeholder="${key?"Schlüssel ist gespeichert – zum Ändern neu einfügen":"Google-Maps-Schlüssel einfügen"}" autocomplete="off" style="flex:1;min-width:200px">
+        <button class="blue sm" data-do="savekey">Speichern</button>${key?`<button class="ghost sm" data-do="delkey">Entfernen</button>`:""}</div>
+    </details>
+  </section>`;
+}
+function statsHTML(){
+  const hist = table().history || [];
+  if(!hist.length) return `<section class="panel"><h2>Statistik</h2><p class="mute">Noch keine fertigen Suchen. Danach stehen hier Siege, Bestwerte und die letzten Orte.</p></section>`;
+  const by = {};
+  for(const h of hist){ const top = Math.max(...h.res.map(r=>r.p));
+    for(const r of h.res){ const o = by[r.n] = by[r.n] || {n:r.n, e:r.e, games:0, wins:0, best:0, sum:0};
+      o.e = r.e; o.games++; o.sum += r.p; if(r.p===top) o.wins++; o.best = Math.max(o.best, r.p); } }
+  const rows = Object.values(by).sort((a,b)=>b.wins-a.wins || b.sum/b.games-a.sum/a.games);
+  const dt = ts => new Date(ts).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+  return `<section class="panel"><h2>Statistik</h2>
+    <div class="stats"><table><tr><th>Person</th><th>Spiele</th><th>Siege</th><th>Bester</th><th>Schnitt</th></tr>
+    ${rows.map(o=>`<tr><td>${esc(o.e)} ${esc(o.n)}</td><td>${o.games}</td><td><b>${o.wins}</b></td><td>${fmtP(o.best)}</td><td>${(o.sum/o.games).toFixed(1).replace(".",",")}</td></tr>`).join("")}</table></div>
+    <h3>Letzte Suchen</h3>
+    ${hist.slice(-5).reverse().map(h=>`<div class="hrow"><span>${dt(h.at)}</span><span style="color:var(--aqua)">${esc(h.place)}</span><span>${h.res.map(r=>`${esc(r.e)} ${esc(r.n)} ${fmtP(r.p)}`).join(" · ")}</span></div>`).join("")}
+  </section>`;
+}
+function fitPano(){
+  const box = $("panoBox"), hp = $("huntPanel");
+  if(hp.hidden) return;
+  const side = matchMedia("(min-width:900px) and (orientation:landscape)").matches;
+  const vh = window.visualViewport ? visualViewport.height : innerHeight;
+  const top = box.getBoundingClientRect().top + scrollY;
+  let h;
+  if(side) h = vh - top - 22;
+  else { const s = $("huntSide").querySelector(".shoot + .row") || $("huntSide").querySelector(".shoot"); const sideH = s ? s.getBoundingClientRect().bottom - $("huntSide").getBoundingClientRect().top : 160; h = vh - top - sideH - 34; }
+  h = Math.max(260, Math.round(h));
+  if(Math.abs(box.offsetHeight - h) > 2) box.style.height = h + "px";
+}
+function render(){
+  const g = game(), app = $("app"), hp = $("huntPanel");
+  const playing = g && g.phase==="hunt";
+  hp.hidden = !playing;
+  document.body.classList.toggle("playing", !!playing);
+  if(playing){
+    if(ui.sel >= g.items.length) ui.sel = 0;
+    const r = myRow(g);
+    $("huntInfo").innerHTML = `Start: <b>${esc(g.start.name)}</b> · ${g.seats.map(st=>{ const pr = prow(g, st.seat), n = pr ? Object.keys(pr.shots||{}).length : 0;
+      return `${esc(st.emoji)} ${n}${pr&&pr.done?"✓":""}`; }).join(" · ")}`;
+    setupPano(g);
+    $("huntSide").innerHTML = huntSideHTML(g);
+    app.innerHTML = `<div class="row" style="justify-content:center;margin-bottom:18px"><button class="sm ghost" data-do="quit">${ui.confirmQuit?"Wirklich abbrechen? Nochmal tippen":"Spiel abbrechen"}</button></div>`;
+    tickTimer(); fitPano();
+    document.title = "🔎 Blickfang läuft";
+    return;
+  }
+  document.title = "Blickfang";
+  let h = "";
+  if(g && g.phase==="vote") h = voteHTML(g);
+  else { if(g && g.phase==="over") h += resultHTML(g); h += setupHTML() + statsHTML(); }
+  app.innerHTML = h;
+}
+
+document.addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  const g = game();
+  if(b.dataset.pick!=null){ const i = +b.dataset.pick, cur = pickedIdx(); if(!cur.includes(i)) setup.picked = [...cur, i]; savePicked(); return render(); }
+  if(b.dataset.unpick!=null){ const i = +b.dataset.unpick; setup.picked = pickedIdx().filter(x=>x!==i); savePicked(); return render(); }
+  if(b.dataset.region){ setup.region = b.dataset.region; return render(); }
+  if(b.dataset.n){ setup.n = +b.dataset.n; return render(); }
+  if(b.dataset.dur){ setup.dur = +b.dataset.dur; return render(); }
+  if(b.dataset.me){ whoOpen = false; me = b.dataset.me; localStorage.setItem("bf-me", me); return render(); }
+  if(b.dataset.item!=null){ ui.sel = +b.dataset.item; return render(); }
+  if(b.dataset.vote){ const [o,i,v] = b.dataset.vote.split("|"); return vote(o, +i, +v); }
+  if(b.dataset.zoom){
+    const [o,i] = b.dataset.zoom.split("|"), r = prow(g, o), s = r && r.shots[i]; if(!s) return;
+    const lb = $("lb"), st = seatOf(g, o);
+    lb.innerHTML = `<img src="${esc(shotSrc(s, 640, 640))}" alt=""><div class="row"><span>${esc(st.emoji)} ${esc(st.name)} · ${esc(g.items[i])}</span>
+      ${shotLink(s)?`<a class="btn blue sm" href="${shotLink(s)}" target="_blank" rel="noopener">🗺️ In Street View ansehen</a>`:""}<button class="ghost sm" data-do="lbclose">Schließen</button></div>`;
+    lb.hidden = false; return;
+  }
+  switch(b.dataset.do){
+    case "pickopen": pickOpen = !pickOpen; return render();
+    case "whoopen": whoOpen = !whoOpen; return render();
+    case "new": return newGame();
+    case "rematch": return rematch();
+    case "transfer": return transferResult();
+    case "snap": return snapshot();
+    case "upload": ui.upFor = ui.sel; return $("fileIn").click();
+    case "delshot": return delShot(ui.sel);
+    case "done": return setDone(!myRow(g).done);
+    case "home": if(pano && g){ pano.setPosition({lat:g.start.lat, lng:g.start.lng}); if(g.startPano) pano.setPano(g.startPano); } return;
+    case "lbclose": $("lb").hidden = true; return;
+    case "savekey": { const v = ($("keyIn")||{}).value || ""; if(!v.trim()) return toast("Bitte erst den Schlüssel einfügen"); return saveKey(v); }
+    case "delkey": return saveKey("");
+    case "finish":
+      if(!ui.confirmEnd){ ui.confirmEnd = true; render(); setTimeout(()=>{ ui.confirmEnd = false; render(); }, 4000); return; }
+      ui.confirmEnd = false; return finishVote();
+    case "quit": if(!ui.confirmQuit){ ui.confirmQuit = true; render(); setTimeout(()=>{ ui.confirmQuit = false; render(); }, 4000); return; } ui.confirmQuit = false; return quitGame();
+  }
+});
+$("lb").addEventListener("click", e=>{ if(e.target.id==="lb") $("lb").hidden = true; });
+addEventListener("resize", fitPano);
+connect();
+</script>
+</body>
+</html>
