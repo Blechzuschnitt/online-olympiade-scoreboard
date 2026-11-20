@@ -25,11 +25,11 @@ test("Doppelte Zahl = raus und 0 Punkte", () => {
   S = go(S, {type:"draw"}); S = go(S, {type:"draw"}); S = go(S, {type:"draw"}); S = go(S, {type:"draw"});
   assert.equal(S.players[0].status, "bust"); assert.equal(G.rowScore(S.players[0]), 0);
 });
-test("Schutzschild fängt doppelte Zahl ab", () => {
+test("Rettungsanker fängt doppelte Zahl ab", () => {
   let S = game(["S","n1","n2","n4","n1","n3","n4"]);
   for(let i=0;i<7;i++) S = go(S, {type:"draw"});    // Anna: Schild, 4, 4 · Ben: 1, 1 (raus) · Cleo: 2, 3
   assert.equal(S.players[1].status, "bust");
-  assert.equal(S.players[0].status, "in"); assert.equal(S.players[0].shield, false);
+  assert.equal(S.players[0].status, "in"); assert.equal(S.players[0].anchor, false);
   assert.deepEqual(S.players[0].row.map(c=>c.k), ["n4"]);
 });
 test("Punkte: ×2 nur auf Zahlen, dann Booster", () => {
