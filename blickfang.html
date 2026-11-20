@@ -409,24 +409,35 @@ function setupPano(g){
       <a class="btn blue" href="${mapsLink(g)}" target="_blank" rel="noopener">🗺️ Street View in ${esc(g.start.name)} öffnen</a>`;
     tools.innerHTML = ""; return;
   }
-  if(panoFor===g.gid && pano) return;
-  msg.hidden = false; msg.innerHTML = `<div class="big">🌍</div><div>Street View lädt …</div>`;
+  if(panoFor===g.gid && map) return;
+  msg.hidden = false; msg.innerHTML = `<div class="big">🌍</div><div>Karte lädt …</div>`;
   loadMaps().then(()=>{
     if(mapsState==="fail") return render();
-    const opts = {position:{lat:g.start.lat, lng:g.start.lng}, pov:{heading:Math.random()*360, pitch:0}, zoom:1,
-      addressControl:false, fullscreenControl:false, motionTracking:false, motionTrackingControl:false, showRoadLabels:false, linksControl:true, panControl:false, zoomControl:false};
-    if(!pano) pano = new google.maps.StreetViewPanorama($("pano"), opts);
-    else { pano.setOptions(opts); pano.setVisible(true); }
-    // nächstgelegenes Panorama am Startort suchen, damit alle am selben Fleck starten
-    new google.maps.StreetViewService().getPanorama({location:opts.position, radius:3000, sources:[google.maps.StreetViewSource.GOOGLE || google.maps.StreetViewSource.OUTDOOR]}, (d, st)=>{
-      if(st==="OK" && d && d.location){ pano.setPano(d.location.pano); g.startPano = d.location.pano; }
-    });
-    panoFor = g.gid; msg.hidden = true;
-    tools.innerHTML = `<button class="btn ghost sm" data-do="home" title="Zurück zum Startort">⌂ Start</button>`;
+    const center = {lat:g.start.lat, lng:g.start.lng};
+    if(!map){
+      // Start auf der 2D-Karte – das Männchen unten rechts auf eine blaue Straße ziehen
+      map = new google.maps.Map($("pano"), {center, zoom:17, streetViewControl:true, mapTypeControl:false, fullscreenControl:false,
+        clickableIcons:false, gestureHandling:"greedy", rotateControl:false});
+      pano = map.getStreetView();
+      pano.setOptions({addressControl:false, fullscreenControl:false, motionTracking:false, motionTrackingControl:false,
+        showRoadLabels:false, enableCloseButton:true, panControl:false, zoomControl:false});
+      pano.addListener("visible_changed", ()=>{ renderTools(); render(); });
+      startMarker = new google.maps.Marker({map, position:center, title:"Start", label:{text:"⌂", color:"#fff", fontWeight:"900"}});
+    } else { pano.setVisible(false); map.setCenter(center); map.setZoom(17); startMarker.setPosition(center); }
+    panoFor = g.gid; msg.hidden = true; renderTools();
   }).catch(()=>{ render(); });
+}
+let map = null, startMarker = null;
+const streetOn = () => !!(pano && pano.getVisible());
+function renderTools(){
+  const g = game(); if(!g) return;
+  $("panoTools").innerHTML = streetOn()
+    ? `<button class="btn ghost sm" data-do="tomap">🗺️ Zur Karte</button>`
+    : `<button class="btn ghost sm" data-do="home" title="Zurück zum Startort">⌂ Start</button>`;
 }
 function snapshot(){
   const g = game(); if(!pano || !g) return;
+  if(!streetOn()) return toast("Erst das Männchen auf die Karte ziehen");
   const pv = pano.getPov(), z = pano.getZoom() || 1, pos = pano.getPosition();
   const f = Math.max(15, Math.min(120, 180/Math.pow(2, z)));
   const id = pano.getPano(); if(!id) return toast("Street View lädt noch …");
@@ -545,14 +556,16 @@ setInterval(tickTimer, 1000);
 function huntSideHTML(g){
   if(!inGame(g)) return `<div class="hint">Tippe auf deinen Namen, um mitzusuchen.</div>${whoBarHTML(g)}`;
   const r = myRow(g), shots = r.shots || {}, got = Object.keys(shots).length;
-  const live = !!pano && panoFor===g.gid && mapsState==="ok";
+  const live = !!pano && panoFor===g.gid && mapsState==="ok" && streetOn();
+  const onMap = !!map && panoFor===g.gid && mapsState==="ok" && !streetOn();
   const items = g.items.map((it,i)=>{ const s = shots[i], src = s ? shotSrc(s, 120, 80) : "";
     return `<button class="item${s?" got":""}${ui.sel===i?" sel":""}" data-item="${i}"><span class="n">${s?"✓":i+1}</span><span class="t">${esc(it)}</span>${src?`<img class="th" src="${esc(src)}" alt="" onerror="this.remove()">`:""}</button>`; }).join("");
   const cur = g.items[ui.sel], has = !!shots[ui.sel];
   return `<div class="items">${items}</div>
+    ${onMap?`<div class="hint">🗺️ Du bist auf der Karte. <b>Zieh das gelbe Männchen</b> (unten rechts) auf eine blau markierte Straße – dann bist du in Street View. Mit „🗺️ Zur Karte“ kommst du zurück.</div>`:""}
     <div class="shoot">
-      ${live?`<button class="big go" data-do="snap">📸 Festhalten: ${esc(cur)}</button>`:""}
-      <button class="${live?"ghost":"big blue"}" data-do="upload">📷 ${live?"Bild":`Screenshot für „${esc(cur)}“`} hochladen</button>
+      ${live||onMap?`<button class="big go" data-do="snap" ${live?"":"disabled"}>📸 Festhalten: ${esc(cur)}</button>`:""}
+      <button class="${live||onMap?"ghost":"big blue"}" data-do="upload">📷 ${live||onMap?"Bild":`Screenshot für „${esc(cur)}“`} hochladen</button>
       ${has?`<button class="ghost sm" data-do="delshot">✕ Foto löschen</button>`:""}
     </div>
     <div class="row" style="justify-content:space-between;margin-top:6px">
@@ -716,7 +729,8 @@ document.addEventListener("click", e=>{
     case "upload": ui.upFor = ui.sel; return $("fileIn").click();
     case "delshot": return delShot(ui.sel);
     case "done": return setDone(!myRow(g).done);
-    case "home": if(pano && g){ pano.setPosition({lat:g.start.lat, lng:g.start.lng}); if(g.startPano) pano.setPano(g.startPano); } return;
+    case "home": if(map && g){ pano.setVisible(false); map.setCenter({lat:g.start.lat, lng:g.start.lng}); map.setZoom(17); } return;
+    case "tomap": if(pano){ const pos = pano.getPosition(); pano.setVisible(false); if(pos && map) map.setCenter(pos); } return;
     case "lbclose": $("lb").hidden = true; return;
     case "savekey": { const v = ($("keyIn")||{}).value || ""; if(!v.trim()) return toast("Bitte erst den Schlüssel einfügen"); return saveKey(v); }
     case "delkey": return saveKey("");
