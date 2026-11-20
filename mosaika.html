@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mosaika</title>
+<link rel="icon" href="mosaika-icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt:#16402f;--felt2:#0b2419;--ink:#231d17;--paper:#f7f1e3;--paper2:#ede4cf;
+    --brass:#c9a45c;--brass2:#a8823d;--brass3:#7a5d27;--text:#f3ecdc;--mute:#b9c4b8;
+    --panel:rgba(8,22,16,.78);--line:rgba(201,164,92,.35);--warn:#9c2f37;
+    --k0:#b8324a;--k1:#d8722a;--k2:#d3a823;--k3:#3a8a4e;--k4:#2c66ad;--k5:#7a4da1;
+    --cs:44px;
+    --serif:"Playfair Display",Georgia,"Times New Roman",serif;
+    --sans:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--text);font-family:var(--sans);
+    background:radial-gradient(1200px 700px at 50% 0%,#1f5640,transparent 70%),radial-gradient(900px 600px at 50% 110%,#0a1f16,transparent 70%),var(--felt2);
+    background-attachment:fixed;padding:18px 16px 48px}
+  .wrap{max-width:900px;margin:0 auto}
+  .back{display:inline-block;margin-bottom:10px;color:var(--brass);font-weight:600;text-decoration:none;font-size:14px}
+  .sign{text-align:center;margin:4px auto 20px;padding:18px 14px 14px;max-width:560px;position:relative;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .sign h1{margin:0;font-family:var(--serif);font-weight:700;font-size:clamp(36px,9vw,60px);letter-spacing:.02em;
+    background:linear-gradient(180deg,#f3e2b3,var(--brass) 55%,var(--brass2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sign .sub{font-weight:600;font-size:12px;letter-spacing:.32em;color:var(--mute);margin-top:2px}
+  .live{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:3px 11px;border-radius:99px;border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--mute)}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--brass)}
+  .live.on i{background:#6fbf8e}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:18px;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+  .panel h2{margin:0 0 10px;font-family:var(--serif);font-weight:700;font-size:22px;color:#efe0b8}
+  .mute{color:var(--mute);font-size:14px}
+  button{font-family:var(--sans);font-weight:700;font-size:14px;letter-spacing:.02em;border-radius:10px;padding:9px 16px;cursor:pointer;
+    color:#2a1e08;background:linear-gradient(180deg,#e6cb85,var(--brass) 60%,var(--brass2));border:1px solid #e9d49c;
+    box-shadow:0 2px 0 var(--brass3),0 6px 14px rgba(0,0,0,.3);transition:filter .15s,transform .08s}
+  button:hover:not(:disabled){filter:brightness(1.06)}
+  button:active:not(:disabled){transform:translateY(1px)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);box-shadow:none}
+  button.warn{background:linear-gradient(180deg,#b9454d,var(--warn));color:#fbefe6;border-color:#d07a80;box-shadow:0 2px 0 #5e1a20}
+  button.sm{font-size:13px;padding:6px 12px;border-radius:8px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;border:1px solid var(--line);background:rgba(0,0,0,.2);cursor:pointer;font-weight:600;color:var(--mute);font-size:14px;box-shadow:none}
+  .chip.on{color:#2a1e08;background:linear-gradient(180deg,#ecd697,var(--brass));border-color:#e9d49c}
+  .variants{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin:6px 0 12px}
+  .var{display:block;text-align:left;padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.22);cursor:pointer;font-weight:400;color:var(--text);box-shadow:none;font-size:13.5px;line-height:1.35}
+  .var b{display:block;font-family:var(--serif);font-weight:700;font-size:16px;color:#efe0b8;margin-bottom:3px}
+  .var.on{border-color:var(--brass);background:rgba(201,164,92,.13);box-shadow:inset 0 0 0 1px var(--brass)}
+
+  /* Spielstand */
+  .turn{font-family:var(--serif);font-size:19px;color:#efe0b8;margin-bottom:8px}
+  .turn small{font-family:var(--sans);font-size:13px;color:var(--mute);font-weight:600;margin-left:6px}
+  .scorerow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .pl{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:10px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);font-size:14px;font-weight:600}
+  .pl b{font-family:var(--serif);font-size:17px;color:#efe0b8}
+  .pl small{color:var(--mute);font-weight:600;font-size:11.5px}
+  .pl.on{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass);background:rgba(201,164,92,.12)}
+  .lastl{font-size:13.5px;color:var(--mute);min-height:18px;margin-bottom:8px}
+  .lastl b{color:#efe0b8}
+
+  /* Spielfläche */
+  .boardwrap{position:relative;overflow:auto;max-height:min(62vh,560px);min-height:220px;border-radius:12px;
+    background:radial-gradient(ellipse at 50% 40%,#215a43,#123526 80%);box-shadow:inset 0 2px 12px rgba(0,0,0,.6),0 0 0 3px #4a3420,0 0 0 4px var(--brass3);
+    -webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(201,164,92,.55) transparent}
+  .board{display:grid;gap:3px;padding:14px;width:max-content;margin:auto}
+  .cell{width:var(--cs);height:var(--cs);border-radius:7px;border:none;padding:0;box-shadow:none;background:transparent;cursor:default}
+  .cell.empty{background:rgba(255,255,255,.025)}
+  .cell.legal{cursor:pointer;background:rgba(243,226,179,.16);box-shadow:inset 0 0 0 2px rgba(243,226,179,.85);animation:pulse 1.3s ease-in-out infinite}
+  .cell.legal:hover{background:rgba(243,226,179,.32)}
+  @keyframes pulse{50%{box-shadow:inset 0 0 0 2px rgba(243,226,179,.35)}}
+  .zoom{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+  .zoom button{padding:4px 11px}
+
+  /* Steine */
+  .tile{position:relative;display:flex;align-items:center;justify-content:center;width:var(--cs);height:var(--cs);border-radius:16%;padding:0;cursor:default;
+    background:linear-gradient(160deg,#fbf6ea,#e9dfc6);box-shadow:inset 0 1px 0 #fff,inset 0 -3px 0 rgba(0,0,0,.14),0 2px 3px rgba(0,0,0,.45);border:none}
+  .tile:disabled{opacity:1;cursor:default}
+  .rack .tile.used:disabled{opacity:.22}
+  .tile svg{width:72%;height:72%;filter:drop-shadow(0 1px 0 rgba(0,0,0,.25))}
+  .tile.die{border-radius:22%;box-shadow:inset 0 1px 0 #fff,inset 0 -4px 0 rgba(0,0,0,.16),inset 0 0 0 1px rgba(0,0,0,.08),0 3px 5px rgba(0,0,0,.45)}
+  .tile.pend{box-shadow:0 0 0 3px #f3d27a,0 0 0 5px var(--ink),0 4px 10px rgba(0,0,0,.5);cursor:pointer;z-index:1}
+  .tile.lastmv::after{content:"";position:absolute;inset:-3px;border-radius:20%;box-shadow:0 0 0 2px rgba(255,255,255,.75)}
+  .tile.ghost{opacity:.25}
+
+  /* Ablage (Hand) */
+  .rack{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:14px 10px 16px;border-radius:12px;margin:8px 0 10px;
+    background:linear-gradient(180deg,#6b4527,#4a2e18);box-shadow:inset 0 2px 0 rgba(255,255,255,.12),inset 0 -4px 0 rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.4)}
+  .rack .tile{--cs:52px;cursor:pointer;transition:transform .15s}
+  .rack .tile.sel{transform:translateY(-8px);box-shadow:0 0 0 3px #f3d27a,0 0 0 5px var(--ink),0 10px 16px rgba(0,0,0,.5)}
+  .rack .tile.mark{transform:translateY(-6px) rotate(-6deg);box-shadow:0 0 0 3px #e98a8f,0 0 0 5px var(--ink),0 10px 16px rgba(0,0,0,.5)}
+  .rack .tile.used{opacity:.22;cursor:default}
+  .rack .tile.roll{animation:rollit .55s ease-out}
+  @keyframes rollit{0%{transform:translateY(-30px) rotate(-200deg) scale(.8)}70%{transform:translateY(3px) rotate(10deg)}100%{transform:none}}
+  .rack .emptyr{color:#d9c9a8;font-size:14px;padding:12px}
+  .hint{background:rgba(0,0,0,.22);border-left:3px solid var(--brass);border-radius:8px;padding:9px 12px;font-size:14.5px;margin:4px 0 10px}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .acts .big{font-size:16px;padding:11px 20px}
+  .who{margin-top:12px;font-size:13px;color:var(--mute);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .who .chip{font-size:13px;padding:5px 11px}
+  .bag{font-size:13px;color:var(--mute);text-align:center}
+
+  .rank{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:rgba(0,0,0,.22);margin-bottom:6px;font-weight:600}
+  .rank .p{margin-left:auto;font-family:var(--serif);font-weight:700;color:#efe0b8;font-size:18px}
+  .done{color:#9fd3b0;font-weight:600}
+  summary{cursor:pointer;font-family:var(--serif);font-weight:700;color:#efe0b8;font-size:18px}
+  .rules{font-size:14.5px;line-height:1.55}
+  .rules h3{font-family:var(--serif);font-weight:700;color:var(--brass);font-size:16px;margin:16px 0 4px}
+  .rules ul{margin:4px 0;padding-left:20px}
+  .legend{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .legend .tile{--cs:34px}
+  .toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,160%);background:#1b130b;color:var(--text);border:1px solid var(--brass);padding:10px 16px;border-radius:10px;font-weight:600;transition:transform .25s;z-index:9;max-width:92vw}
+  .toast.show{transform:translate(-50%,0)}
+  .ann{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.9);opacity:0;pointer-events:none;z-index:10;
+    min-width:min(340px,86vw);max-width:90vw;text-align:center;padding:18px 26px 20px;border-radius:14px;
+    background:linear-gradient(180deg,var(--paper),var(--paper2));color:var(--ink);box-shadow:0 0 0 1px rgba(0,0,0,.3),0 0 0 5px rgba(201,164,92,.85),0 24px 60px rgba(0,0,0,.55);
+    transition:opacity .3s,transform .35s cubic-bezier(.2,.9,.3,1.3)}
+  .ann.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  .ann .ai{font-size:30px;line-height:1;margin-bottom:6px}
+  .ann .at{font-family:var(--serif);font-weight:700;font-size:21px}
+  .stats{overflow-x:auto}
+  .stats table{width:100%;border-collapse:collapse;font-size:14.5px}
+  .stats th{font-weight:600;color:var(--mute);font-size:12.5px;text-align:right;padding:4px 8px;border-bottom:1px solid var(--line)}
+  .stats td{text-align:right;padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.07);white-space:nowrap}
+  .stats td:first-child,.stats th:first-child{text-align:left}
+  .recs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+  .recs div{background:rgba(0,0,0,.22);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column}
+  .recs span{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+  .recs b{font-family:var(--serif);font-size:24px;color:#efe0b8}
+  .recs em{font-style:normal;font-size:13px;color:var(--mute)}
+  .hrow{display:flex;gap:10px;font-size:13.5px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);flex-wrap:wrap}
+  .hrow span:first-child{color:var(--mute);min-width:48px}
+  .hrow span:nth-child(2){color:var(--brass);min-width:90px}
+  .sound{position:absolute;right:0;top:12px;font-size:16px;padding:4px 8px}
+  @media (max-width:520px){ :root{--cs:38px} .rack .tile{--cs:44px} .rack{gap:6px} }
+  @media (prefers-reduced-motion:reduce){ .cell.legal{animation:none} .rack .tile.roll{animation:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Zur Nelskamp Olympiade</a>
+  <div class="sign">
+    <h1>Mosaika</h1>
+    <div class="sub">WÜRFELN · LEGEN · PUNKTEN</div>
+    <div class="live" id="live"><i></i><span id="liveText">Verbinde …</span></div>
+    <button class="ghost sound" id="soundBtn" title="Ton an/aus" aria-label="Ton an oder aus">🔊</button>
+  </div>
+
+  <section class="panel" id="tablePanel" hidden>
+    <div class="turn" id="turnLine"></div>
+    <div class="scorerow" id="scoreRow"></div>
+    <div class="lastl" id="lastLine"></div>
+    <div class="boardwrap" id="boardWrap"><div class="board" id="board"></div></div>
+    <div class="zoom"><button class="ghost sm" data-zoom="-1" aria-label="Kleiner">−</button><button class="ghost sm" data-zoom="1" aria-label="Größer">+</button><button class="ghost sm" data-do="center">⌖ Mitte</button></div>
+  </section>
+  <section class="panel" id="handPanel" hidden></section>
+
+  <div id="app"></div>
+
+  <section class="panel">
+    <details>
+      <summary>Spielregeln &amp; Varianten</summary>
+      <div class="rules">
+        <h3>Material</h3>
+        Sechs Farben und sechs Symbole:
+        <div class="legend" id="legend"></div>
+        <h3>Ziel</h3>
+        Steine so anlegen, dass Reihen entstehen, in denen <b>entweder alle dieselbe Farbe</b> (lauter verschiedene Symbole) <b>oder alle dasselbe Symbol</b> (lauter verschiedene Farben) haben. Keine Reihe darf zwei gleiche Steine enthalten – deshalb ist eine Reihe höchstens 6 lang.
+        <h3>Ein Zug</h3>
+        <ul>
+          <li>Jede Person hat 6 Steine. Wer dran ist, legt <b>einen oder mehrere</b> Steine – alle in <b>dieselbe Reihe</b> (waagerecht oder senkrecht), lückenlos und angrenzend an Steine, die schon liegen.</li>
+          <li>Jede Reihe, die dabei entsteht oder verlängert wird, muss gültig bleiben.</li>
+          <li>Danach wird auf 6 Steine nachgezogen.</li>
+          <li>Wer anfängt, entscheidet die Hand: Wer die größte passende Gruppe hat, beginnt.</li>
+        </ul>
+        <h3>Punkte</h3>
+        <ul>
+          <li>Jede Reihe, die man gebildet oder verlängert hat, zählt so viele Punkte, wie sie Steine hat – auch die Steine, die schon lagen.</li>
+          <li>Passt ein Stein in zwei Reihen, zählen beide.</li>
+          <li><b>Sechser:</b> Wer eine Reihe mit dem 6. Stein vollendet, bekommt 6 Extrapunkte (also 12 für die Reihe).</li>
+        </ul>
+        <h3>Varianten</h3>
+        <ul>
+          <li><b>Würfel</b> (Standard) – 90 Würfel, 15 pro Farbe, jeder zeigt alle sechs Symbole. Gezogene Würfel werden geworfen. In deinem Zug darfst du <b>einmal beliebig viele deiner Würfel neu werfen</b>, bevor du legst. Legen ist Pflicht; nur wer auch nach dem Neuwurf nicht legen kann, passt.</li>
+          <li><b>Plättchen</b> – 108 Steine, jede Kombination dreimal. Statt zu legen darf man beliebig viele Steine mit dem Beutel <b>tauschen</b> (solange genug drin sind).</li>
+        </ul>
+        <h3>Spielende</h3>
+        Ist der Beutel leer, wird weitergespielt, bis jemand seinen letzten Stein gelegt hat – dafür gibt es <b>6 Bonuspunkte</b>, und das Spiel endet. Kann niemand mehr legen, endet es ebenfalls. Die meisten Punkte gewinnen.
+        <h3>Mehrere Geräte &amp; KI</h3>
+        Jede Person öffnet die Seite auf ihrem Handy und tippt auf ihren Namen – dann sieht jede nur ihre eigenen Steine. Auf einem einzigen Gerät „Alle an diesem Gerät“ wählen und herumreichen. Dazu können bis zu zwei KI-Gegner mitspielen.
+      </div>
+    </details>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<div class="ann" id="ann" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const r6 = () => Math.floor(Math.random()*6);
+const clone = o => JSON.parse(JSON.stringify(o));
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2600); }
+
+/* ============ Farben & Symbole ============ */
+const CNAME = ["Rot","Orange","Gelb","Grün","Blau","Lila"];
+const SNAME = ["Sonne","Mond","Herz","Tropfen","Blatt","Krone"];
+const SYM = [
+  `<circle cx="12" cy="12" r="4.6"/><g stroke-width="2.2" stroke-linecap="round" stroke="currentColor"><path d="M12 1.8v3.1M12 19.1v3.1M1.8 12h3.1M19.1 12h3.1M4.8 4.8l2.2 2.2M17 17l2.2 2.2M4.8 19.2 7 17M17 7l2.2-2.2"/></g>`,
+  `<path d="M15.5 2.5A9.6 9.6 0 1 0 21.6 17 7.6 7.6 0 0 1 15.5 2.5z"/>`,
+  `<path d="M12 21.2s-8.6-5.3-10-10.5C1.1 7.1 3.6 3.6 7.1 3.6c2.2 0 3.7 1.3 4.9 3 1.2-1.7 2.7-3 4.9-3 3.5 0 6 3.5 5.1 7.1-1.4 5.2-10 10.5-10 10.5z"/>`,
+  `<path d="M12 1.8S4.6 10.2 4.6 15.1a7.4 7.4 0 0 0 14.8 0C19.4 10.2 12 1.8 12 1.8z"/>`,
+  `<path d="M20.8 3.2C9.9 3.2 3.4 8.6 3.4 15.6c0 1.7.4 3.3 1.1 4.6.9-4.3 4-8.5 9.2-11-4.2 3.4-6.6 7.2-7.3 11.5 9.2 0 14.4-5.9 14.4-17.5z"/>`,
+  `<path d="M2.2 7.2 7 11.4 12 3.6l5 7.8 4.8-4.2-1.6 11.6H3.8z"/><rect x="3.8" y="19.6" width="16.4" height="2.2" rx="1"/>`
+];
+const tileHTML = (t, cls="", attrs="") => `<button class="tile ${cls}" ${attrs} aria-label="${CNAME[t.c]} ${SNAME[t.s]}"><svg viewBox="0 0 24 24" fill="currentColor" style="color:var(--k${t.c})">${SYM[t.s]}</svg></button>`;
+$("legend").innerHTML = [0,1,2,3,4,5].map(i=>tileHTML({c:i,s:i},"","disabled")).join("");
+
+/* ============ Speicher & Live-Sync ============ */
+const SB_URL = "https://ktpjtmoezirsccgjbafe.supabase.co";
+const SB_KEY = "sb_publishable_JthhfbzVbUjImGFvevYXaA_j_ssZ3tB";
+const T_ID = "mo-tisch", LS = "mosaika-v1";
+const SEATS = ["s1","s2","s3","s4"];
+const MODES = {
+  wuerfel:{name:"Würfel", desc:"90 Würfel. Einmal pro Zug beliebig viele eigene Würfel neu werfen, dann legen."},
+  plaettchen:{name:"Plättchen", desc:"108 Steine, jede Kombination dreimal. Statt zu legen darf man Steine tauschen."}
+};
+const BOTS = [{name:"Robo", emoji:"🤖"}, {name:"Ada", emoji:"🦉"}];
+const LEVELS = {locker:"Locker", clever:"Clever"};
+let sb = null, online = false, cache = {}, firstPaint = true;
+let olyPlayers = [{name:"Yana",emoji:"🦄"},{name:"Noah",emoji:"🚀"},{name:"Papa",emoji:"🦁"}];
+let me = localStorage.getItem("mo-me") || "";
+const CID = localStorage.getItem("ll-cid") || (()=>{ const c = uid()+uid(); localStorage.setItem("ll-cid", c); return c; })();
+let setup = {picked:null, mode:"wuerfel", bots:0, level:"clever"};
+let ui = {sel:null, pend:[], mark:new Set(), swap:false, confirmQuit:false, rolled:null};
+let zoom = +(localStorage.getItem("mo-zoom")||0);
+let soundOn = localStorage.getItem("ll-sound")!=="0", actx = null;
+
+function loadLocal(){ try{ cache = JSON.parse(localStorage.getItem(LS)) || {}; }catch{ cache = {}; } }
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(cache)); }catch{} }
+function put(id, d){
+  d.v = ((cache[id] && cache[id].v) || 0) + 1;
+  cache[id] = d; saveLocal(); render();
+  if(online) sb.from("olympiade_state").update({data:d}).eq("id",id).then(({error})=>{
+    if(error){ console.error(error); toast("⚠️ Speichern fehlgeschlagen – bitte neu laden"); }
+  });
+}
+function applyRemote(id, d, force){
+  if(!d || typeof d!=="object") return;
+  const cur = cache[id];
+  if(!force && cur && cur.gid===d.gid && (cur.v||0) > (d.v||0)) return;
+  cache[id] = d; saveLocal(); render();
+}
+async function fetchAll(){
+  const {data, error} = await sb.from("olympiade_state").select("id,data").in("id",[T_ID,"nelskamp"]);
+  if(error) throw error;
+  for(const row of data){
+    if(row.id==="nelskamp"){ const ps = row.data && row.data.players; if(Array.isArray(ps) && ps.length) olyPlayers = ps.map(p=>({name:p.name,emoji:p.emoji})); }
+    else applyRemote(row.id, row.data, true);
+  }
+}
+async function connect(){
+  loadLocal();
+  try{
+    sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:false, autoRefreshToken:false}});
+    await fetchAll();
+    online = true;
+    sb.channel("mosaika").on("postgres_changes",{event:"UPDATE",schema:"public",table:"olympiade_state"}, p=>{
+      if(p.new && p.new.id===T_ID) applyRemote(T_ID, p.new.data);
+    }).subscribe();
+    document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) fetchAll().catch(()=>{}); });
+  }catch(e){ console.warn(e); online = false; sb = null; me = "all"; }
+  $("live").classList.toggle("on", online);
+  $("liveText").textContent = online ? "Live – auf allen Geräten" : "Offline – nur dieses Gerät";
+  render();
+  firstPaint = false;
+}
+
+/* ============ Regeln ============ */
+const table = () => cache[T_ID] || {};
+const game = () => { const t = table(); return t.gid ? t : null; };
+const activeSeat = g => g.seats[g.turn % g.seats.length].seat;
+const seatOf = (g,s) => g.seats.find(x=>x.seat===s);
+const isBot = (g,s) => !!(seatOf(g,s)||{}).bot;
+const canControl = (g,s) => !isBot(g,s) && (me==="all" || me===s);
+const K = (x,y) => x+","+y;
+const tkey = t => t.c*6+t.s;
+
+function lineValid(ts){
+  if(ts.length<=1) return true;
+  if(ts.length>6) return false;
+  const cs = new Set(ts.map(t=>t.c)), ss = new Set(ts.map(t=>t.s));
+  return (cs.size===1 && ss.size===ts.length) || (ss.size===1 && cs.size===ts.length);
+}
+// Zusammenhängende Reihe durch (x,y) in Richtung (dx,dy)
+function lineAt(get, x, y, dx, dy){
+  let sx = x, sy = y;
+  while(get(sx-dx, sy-dy)){ sx -= dx; sy -= dy; }
+  const out = [];
+  let cx = sx, cy = sy;
+  while(get(cx,cy)){ out.push(get(cx,cy)); cx += dx; cy += dy; }
+  return {start:K(sx,sy), tiles:out};
+}
+// Prüft eine Legung P=[{x,y,t}] auf Brett B und berechnet die Punkte
+function evalMove(B, P){
+  if(!P.length) return {ok:false, msg:"Noch nichts gelegt"};
+  const Pm = {};
+  for(const p of P){ const k = K(p.x,p.y); if(B[k] || Pm[k]) return {ok:false, msg:"Feld ist besetzt"}; Pm[k] = p.t; }
+  const get = (x,y) => Pm[K(x,y)] || B[K(x,y)];
+  const row = P.every(p=>p.y===P[0].y), col = P.every(p=>p.x===P[0].x);
+  if(!row && !col) return {ok:false, msg:"Alle Steine müssen in eine Reihe"};
+  const empty = !Object.keys(B).length;
+  if(P.length>1){
+    const [dx,dy] = row ? [1,0] : [0,1];
+    const vals = P.map(p=>row?p.x:p.y), lo = Math.min(...vals), hi = Math.max(...vals);
+    for(let v=lo; v<=hi; v++) if(!get(row?v:P[0].x, row?P[0].y:v)) return {ok:false, msg:"Die Reihe darf keine Lücke haben"};
+  }
+  if(empty){ if(!P.some(p=>p.x===0&&p.y===0)) return {ok:false, msg:"Der erste Stein liegt in der Mitte"}; }
+  else if(!P.some(p=>[[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>B[K(p.x+a,p.y+b)]))) return {ok:false, msg:"Muss an liegende Steine angrenzen"};
+  const lines = new Map();
+  for(const p of P) for(const [dx,dy] of [[1,0],[0,1]]){
+    const L = lineAt(get, p.x, p.y, dx, dy);
+    if(!lineValid(L.tiles)) return {ok:false, msg:"Diese Reihe passt nicht zusammen"};
+    if(L.tiles.length>1) lines.set(L.start+":"+dx, L.tiles.length);
+  }
+  let pts = 0, six = 0;
+  for(const n of lines.values()){ pts += n; if(n===6){ pts += 6; six++; } }
+  if(!lines.size) pts = 1;
+  return {ok:true, pts, six};
+}
+// Felder, an die der nächste Stein gelegt werden könnte
+function frontier(B, P){
+  const Pm = {}; for(const p of P) Pm[K(p.x,p.y)] = 1;
+  const occ = (x,y) => B[K(x,y)] || Pm[K(x,y)];
+  const out = new Map();
+  if(!P.length){
+    const ks = Object.keys(B);
+    if(!ks.length) return [[0,0]];
+    for(const k of ks){ const [x,y] = k.split(",").map(Number);
+      for(const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]]) if(!occ(x+a,y+b)) out.set(K(x+a,y+b),[x+a,y+b]); }
+    return [...out.values()];
+  }
+  const dirs = P.length===1 ? [[1,0],[0,1]] : [P.every(p=>p.y===P[0].y) ? [1,0] : [0,1]];
+  for(const [dx,dy] of dirs){
+    let x = P[0].x, y = P[0].y; while(occ(x,y)){ x -= dx; y -= dy; } out.set(K(x,y),[x,y]);
+    x = P[0].x; y = P[0].y; while(occ(x,y)){ x += dx; y += dy; } out.set(K(x,y),[x,y]);
+  }
+  return [...out.values()];
+}
+function legalCells(B, P, t){ return frontier(B,P).filter(([x,y]) => evalMove(B, [...P,{x,y,t}]).ok); }
+// alle möglichen Legungen einer Hand (für KI und „kann ich überhaupt legen?“)
+function genMoves(B, hand, limit){
+  const res = new Map();
+  (function dfs(P, used){
+    if(limit && res.size>=limit) return;
+    for(const [x,y] of frontier(B,P)){
+      const seen = new Set();
+      hand.forEach((t,i)=>{
+        if(used.includes(i) || seen.has(tkey(t))) return; seen.add(tkey(t));
+        const P2 = [...P, {x,y,t,i}], ev = evalMove(B, P2);
+        if(!ev.ok) return;
+        const key = P2.map(p=>K(p.x,p.y)+":"+tkey(p.t)).sort().join("|");
+        if(res.has(key)) return;
+        res.set(key, {P:P2, pts:ev.pts, six:ev.six});
+        dfs(P2, [...used, i]);
+      });
+    }
+  })([], []);
+  return [...res.values()];
+}
+const canPlay = (B, hand) => genMoves(B, hand, 1).length>0;
+function bestGroup(hand){
+  let best = 0;
+  for(let i=0;i<6;i++){
+    best = Math.max(best, new Set(hand.filter(t=>t.c===i).map(t=>t.s)).size, new Set(hand.filter(t=>t.s===i).map(t=>t.c)).size);
+  }
+  return best;
+}
+function draw(t){
+  if(!t.bag.length) return null;
+  const x = t.bag.pop();
+  return t.mode==="wuerfel" ? {c:x, s:r6()} : x;
+}
+
+/* ============ Aktionen ============ */
+function startGame(people, mode){
+  const seats = people.slice(0,4).map((p,i)=>Object.assign({seat:SEATS[i], name:p.name, emoji:p.emoji}, p.bot?{bot:p.bot}:{}));
+  const bag = [];
+  if(mode==="wuerfel"){ for(let c=0;c<6;c++) for(let n=0;n<15;n++) bag.push(c); }
+  else for(let c=0;c<6;c++) for(let s=0;s<6;s++) for(let n=0;n<3;n++) bag.push({c,s});
+  const t = {gid:uid(), mode, seats, bag:shuffle(bag), board:{}, hands:{}, score:{}, turn:0, rerolled:false, passes:0,
+    last:null, over:false, started:Date.now(), host:CID, history:table().history||[]};
+  for(const st of seats){ t.hands[st.seat] = Array.from({length:6},()=>draw(t)); t.score[st.seat] = 0; }
+  let bi = 0, bv = -1;
+  seats.forEach((st,i)=>{ const v = bestGroup(t.hands[st.seat]) + Math.random()*.1; if(v>bv){ bv = v; bi = i; } });
+  t.turn = bi;
+  resetUI();
+  if(me && me!=="all" && !seats.some(x=>x.seat===me && !x.bot)) me = "";
+  put(T_ID, t);
+  toast("🧩 Neues Spiel – viel Glück!");
+}
+function newGame(){
+  const picked = setup.picked || olyPlayers.map((_,i)=>i);
+  if(picked.length < 1) return toast("Mindestens eine Person auswählen");
+  const nb = Math.min(setup.bots, 4 - Math.min(picked.length,4));
+  if(picked.length + nb < 2) return toast("Mindestens zwei Mitspieler – oder einen KI-Gegner dazunehmen");
+  startGame([...picked.slice(0, 4-nb).map(i=>olyPlayers[i]), ...BOTS.slice(0,nb).map(b=>({...b, bot:setup.level}))], setup.mode);
+}
+function rematch(){ const g = table(); if(g.seats) startGame(g.seats.map(st=>({name:st.name, emoji:st.emoji, bot:st.bot})), g.mode||"wuerfel"); }
+function quitGame(){ const t = clone(table()); t.over = true; t.aborted = true; put(T_ID, t); ui.confirmQuit = false; }
+function resetUI(){ ui.sel = null; ui.pend = []; ui.mark = new Set(); ui.swap = false; }
+
+function endTurn(t, s, last){
+  t.last = {id:uid(), seat:s, ...last};
+  t.rerolled = false;
+  const allPassed = t.passes >= t.seats.length;
+  if(last.end || allPassed){
+    t.over = true; t.ended = Date.now();
+    const res = ranking(t).map(x=>({n:x.st.name, e:x.st.emoji, p:x.p}));
+    t.history = [...(t.history||[]).filter(h=>h.gid!==t.gid), {gid:t.gid, v:t.mode, at:t.ended, res}].slice(-150);
+  } else t.turn = (t.turn + 1) % t.seats.length;
+  resetUI();
+  put(T_ID, t);
+}
+function commitMove(s, P, bot){
+  const g = game(); if(!g || g.over || activeSeat(g)!==s) return;
+  if(!bot && !canControl(g,s)) return;
+  const ev = evalMove(g.board, P);
+  if(!ev.ok) return toast(ev.msg);
+  const t = clone(g), hand = t.hands[s];
+  for(const p of P) t.board[K(p.x,p.y)] = {c:p.t.c, s:p.t.s};
+  const idx = P.map(p=>p.i).sort((a,b)=>b-a);
+  for(const i of idx) hand.splice(i,1);
+  while(hand.length<6 && t.bag.length) hand.push(draw(t));
+  let pts = ev.pts, end = false;
+  if(!hand.length && !t.bag.length){ pts += 6; end = true; }
+  t.score[s] += pts; t.passes = 0;
+  endTurn(t, s, {kind:"lay", cells:P.map(p=>K(p.x,p.y)), pts, six:ev.six, n:P.length, end});
+}
+function reroll(s, idxs, bot){
+  const g = game(); if(!g || g.over || g.mode!=="wuerfel" || g.rerolled || activeSeat(g)!==s) return;
+  if(!bot && !canControl(g,s)) return;
+  if(!idxs.length) return toast("Erst Würfel antippen, die neu geworfen werden sollen");
+  const t = clone(g);
+  for(const i of idxs) t.hands[s][i].s = r6();
+  t.rerolled = true;
+  ui.rolled = {gid:t.gid, seat:s, idx:[...idxs], at:Date.now()};
+  resetUI(); clack();
+  put(T_ID, t);
+}
+function swapTiles(s, idxs, bot){
+  const g = game(); if(!g || g.over || g.mode!=="plaettchen" || activeSeat(g)!==s) return;
+  if(!bot && !canControl(g,s)) return;
+  if(!idxs.length) return toast("Erst Steine zum Tauschen antippen");
+  if(g.bag.length < idxs.length) return toast(`Im Beutel sind nur noch ${g.bag.length} Steine`);
+  const t = clone(g), hand = t.hands[s], back = [];
+  for(const i of [...idxs].sort((a,b)=>b-a)) back.push(hand.splice(i,1)[0]);
+  while(hand.length<6 && t.bag.length) hand.push(draw(t));
+  t.bag = shuffle([...t.bag, ...back]); t.passes = 0;
+  endTurn(t, s, {kind:"swap", n:idxs.length});
+}
+function pass(s, bot){
+  const g = game(); if(!g || g.over || activeSeat(g)!==s) return;
+  if(!bot && !canControl(g,s)) return;
+  const t = clone(g); t.passes = (t.passes||0) + 1;
+  endTurn(t, s, {kind:"pass"});
+}
+
+/* ============ KI-Gegner ============ */
+function botValue(g, s, m, lvl){
+  const hand = g.hands[s];
+  let v = m.pts + 0.4*m.P.length;
+  if(m.P.length===hand.length && g.bag.length===0) v += 6;   // Hand leer = Spielende mit Bonus
+  if(lvl==="clever"){
+    // offene Fünferreihen schenken dem Nächsten einen Sechser
+    const Pm = {}; for(const p of m.P) Pm[K(p.x,p.y)] = p.t;
+    const get = (x,y) => Pm[K(x,y)] || g.board[K(x,y)];
+    const seen = new Set();
+    for(const p of m.P) for(const [dx,dy] of [[1,0],[0,1]]){
+      const L = lineAt(get, p.x, p.y, dx, dy); const k = L.start+dx;
+      if(!seen.has(k) && L.tiles.length===5){ seen.add(k); v -= 4; }
+    }
+  } else v += Math.random()*4 - 2;
+  return v;
+}
+function botBest(g, s, lvl){
+  const ms = genMoves(g.board, g.hands[s]);
+  if(!ms.length) return null;
+  ms.forEach(m=>m.v = botValue(g, s, m, lvl));
+  ms.sort((a,b)=>b.v-a.v);
+  if(lvl==="locker") return ms[Math.floor(Math.random()*Math.min(ms.length, Math.max(1, Math.ceil(ms.length*0.4))))];
+  return ms[0];
+}
+function botTurn(s){
+  const g = game(); if(!g || g.over || activeSeat(g)!==s) return;
+  const lvl = seatOf(g,s).bot, hand = g.hands[s], best = botBest(g, s, lvl);
+  if(g.mode==="wuerfel" && !g.rerolled){
+    const weak = !best || (lvl==="clever" && best.pts < 5);
+    if(weak){
+      const keep = new Set(best && lvl==="clever" ? best.P.map(p=>p.i) : []);
+      const idx = hand.map((_,i)=>i).filter(i=>!keep.has(i));
+      if(idx.length) return reroll(s, idx, true);
+    }
+  }
+  if(g.mode==="plaettchen" && g.bag.length && (!best || (lvl==="clever" && best.pts<=2))){
+    // Steine außerhalb der größten Gruppe tauschen
+    let grp = [];
+    for(let i=0;i<6;i++) for(const f of [t=>t.c===i, t=>t.s===i]){
+      const ids = []; const seen = new Set();
+      hand.forEach((t,j)=>{ if(f(t) && !seen.has(tkey(t))){ seen.add(tkey(t)); ids.push(j); } });
+      if(ids.length > grp.length) grp = ids;
+    }
+    const idx = hand.map((_,i)=>i).filter(i=>!grp.includes(i)).slice(0, g.bag.length);
+    if(idx.length && (!best || idx.length>=2)) return swapTiles(s, idx, true);
+  }
+  if(best) return commitMove(s, best.P, true);
+  pass(s, true);
+}
+let botTimer = null, botKey = null, takeTimer = null;
+const isDriver = g => !online || g.host===CID;
+function botTick(){
+  const g = game();
+  const s = g && !g.over ? activeSeat(g) : null;
+  if(!s || !isBot(g,s)){ clearTimeout(botTimer); clearTimeout(takeTimer); botKey = null; return; }
+  const k = `${g.gid}:${g.v}:${s}`;
+  if(k===botKey) return;
+  botKey = k; clearTimeout(botTimer); clearTimeout(takeTimer);
+  if(isDriver(g)) botTimer = setTimeout(()=>{ botKey = null; botTurn(s); }, g.rerolled ? 1300 : 1700 + Math.random()*800);
+  else takeTimer = setTimeout(()=>{   // Startgerät weg? Dann übernimmt dieses Gerät die KI.
+    if(botKey!==k || document.hidden) return;
+    const t = clone(table()); t.host = CID; botKey = null; put(T_ID, t);
+  }, 9000 + Math.random()*4000);
+}
+
+/* ============ Ergebnis in die Olympiade ============ */
+function ranking(g){ return g.seats.map(st=>({st, p:g.score[st.seat]||0})).sort((a,b)=>b.p-a.p); }
+let transferring = false;
+async function transferResult(){
+  const g = game(); if(!g || !g.over || g.aborted || g.transferred || transferring) return;
+  if(!online) return toast("Dafür braucht es eine Internetverbindung");
+  transferring = true; render();
+  try{
+    const {data, error} = await sb.from("olympiade_state").select("data").eq("id","nelskamp").single();
+    if(error) throw error;
+    const st = data.data, ol = st.olympiad;
+    if(!ol) { toast("Gerade läuft keine Olympiade – erst in der App eine erstellen"); return; }
+    const norm = x => String(x||"").trim().toLowerCase();
+    const order = [], missing = [];
+    for(const x of ranking(g)){
+      const p = (ol.roster||[]).find(r=>norm(r.name)===norm(x.st.name));
+      if(p) order.push(p.id); else missing.push(x.st.name);
+    }
+    if(!order.length){ toast("Niemand aus diesem Spiel ist in der Olympiade dabei"); return; }
+    const lib = (st.library||[]).find(l=>/mosaika/i.test(l.url||""));
+    const pend = st.pending && lib && st.pending.gameId===lib.id ? st.pending : null;
+    const dbl = pend ? !!pend.double : !!(lib && lib.double);
+    const points = {}; order.forEach((pid,i)=>{ points[pid] = ([3,2,1][i]||0) * (dbl?2:1); });
+    ol.rounds = ol.rounds || [];
+    ol.rounds.push({id:uid(), n:ol.rounds.length+1, gameId:lib?lib.id:"mosaika", gameName:"Mosaika", icon:lib?lib.icon:"🧩",
+      at:Date.now(), order, double:dbl, points});
+    if(pend) st.pending = null;
+    st._rev = uid();
+    const up = await sb.from("olympiade_state").update({data:st}).eq("id","nelskamp");
+    if(up.error) throw up.error;
+    const t = clone(table()); t.transferred = {at:Date.now(), name:ol.name||"Olympiade", round:ol.rounds.length}; put(T_ID, t);
+    toast(`✓ Als Runde ${ol.rounds.length} eingetragen` + (missing.length?` (ohne ${missing.join(", ")})`:""));
+  }catch(e){ console.error(e); toast("⚠️ Übernehmen hat nicht geklappt – bitte nochmal"); }
+  finally{ transferring = false; render(); }
+}
+
+/* ============ Ton & Ansagen ============ */
+function clack(){
+  if(!soundOn) return;
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const t = actx.currentTime, n = actx.sampleRate*0.05, buf = actx.createBuffer(1,n,actx.sampleRate), d = buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/n, 4);
+    const src = actx.createBufferSource(), f = actx.createBiquadFilter(), gn = actx.createGain();
+    src.buffer = buf; f.type = "bandpass"; f.frequency.value = 1600; f.Q.value = 1.4; gn.gain.value = .5;
+    src.connect(f).connect(gn).connect(actx.destination); src.start(t);
+  }catch{}
+}
+function chime(){
+  if(!soundOn) return;
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    [880,1320].forEach((f,i)=>{ const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i*.09;
+      o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.12,t+.01); g.gain.exponentialRampToValueAtTime(.001,t+.6);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t+.65); });
+  }catch{}
+}
+let seenEv = null, annQ = [], annBusy = false;
+function announce(icon, text){ annQ.push({icon,text}); if(!annBusy) nextAnn(); }
+function nextAnn(){
+  const a = annQ.shift(), el = $("ann");
+  if(!a){ annBusy = false; return; }
+  annBusy = true;
+  el.innerHTML = `<div class="ai">${a.icon}</div><div class="at">${esc(a.text)}</div>`;
+  el.classList.remove("show"); void el.offsetWidth; el.classList.add("show"); chime();
+  setTimeout(()=>{ el.classList.remove("show"); setTimeout(nextAnn, 350); }, 2600);
+}
+function checkEvents(g){
+  if(!g) return;
+  const evs = [], L = g.last;
+  if(L && L.kind==="lay"){
+    const nm = (seatOf(g,L.seat)||{}).name || "";
+    evs.push({k:"c"+L.id, sound:true});
+    if(L.six) evs.push({k:"6"+L.id, i:"✨", t: L.six>1 ? `${nm} vollendet ${L.six} Sechser! +${L.pts}` : `${nm} legt einen Sechser! +${L.pts}`});
+    else if(L.pts>=12) evs.push({k:"b"+L.id, i:"🔥", t:`${nm}: +${L.pts} Punkte!`});
+    if(L.end) evs.push({k:"e"+L.id, i:"🏁", t:`${nm} hat keine Steine mehr: +6`});
+  }
+  if(g.over && !g.aborted){ const w = ranking(g)[0]; evs.push({k:"E", i:"🏆", t:`${w.st.name} gewinnt mit ${w.p} Punkten!`}); }
+  if(!seenEv || seenEv.gid!==g.gid || firstPaint){ seenEv = {gid:g.gid, set:new Set(evs.map(e=>e.k))}; return; }
+  for(const e of evs) if(!seenEv.set.has(e.k)){ seenEv.set.add(e.k); if(e.sound) clack(); else announce(e.i, e.t); }
+}
+
+/* ============ Statistik ============ */
+function statsHTML(){
+  const hist = (table().history||[]);
+  if(!hist.length) return `<section class="panel"><h2>Statistik</h2><p class="mute">Noch keine fertigen Partien. Nach dem ersten Spiel stehen hier Siege, Bestwerte und Rekorde.</p></section>`;
+  const by = {}; let rec = null;
+  for(const h of hist){
+    const top = Math.max(...h.res.map(r=>r.p));
+    for(const r of h.res){
+      const o = by[r.n] = by[r.n] || {n:r.n, e:r.e, games:0, wins:0, best:-Infinity, sum:0};
+      o.e = r.e; o.games++; o.sum += r.p; if(r.p===top) o.wins++; o.best = Math.max(o.best, r.p);
+      if(!rec || r.p > rec.p) rec = {...r, v:h.v, at:h.at};
+    }
+  }
+  const rows = Object.values(by).sort((a,b)=>b.wins-a.wins || b.sum/b.games - a.sum/a.games);
+  const dt = ts => new Date(ts).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+  return `<section class="panel"><h2>Statistik</h2>
+    <div class="stats"><table><tr><th>Person</th><th>Spiele</th><th>Siege</th><th>Bester</th><th>Schnitt</th></tr>
+    ${rows.map(o=>`<tr><td>${esc(o.e)} ${esc(o.n)}</td><td>${o.games}</td><td><b>${o.wins}</b></td><td>${o.best}</td><td>${Math.round(o.sum/o.games)}</td></tr>`).join("")}</table></div>
+    <div class="recs"><div><span>Rekord</span><b>${rec.p}</b><em>${esc(rec.e)} ${esc(rec.n)} · ${(MODES[rec.v]||{}).name||""} · ${dt(rec.at)}</em></div>
+      <div><span>Partien</span><b>${hist.length}</b><em>Würfel ${hist.filter(h=>h.v==="wuerfel").length} · Plättchen ${hist.filter(h=>h.v==="plaettchen").length}</em></div></div>
+    <h2 style="font-size:17px;margin-top:16px">Letzte Partien</h2>
+    ${hist.slice(-5).reverse().map(h=>`<div class="hrow"><span>${dt(h.at)}</span><span>${(MODES[h.v]||{}).name||""}</span><span>${h.res.map(r=>`${esc(r.e)} ${esc(r.n)} ${r.p}`).join(" · ")}</span></div>`).join("")}
+  </section>`;
+}
+
+/* ============ Darstellung ============ */
+let boardBox = null, centered = null;
+function myHandSeat(g){
+  if(me==="all"){ const s = activeSeat(g); return isBot(g,s) ? null : s; }
+  return g.seats.some(x=>x.seat===me) ? me : null;
+}
+function renderBoard(g){
+  const B = g.board, P = ui.pend, mine = activeSeat(g)===myHandSeat(g) && canControl(g, activeSeat(g));
+  const hand = g.hands[activeSeat(g)] || [];
+  const legal = mine && ui.sel!=null && !ui.swap ? legalCells(B, P, hand[ui.sel]) : [];
+  const legalSet = new Set(legal.map(([x,y])=>K(x,y)));
+  const pm = {}; for(const p of P) pm[K(p.x,p.y)] = p;
+  const lastSet = new Set(g.last && g.last.cells || []);
+  const pts = [...Object.keys(B), ...Object.keys(pm), ...legalSet, "0,0"].map(k=>k.split(",").map(Number));
+  const M = 2;
+  const minX = Math.min(...pts.map(p=>p[0]))-M, maxX = Math.max(...pts.map(p=>p[0]))+M;
+  const minY = Math.min(...pts.map(p=>p[1]))-M, maxY = Math.max(...pts.map(p=>p[1]))+M;
+  let h = "";
+  for(let y=minY; y<=maxY; y++) for(let x=minX; x<=maxX; x++){
+    const k = K(x,y);
+    if(B[k]) h += tileHTML(B[k], (g.mode==="wuerfel"?"die ":"") + (lastSet.has(k)?"lastmv":""), "disabled");
+    else if(pm[k]) h += tileHTML(pm[k].t, (g.mode==="wuerfel"?"die ":"")+"pend", `data-unpend="${k}" title="Zurücknehmen"`);
+    else if(legalSet.has(k)) h += `<button class="cell legal" data-cell="${k}" aria-label="Hier legen"></button>`;
+    else h += `<div class="cell empty"></div>`;
+  }
+  const wrap = $("boardWrap"), el = $("board");
+  const step = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cs")) + 3;
+  const sl = wrap.scrollLeft, st = wrap.scrollTop, prev = boardBox;
+  el.style.gridTemplateColumns = `repeat(${maxX-minX+1}, var(--cs))`;
+  el.innerHTML = h;
+  boardBox = {minX, minY, gid:g.gid};
+  if(!prev || prev.gid!==g.gid || centered!==g.gid){ centerBoard(); centered = g.gid; }
+  else { wrap.scrollLeft = sl + (prev.minX-minX)*step; wrap.scrollTop = st + (prev.minY-minY)*step; }
+}
+function centerBoard(){
+  const wrap = $("boardWrap");
+  requestAnimationFrame(()=>{ wrap.scrollLeft = (wrap.scrollWidth-wrap.clientWidth)/2; wrap.scrollTop = (wrap.scrollHeight-wrap.clientHeight)/2; });
+}
+function applyZoom(){ const base = matchMedia("(max-width:520px)").matches ? 38 : 44; document.documentElement.style.setProperty("--cs", Math.max(24, Math.min(64, base + zoom*6))+"px"); }
+
+function handHTML(g){
+  const actS = activeSeat(g), hs = myHandSeat(g);
+  const actSt = seatOf(g, actS);
+  if(!hs) return `<div class="hint">${isBot(g,actS) ? `${esc(actSt.emoji)} ${esc(actSt.name)} überlegt …` : `Tippe unten auf deinen Namen, um deine Steine zu sehen.`}</div>${whoHTML(g)}`;
+  const hand = g.hands[hs] || [], myTurn = hs===actS && canControl(g, hs), dice = g.mode==="wuerfel";
+  const used = new Set(ui.pend.map(p=>p.i));
+  const rolled = ui.rolled && ui.rolled.gid===g.gid && ui.rolled.seat===hs && Date.now()-ui.rolled.at<900 ? new Set(ui.rolled.idx) : new Set();
+  const markMode = myTurn && (ui.swap);
+  const rack = hand.length ? hand.map((t,i)=>tileHTML(t, (dice?"die ":"") + (used.has(i)?"used":"") + (ui.sel===i&&!markMode?" sel":"") + (markMode&&ui.mark.has(i)?" mark":"") + (rolled.has(i)?" roll":""),
+      myTurn && !used.has(i) ? `data-hand="${i}"` : "disabled")).join("") : `<span class="emptyr">Keine Steine mehr</span>`;
+  let hint = "", acts = "";
+  if(!myTurn){
+    hint = `Deine ${dice?"Würfel":"Steine"} – ${esc(actSt.name)} ist am Zug${isBot(g,actS)?" und überlegt …":"."}`;
+  } else if(markMode){
+    hint = dice ? `<b>Neu werfen:</b> tippe die Würfel an, die du neu werfen willst (einmal pro Zug).`
+                : `<b>Tauschen:</b> tippe die Steine an, die zurück in den Beutel sollen. Danach ist dein Zug vorbei.`;
+    acts = `<button class="big" data-do="${dice?"reroll":"swap"}" ${ui.mark.size?"":"disabled"}>${dice?`🎲 ${ui.mark.size||""} neu werfen`:`⇄ ${ui.mark.size||""} tauschen`}</button>
+      ${dice?`<button class="ghost sm" data-do="markall">alle</button>`:""}<button class="ghost sm" data-do="cancelmark">Abbrechen</button>`;
+  } else {
+    const ev = ui.pend.length ? evalMove(g.board, ui.pend) : null;
+    const playable = ui.pend.length || canPlay(g.board, hand);
+    if(ui.pend.length) hint = ev.ok ? `Gelegt: ${ui.pend.length} – das gibt <b>${ev.pts} Punkte</b>${ev.six?" inkl. Sechser-Bonus ✨":""}. Weitere Steine in dieselbe Reihe legen oder bestätigen.` : ev.msg;
+    else if(ui.sel!=null) hint = `Tippe auf ein leuchtendes Feld, um den Stein zu legen.`;
+    else if(!playable) hint = dice && !g.rerolled ? `Kein Stein passt gerade. <b>Wirf Würfel neu</b> – danach kannst du vielleicht legen.` : `Kein Stein passt – du musst ${dice?"passen":"tauschen oder passen"}.`;
+    else hint = `<b>Du bist dran!</b> Tippe einen ${dice?"Würfel":"Stein"} an und dann ein leuchtendes Feld.${dice&&!g.rerolled?" Vorher darfst du einmal Würfel neu werfen.":""}`;
+    if(ui.pend.length) acts += `<button class="big" data-do="confirm" ${ev.ok?"":"disabled"}>✓ Legen${ev.ok?` (+${ev.pts})`:""}</button><button class="ghost sm" data-do="takeback">↶ Zurücknehmen</button>`;
+    else {
+      if(dice && !g.rerolled) acts += `<button class="ghost" data-do="markmode">🎲 Würfel neu werfen</button>`;
+      if(!dice && g.bag.length) acts += `<button class="ghost" data-do="markmode">⇄ Steine tauschen</button>`;
+      if(!playable && (!dice || g.rerolled)) acts += `<button class="warn" data-do="pass">Passen</button>`;
+    }
+  }
+  return `<div class="rack">${rack}</div><div class="hint">${hint}</div><div class="acts">${acts}</div>
+    <div class="bag" style="margin-top:10px">Im Beutel: ${g.bag.length} ${dice?"Würfel":"Steine"}</div>${whoHTML(g)}`;
+}
+function whoHTML(g){
+  const hum = g.seats.filter(st=>!st.bot);
+  return `<div class="who">Wer bist du? ${hum.map(st=>`<button class="chip${me===st.seat?" on":""}" data-me="${st.seat}">${esc(st.emoji)} ${esc(st.name)}</button>`).join("")}
+    <button class="chip${me==="all"?" on":""}" data-me="all">📱 Alle an diesem Gerät</button></div>`;
+}
+function setupHTML(){
+  const picked = setup.picked || olyPlayers.map((_,i)=>i);
+  return `<section class="panel"><h2>Neues Spiel</h2>
+    <div class="mute">Wer spielt mit? (2–4 zusammen mit KI)</div>
+    <div class="chips">${olyPlayers.map((p,i)=>`<button class="chip${picked.includes(i)?" on":""}" data-pick="${i}">${esc(p.emoji)} ${esc(p.name)}</button>`).join("")}</div>
+    <div class="mute">KI-Gegner</div>
+    <div class="chips">${[0,1,2].map(n=>`<button class="chip${setup.bots===n?" on":""}" data-bots="${n}">${n?BOTS.slice(0,n).map(b=>b.emoji+" "+b.name).join(" + "):"Keine"}</button>`).join("")}
+      ${setup.bots?`<span style="width:100%"></span>${Object.entries(LEVELS).map(([k,v])=>`<button class="chip${setup.level===k?" on":""}" data-level="${k}">${k==="locker"?"🙂":"🧠"} ${v}</button>`).join("")}`:""}</div>
+    <div class="mute">Variante</div>
+    <div class="variants">${Object.entries(MODES).map(([k,v])=>`<button class="var${setup.mode===k?" on":""}" data-mode="${k}"><b>${v.name}</b>${v.desc}</button>`).join("")}</div>
+    <div class="row" style="margin-top:10px"><button data-do="new">Spiel starten</button></div>
+  </section>`;
+}
+function resultHTML(g){
+  const ranked = ranking(g), medal = ["🥇","🥈","🥉"];
+  let btn = "";
+  if(!g.aborted) btn = g.transferred
+    ? `<span class="done">✓ In „${esc(g.transferred.name)}“ als Runde ${g.transferred.round} eingetragen</span>`
+    : `<button data-do="transfer" ${transferring||!online?"disabled":""}>${transferring?"Wird eingetragen …":"🏅 In die Olympiade übernehmen"}</button>`;
+  return `<section class="panel"><h2>${g.aborted?"Spiel abgebrochen":"Endstand"} – ${MODES[g.mode].name}</h2>
+    ${ranked.map((x,i)=>`<div class="rank"><span>${medal[i]||"🎖️"}</span><span>${esc(x.st.emoji)} ${esc(x.st.name)}</span><span class="p">${x.p} P</span></div>`).join("")}
+    <div class="row" style="margin-top:12px">${btn}<button class="ghost" data-do="rematch">↻ Revanche</button></div>
+    ${!g.aborted && !g.transferred ? `<p class="mute" style="margin:8px 0 0">Trägt die Platzierung (3 / 2 / 1 Punkte) als Runde „Mosaika“ in die laufende Olympiade ein.</p>`:""}
+  </section>`;
+}
+function lastText(g){
+  const L = g.last; if(!L) return "";
+  const st = seatOf(g, L.seat); if(!st) return "";
+  const nm = `${esc(st.emoji)} ${esc(st.name)}`;
+  if(L.kind==="lay") return `Zuletzt: ${nm} legte ${L.n} ${L.n===1?"Stein":"Steine"} für <b>+${L.pts}</b>${L.six?" ✨ Sechser":""}${L.end?" 🏁":""}`;
+  if(L.kind==="swap") return `Zuletzt: ${nm} tauschte ${L.n} ${L.n===1?"Stein":"Steine"}`;
+  return `Zuletzt: ${nm} musste passen`;
+}
+let notified = null;
+function render(){
+  const g = game(), app = $("app");
+  checkEvents(g);
+  botTick();
+  if(!g || g.over){
+    $("tablePanel").hidden = !(g && g.over && !g.aborted); $("handPanel").hidden = true; document.title = "Mosaika";
+    if(g && g.over && !g.aborted){
+      $("turnLine").innerHTML = `Endstand<small>${MODES[g.mode].name}</small>`;
+      $("scoreRow").innerHTML = ranking(g).map(x=>`<span class="pl">${esc(x.st.emoji)} ${esc(x.st.name)} <b>${x.p}</b></span>`).join("");
+      $("lastLine").innerHTML = lastText(g);
+      ui.pend = []; ui.sel = null; renderBoard(g);
+    }
+    let h = "";
+    if(g && g.over) h += resultHTML(g);
+    h += setupHTML() + statsHTML();
+    app.innerHTML = h; return;
+  }
+  const actS = activeSeat(g), actSt = seatOf(g, actS);
+  // Wenn der Zug weitergeht, verfallen lokale Entwürfe
+  const pv = g.gid+":"+g.turn+":"+(g.last&&g.last.id)+":"+myHandSeat(g);
+  if(ui.pendV!==pv) resetUI();
+  ui.pendV = pv;
+  $("tablePanel").hidden = false; $("handPanel").hidden = false;
+  $("turnLine").innerHTML = `${esc(actSt.emoji)} ${esc(actSt.name)} ist am Zug<small>${MODES[g.mode].name}</small>`;
+  $("scoreRow").innerHTML = g.seats.map(st=>`<span class="pl${st.seat===actS?" on":""}">${esc(st.emoji)} ${esc(st.name)}${st.bot?` <small>KI</small>`:""} <b>${g.score[st.seat]||0}</b> <small>${(g.hands[st.seat]||[]).length} St.</small></span>`).join("");
+  $("lastLine").innerHTML = lastText(g);
+  renderBoard(g);
+  $("handPanel").innerHTML = handHTML(g);
+  app.innerHTML = `<div class="row" style="justify-content:center;margin-bottom:18px"><button class="sm ghost" data-do="quit">${ui.confirmQuit?"Wirklich abbrechen? Nochmal tippen":"Spiel abbrechen"}</button></div>`;
+  const mine = me!=="all" && me===actS;
+  document.title = mine ? "🧩 Du bist dran – Mosaika" : "Mosaika";
+  const nk = g.gid+":"+g.turn+":"+(g.last&&g.last.id);
+  if(mine && notified!==nk && !firstPaint){ try{ navigator.vibrate && navigator.vibrate([60,40,60]); }catch{} }
+  if(mine) notified = nk;
+}
+
+document.addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  const g = game();
+  if(b.dataset.zoom){ zoom = Math.max(-3, Math.min(3, zoom + +b.dataset.zoom)); localStorage.setItem("mo-zoom", zoom); applyZoom(); boardBox = null; centered = null; if(g) renderBoard(g); return; }
+  if(b.dataset.pick!=null){ const i = +b.dataset.pick, cur = setup.picked || olyPlayers.map((_,j)=>j);
+    setup.picked = cur.includes(i) ? cur.filter(x=>x!==i) : [...cur,i].sort((a,b)=>a-b); return render(); }
+  if(b.dataset.mode){ setup.mode = b.dataset.mode; return render(); }
+  if(b.dataset.bots!=null){ setup.bots = +b.dataset.bots; return render(); }
+  if(b.dataset.level){ setup.level = b.dataset.level; return render(); }
+  if(b.dataset.me){ me = b.dataset.me; localStorage.setItem("mo-me", me); resetUI(); return render(); }
+  if(b.dataset.hand!=null){
+    const i = +b.dataset.hand;
+    if(ui.swap){ ui.mark.has(i) ? ui.mark.delete(i) : ui.mark.add(i); }
+    else ui.sel = ui.sel===i ? null : i;
+    return render();
+  }
+  if(b.dataset.cell && g && ui.sel!=null){
+    const [x,y] = b.dataset.cell.split(",").map(Number), hand = g.hands[activeSeat(g)];
+    ui.pend.push({x, y, t:hand[ui.sel], i:ui.sel}); ui.sel = null; clack();
+    const free = hand.map((_,i)=>i).filter(i=>!ui.pend.some(p=>p.i===i));
+    if(free.length===1) ui.sel = free[0];
+    return render();
+  }
+  if(b.dataset.unpend){ ui.pend = ui.pend.filter(p=>K(p.x,p.y)!==b.dataset.unpend); return render(); }
+  switch(b.dataset.do){
+    case "new": return newGame();
+    case "rematch": return rematch();
+    case "transfer": return transferResult();
+    case "center": return centerBoard();
+    case "confirm": return commitMove(activeSeat(g), ui.pend);
+    case "takeback": ui.pend = []; ui.sel = null; return render();
+    case "markmode": ui.swap = true; ui.mark = new Set(); ui.sel = null; return render();
+    case "markall": ui.mark = new Set(g.hands[activeSeat(g)].map((_,i)=>i)); return render();
+    case "cancelmark": ui.swap = false; ui.mark = new Set(); return render();
+    case "reroll": return reroll(activeSeat(g), [...ui.mark]);
+    case "swap": return swapTiles(activeSeat(g), [...ui.mark]);
+    case "pass": return pass(activeSeat(g));
+    case "quit": if(!ui.confirmQuit){ ui.confirmQuit = true; render(); setTimeout(()=>{ ui.confirmQuit = false; render(); }, 4000); return; } return quitGame();
+  }
+});
+function paintSound(){ $("soundBtn").textContent = soundOn ? "🔊" : "🔇"; }
+$("soundBtn").addEventListener("click", e=>{ e.stopPropagation(); soundOn = !soundOn; localStorage.setItem("ll-sound", soundOn?"1":"0"); paintSound(); if(soundOn) clack(); });
+paintSound(); applyZoom();
+addEventListener("resize", applyZoom);
+connect();
+</script>
+</body>
+</html>

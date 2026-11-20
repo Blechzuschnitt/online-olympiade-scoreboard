@@ -47,3 +47,9 @@ Die vollständigen Regeln stehen auf der Spielseite unter „Spielregeln & Varia
 Extras: Ansagen bei Sperren, Fehlwürfen und Spielende auf allen Geräten · Statistik (Siege, Bestwerte, Rekorde, letzte Partien)
 · „Revanche“ mit denselben Leuten · „In die Olympiade übernehmen“ trägt die Platzierung als Runde (3/2/1 Punkte, ggf. ×2) ein.
 KI-Gegner: beim Start 1–2 Computer-Mitspieler (🤖 Robo, 🦉 Ada) dazunehmen, Stärke „Locker“ oder „Clever“. Gesteuert werden sie vom Gerät, das das Spiel gestartet hat (ist es weg, übernimmt nach ~10 s ein anderes).
+
+## Mosaika
+
+`mosaika.html` – unser eigenes Legespiel mit Würfeln: Reihen bilden, in denen entweder alle dieselbe Farbe oder alle dasselbe Symbol haben (max. 6, Sechser = +6). 2–4 Mitspieler, live auf mehreren Handys (Supabase-Zeile `mo-tisch`) oder an einem Gerät, dazu 1–2 KI-Gegner (Locker/Clever).
+Varianten: **Würfel** (90 Würfel, einmal pro Zug neu werfen) und **Plättchen** (108 Steine, Tauschen statt Legen erlaubt).
+Extras wie bei Lucky Lines: Ansagen, Statistik, Revanche, „In die Olympiade übernehmen“.
