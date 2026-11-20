@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="raetselrad.css">
+<link rel="stylesheet" href="glueckstraehne.css">
 <style>
 /* ============ Design-System ============ */
 :root{
@@ -525,6 +526,7 @@ body.tvon>:not(.tv,.world,#fx,.toast,.cere,svg){display:none!important}
 </section>
 
 <section class="view" id="v-show"><div id="rrRoot"></div></section>
+<section class="view" id="v-gs"><div id="gsRoot"></div></section>
 
 <section class="view" id="v-spiele">
   <section class="panel"><h2 class="h">Spielebibliothek <small id="libCount"></small></h2>
@@ -734,7 +736,8 @@ async function connect(){
     const remote = await fetchRemote();
     if(valid(remote)) applyRemote(remote); else pushRemote();      // erste Nutzung: lokalen Stand hochladen
     setLive("online");
-    if(typeof ensureShowGame==="function" && ensureShowGame()) commit();   // Rätselrad einmalig in die Bibliothek
+    // eigene Spiele einmalig in die Bibliothek (und alte Einträge wie Flip 7 entfernen)
+    if((typeof ensureShowGame==="function" && ensureShowGame()) | (typeof ensureGsGame==="function" && ensureGsGame())) commit();
     sb.channel("olympiade")
       .on("postgres_changes",{event:"UPDATE",schema:"public",table:"olympiade_state"}, p=>{ if(p.new && p.new.id===SB_ROW) applyRemote(p.new.data); })
       .subscribe();
@@ -856,6 +859,7 @@ const facts = g => (g.players ? `<span class="pill" title="Spielerzahl">👥 ${e
 function render(){
   renderHeader(); renderBoard(); renderStage(); renderWheel(); renderWheelChips(); renderLibrary(); renderLog(); renderAdmin();
   if(typeof renderShow==="function") renderShow();          // Rätselrad (raetselrad.js)
+  if(typeof renderGs==="function") renderGs();              // Glückssträhne (glueckstraehne.js)
 }
 // Ein Inhalt kann an mehreren Stellen stehen (Arena, Glücksrad, TV …) – nur neu zeichnen, wenn er sich ändert
 const slotCache = new WeakMap();
@@ -1517,13 +1521,13 @@ $("dice").onclick = ()=>{
 };
 
 /* ================= Navigation & Live-Modus ================= */
-const VIEWS = ["arena","rad","show","spiele","rangliste","runden","verwaltung"];
+const VIEWS = ["arena","rad","show","gs","spiele","rangliste","runden","verwaltung"];
 let curView = "arena";
 function go(v, keepScroll){
   if(!VIEWS.includes(v)) v = "arena";
   const changed = v!==curView; curView = v;
   document.querySelectorAll("main .view").forEach(s=>s.classList.toggle("on", s.id==="v-"+v));
-  const nav = v==="show" ? "spiele" : v;                              // das Rätselrad gehört zu den Spielen
+  const nav = v==="show" || v==="gs" ? "spiele" : v;                  // eigene Spiele gehören zu den Spielen
   document.querySelectorAll(".dock [data-view]").forEach(b=>{ b.classList.toggle("on", b.dataset.view===nav); b.toggleAttribute("aria-current", b.dataset.view===nav); });
   try{ localStorage.setItem("oly-view", v); if($("tv").hidden) history.replaceState(null, "", "#"+v); }catch(e){}
   if(changed && !keepScroll) scrollTo(0,0);
@@ -1571,5 +1575,7 @@ if(startHash==="live" || startHash==="tv") tvOn(true);
 </script>
 <script src="raetselrad-logic.js"></script>
 <script src="raetselrad.js"></script>
+<script src="glueckstraehne-logic.js"></script>
+<script src="glueckstraehne.js"></script>
 </body>
 </html>
