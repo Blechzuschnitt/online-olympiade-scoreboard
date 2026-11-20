@@ -109,7 +109,11 @@
   .card.yes{border-color:var(--lime);box-shadow:0 0 14px rgba(182,255,59,.25)}
   .card.no{border-color:rgba(255,59,92,.7)}
   .card.half{border-color:var(--gold)}
-  .card .img{aspect-ratio:16/10;background:#000 center/cover no-repeat;cursor:zoom-in;border:none;border-radius:0;padding:0;box-shadow:none;width:100%}
+  .card .img{position:relative;aspect-ratio:16/10;background:radial-gradient(ellipse at 50% 30%,#1d5a80,#061624);cursor:zoom-in;border:none;border-radius:0;padding:0;box-shadow:none;width:100%;overflow:hidden;color:#fff;font-size:15px}
+  .card .img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .card .img span{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .card .img span b{font-size:30px}
+  #lbPano{width:min(960px,100%);height:min(70vh,640px);border-radius:12px;overflow:hidden;background:#000}
   .card .none{aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:13px;background:rgba(0,0,0,.25)}
   .card .cb{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
   .card .who2{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:14px}
@@ -414,7 +418,7 @@ function setupPano(g){
     if(!pano) pano = new google.maps.StreetViewPanorama($("pano"), opts);
     else { pano.setOptions(opts); pano.setVisible(true); }
     // nächstgelegenes Panorama am Startort suchen, damit alle am selben Fleck starten
-    new google.maps.StreetViewService().getPanorama({location:opts.position, radius:3000, sources:[google.maps.StreetViewSource.OUTDOOR]}, (d, st)=>{
+    new google.maps.StreetViewService().getPanorama({location:opts.position, radius:3000, sources:[google.maps.StreetViewSource.GOOGLE || google.maps.StreetViewSource.OUTDOOR]}, (d, st)=>{
       if(st==="OK" && d && d.location){ pano.setPano(d.location.pano); g.startPano = d.location.pano; }
     });
     panoFor = g.gid; msg.hidden = true;
@@ -543,7 +547,7 @@ function huntSideHTML(g){
   const r = myRow(g), shots = r.shots || {}, got = Object.keys(shots).length;
   const live = !!pano && panoFor===g.gid && mapsState==="ok";
   const items = g.items.map((it,i)=>{ const s = shots[i], src = s ? shotSrc(s, 120, 80) : "";
-    return `<button class="item${s?" got":""}${ui.sel===i?" sel":""}" data-item="${i}"><span class="n">${s?"✓":i+1}</span><span class="t">${esc(it)}</span>${src?`<img class="th" src="${esc(src)}" alt="">`:""}</button>`; }).join("");
+    return `<button class="item${s?" got":""}${ui.sel===i?" sel":""}" data-item="${i}"><span class="n">${s?"✓":i+1}</span><span class="t">${esc(it)}</span>${src?`<img class="th" src="${esc(src)}" alt="" onerror="this.remove()">`:""}</button>`; }).join("");
   const cur = g.items[ui.sel], has = !!shots[ui.sel];
   return `<div class="items">${items}</div>
     <div class="shoot">
@@ -571,7 +575,7 @@ function voteHTML(g){
       if(mine && !own){ need++; if(my!==undefined) gave++; }
       const src = shotSrc(s);
       return `<div class="card ${cls}">
-        ${src?`<button class="img" style="background-image:url('${esc(src)}')" data-zoom="${st.seat}|${i}" aria-label="Foto vergrößern"></button>`:`<div class="none">Bild nicht verfügbar</div>`}
+        <button class="img" data-zoom="${st.seat}|${i}" aria-label="Foto ansehen"><span><b>👁</b>Blick ansehen</span>${src?`<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">`:""}</button>
         <div class="cb"><div class="who2">${esc(st.emoji)} ${esc(st.name)}<span class="res">${tl.pts===1?"zählt":tl.pts===0?"zählt nicht":"½ Punkt"}</span></div>
         ${mine && !own ? `<div class="vbtns"><button class="y${my===1?" on":""}" data-vote="${st.seat}|${i}|1">👍 zählt</button><button class="n${my===0?" on":""}" data-vote="${st.seat}|${i}|0">👎 nicht</button></div>` : own ? `<span class="tally">Dein Foto – die anderen stimmen ab</span>` : ""}
         <span class="tally">👍 ${tl.y} · 👎 ${tl.n}</span></div></div>`;
@@ -691,9 +695,16 @@ document.addEventListener("click", e=>{
   if(b.dataset.zoom){
     const [o,i] = b.dataset.zoom.split("|"), r = prow(g, o), s = r && r.shots[i]; if(!s) return;
     const lb = $("lb"), st = seatOf(g, o);
-    lb.innerHTML = `<img src="${esc(shotSrc(s, 640, 640))}" alt=""><div class="row"><span>${esc(st.emoji)} ${esc(st.name)} · ${esc(g.items[i])}</span>
-      ${shotLink(s)?`<a class="btn blue sm" href="${shotLink(s)}" target="_blank" rel="noopener">🗺️ In Street View ansehen</a>`:""}<button class="ghost sm" data-do="lbclose">Schließen</button></div>`;
-    lb.hidden = false; return;
+    const live = s.pano && !s.img && gkey();
+    lb.innerHTML = `${live?`<div id="lbPano"></div>`:`<img src="${esc(shotSrc(s, 640, 640))}" alt="">`}<div class="row"><span>${esc(st.emoji)} ${esc(st.name)} · ${esc(g.items[i])}</span>
+      ${shotLink(s)?`<a class="btn blue sm" href="${shotLink(s)}" target="_blank" rel="noopener">🗺️ In Google Maps</a>`:""}<button class="ghost sm" data-do="lbclose">Schließen</button></div>`;
+    lb.hidden = false;
+    if(live) loadMaps().then(()=>{
+      // genau der festgehaltene Blick – umschauen geht, weggehen nicht
+      new google.maps.StreetViewPanorama($("lbPano"), {pano:s.pano, pov:{heading:s.h, pitch:s.p}, zoom:Math.max(0, Math.log2(180/(s.f||90))),
+        linksControl:false, clickToGo:false, disableDefaultUI:true, showRoadLabels:false, motionTracking:false});
+    }).catch(()=>{});
+    return;
   }
   switch(b.dataset.do){
     case "pickopen": pickOpen = !pickOpen; return render();
