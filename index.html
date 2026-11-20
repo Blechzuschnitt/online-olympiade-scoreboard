@@ -107,13 +107,19 @@
   .med.zero{opacity:.3}
 
   /* ---------- Glücksrad ---------- */
-  .wheelbox{position:relative;width:min(480px,86vw);aspect-ratio:1;margin:12px auto 10px}
-  #wheel{width:100%;height:100%;display:block;transition:transform 4.8s cubic-bezier(.12,.72,.08,1);filter:drop-shadow(0 0 26px rgba(255,47,209,.35)) drop-shadow(0 14px 26px rgba(0,0,0,.6))}
-  .pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-top:34px solid var(--gold);z-index:2;filter:drop-shadow(0 0 6px rgba(255,210,63,.8)) drop-shadow(0 3px 3px rgba(0,0,0,.6))}
-  .pointer.tick{animation:tick .12s ease}
-  @keyframes tick{50%{transform:translateX(-50%) rotate(-14deg)}}
-  .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26%;height:26%;border-radius:50%;padding:0;font-size:clamp(14px,4vw,22px);z-index:2;
-    background:radial-gradient(circle at 35% 30%,#fff6c4,var(--gold) 55%,var(--gold2));color:#5c000f;border:5px dashed #fff;box-shadow:0 0 0 4px var(--red),0 0 24px rgba(255,210,63,.7)}
+  .wheelbox{position:relative;width:min(480px,86vw);aspect-ratio:1;margin:34px auto 14px}
+  .wheelbox::before{content:"";position:absolute;inset:-3%;border-radius:50%;background:radial-gradient(circle,rgba(255,210,63,.25),transparent 70%);filter:blur(10px);z-index:-1}
+  .wheelbox::after{content:"";position:absolute;left:12%;right:12%;bottom:-5%;height:9%;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.65),transparent 70%);z-index:-1}
+  #wheel{width:100%;height:100%;display:block;will-change:transform;filter:drop-shadow(0 10px 18px rgba(0,0,0,.55))}
+  .wglare{position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:1;
+    background:radial-gradient(ellipse 70% 45% at 38% 22%,rgba(255,255,255,.22),transparent 60%),radial-gradient(circle at 50% 50%,transparent 62%,rgba(0,0,0,.28) 100%)}
+  .pointer{position:absolute;top:-6.5%;left:50%;width:13%;aspect-ratio:.62;transform:translateX(-50%) rotate(var(--flap,0deg));transform-origin:50% 18%;z-index:3;
+    filter:drop-shadow(0 4px 4px rgba(0,0,0,.6)) drop-shadow(0 0 8px rgba(255,210,63,.55))}
+  .pointer svg{width:100%;height:100%;display:block}
+  .wheelbox.spinning .hub{pointer-events:none}
+  .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24%;height:24%;border-radius:50%;padding:0;font-size:clamp(14px,4vw,22px);z-index:2;letter-spacing:.04em;
+    background:radial-gradient(circle at 35% 28%,#fffbe0 0,#ffe27a 22%,#e9b21c 55%,#9a6400 100%);color:#5c000f;border:none;
+    box-shadow:inset 0 3px 3px rgba(255,255,255,.75),inset 0 -5px 8px rgba(90,50,0,.55),0 0 0 4px #7a4a00,0 0 0 7px #ffd23f,0 6px 14px rgba(0,0,0,.6),0 0 26px rgba(255,210,63,.55)}
   .hub:hover:not(:disabled){transform:translate(-50%,-50%) scale(1.05)}
   .hub:active:not(:disabled){transform:translate(-50%,-50%) scale(.97)}
   svg .bulb{fill:#fff6c4}
@@ -311,8 +317,12 @@
     <div class="dicelabel" id="diceLabel" aria-live="polite">Würfeln</div>
   </div>
   <div class="wheelbox">
-    <div class="pointer" id="pointer"></div>
+    <div class="pointer" id="pointer"><svg viewBox="0 0 62 100" aria-hidden="true"><defs>
+      <linearGradient id="pg" x1="0" x2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".45" stop-color="#ffd23f"/><stop offset="1" stop-color="#a86b00"/></linearGradient></defs>
+      <path d="M31 98 L6 26 A27 27 0 1 1 56 26 Z" fill="url(#pg)" stroke="#5a3a00" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="31" cy="20" r="9" fill="#c8102e" stroke="#5a0010" stroke-width="2.5"/><circle cx="28" cy="17" r="3" fill="#fff" opacity=".7"/></svg></div>
     <svg id="wheel" viewBox="-100 -100 200 200" role="img" aria-label="Glücksrad"></svg>
+    <div class="wglare"></div>
     <button id="spinBtn" class="hub">SPIN</button>
   </div>
   <div class="hint" id="wheelHint"></div>
@@ -525,6 +535,7 @@ function applyRemote(d){
   setState(d);
   try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
   render();
+  maybeRemoteSpin();
 }
 async function fetchRemote(){
   const { data, error } = await sb.from("olympiade_state").select("data").eq("id",SB_ROW).maybeSingle();
@@ -615,8 +626,37 @@ function renderBoard(){
 /* ---------- Glücksrad ---------- */
 let wheelRot = 0, spinning = false, wheelKey = null, wheelItems = [];
 function pt(a,r){ const t=a*Math.PI/180; return [(r*Math.sin(t)).toFixed(2),(-r*Math.cos(t)).toFixed(2)]; }
-function renderWheel(force){
-  const items = wheelCandidates();
+// Kurzname fürs Rad: ohne Emojis, ohne Klammern, ohne Zusatz nach „–“ oder „:“
+function wheelName(name){
+  let t = String(name||"").replace(/\([^)]*\)|\[[^\]]*\]/g," ").split(/\s[–—-]\s|:\s|\|/)[0];
+  t = t.replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu,"").replace(/\s+/g," ").trim();
+  return t || String(name||"").trim();
+}
+// größte Schrift, die in ein Segment passt (ein- oder zweizeilig)
+function fitText(name, seg){
+  const R0 = 31, R1 = 86.5;                              // Text liegt zwischen Nabe und Rand
+  const wid = t => [...t].reduce((a,ch)=>a + (/[A-ZÄÖÜMW]/.test(ch) ? (/[MW]/.test(ch)?.95:.74) : /[mw]/.test(ch) ? .86 : /[iljtf.,'!|]/.test(ch) ? .32 : ch===" " ? .3 : /[0-9]/.test(ch) ? .6 : .58), 0);
+  const half = Math.min(seg, 179)/2*Math.PI/180;
+  const fits = (lines, fs) => {
+    const len = Math.max(...lines.map(wid))*fs;
+    if(len > R1-R0) return false;
+    const rin = R1 - len, h = 2*rin*Math.sin(half)*.86;  // engste Stelle = inneres Textende
+    return lines.length*fs*1.02 <= h && lines.length*fs*1.02 <= 30;
+  };
+  const best = lines => { let fs = 28; while(fs>3.5 && !fits(lines, fs)) fs -= .25; return fs; };
+  const one = [name], f1 = best(one);
+  const w = name.split(" ");
+  if(w.length>1){
+    let bi = 1, bd = 1e9;
+    for(let i=1;i<w.length;i++){ const d = Math.abs(wid(w.slice(0,i).join(" ")) - wid(w.slice(i).join(" "))); if(d<bd){ bd=d; bi=i; } }
+    const two = [w.slice(0,bi).join(" "), w.slice(bi).join(" ")], f2 = best(two);
+    if(f2 > f1*1.15) return {lines:two, fs:f2};
+  }
+  return {lines:one, fs:f1};
+}
+const SEGCOL = [["#ff3b5c","#a3001f"],["#ffd23f","#c48a00"],["#2fb7ff","#0a4f9e"],["#38e07b","#0b7a3b"],["#b46bff","#5b1ca8"],["#ff8a2a","#b84a00"],["#ff4fd8","#9c0f80"],["#22e4d0","#08756c"]];
+function renderWheel(force, override){
+  const items = override || wheelCandidates();
   const ol = O();
   const hub = $("spinBtn");
   hub.disabled = spinning || !ol || !items.length || !!state.pending;
@@ -624,56 +664,118 @@ function renderWheel(force){
     !state.wheel.length ? "Das Rad ist leer – füge unten Spiele hinzu." :
     !ol ? "Erstelle die Olympiade, dann kannst du drehen." :
     !items.length ? "Alle Spiele im Rad sind gespielt! 🎉 Beende die Olympiade oder lege neue Spiele ins Rad." :
-    state.pending ? "Erst die aktuelle Runde eintragen." : "Drück SPIN – oder tippe ein Spiel unter „Im Rad“ an.";
+    state.pending ? "Erst die aktuelle Runde eintragen." : "Drück SPIN – oder tippe ein Spiel unter „Im Rad“ an. Das Rad dreht sich bei allen mit.";
   if(spinning) return;
-  const key = items.map(g=>g.id+":"+g.name+":"+g.icon).join("|");
+  const key = items.map(g=>g.id+":"+g.name).join("|");
   if(!force && key===wheelKey) return;
   wheelKey = key; wheelItems = items;
   const n = items.length, seg = 360/Math.max(n,1);
-  let s = `<defs><linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6c4"/><stop offset=".5" stop-color="#ffd23f"/><stop offset="1" stop-color="#a86b00"/></linearGradient>
-    <radialGradient id="felt"><stop offset="0" stop-color="#16804a"/><stop offset="1" stop-color="#06371f"/></radialGradient></defs>
-    <circle r="99" fill="#12031f"/>`;
+  let s = `<defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6c4"/><stop offset=".35" stop-color="#ffd23f"/><stop offset=".7" stop-color="#b87a00"/><stop offset="1" stop-color="#ffe9a0"/></linearGradient>
+    <linearGradient id="rim2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a4a00"/><stop offset="1" stop-color="#3a2000"/></linearGradient>
+    <radialGradient id="felt"><stop offset="0" stop-color="#16804a"/><stop offset="1" stop-color="#06371f"/></radialGradient>
+    <radialGradient id="stud" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#e8e8e8"/><stop offset="1" stop-color="#6d6d6d"/></radialGradient>
+    ${SEGCOL.map((c,i)=>`<radialGradient id="sg${i}" cx="0" cy="0" r="92" gradientUnits="userSpaceOnUse"><stop offset=".25" stop-color="${c[0]}"/><stop offset=".78" stop-color="${c[0]}"/><stop offset="1" stop-color="${c[1]}"/></radialGradient>`).join("")}
+  </defs>
+  <circle r="99.5" fill="url(#rim2)"/>`;
   if(!n){
-    s += `<circle r="92" fill="url(#felt)"/>
-      <text y="-44" text-anchor="middle" font-family="Bungee, sans-serif" font-size="11" fill="#ffd23f">LEER</text>
-      <text y="48" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="800" font-size="7.5" fill="#cfeedd">Spiele unten hinzufügen</text>`;
+    s += `<circle r="90" fill="url(#felt)"/>
+      <text y="-44" text-anchor="middle" font-family="Bungee, sans-serif" font-size="13" fill="#ffd23f">LEER</text>
+      <text y="50" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="800" font-size="8" fill="#cfeedd">Spiele unten hinzufügen</text>`;
   }
   items.forEach((g,i)=>{
     const a0=i*seg, a1=(i+1)*seg, c=(a0+a1)/2;
-    let col = i%2 ? "#141414" : "#c8102e";
-    if(n>1 && n%2===1 && i===n-1) col = "#0b7a3b";
-    if(n===1) col = "#c8102e";
-    const [x0,y0]=pt(a0,92),[x1,y1]=pt(a1,92);
-    s += n===1 ? `<circle r="92" fill="${col}"/>` :
-      `<path d="M0 0 L${x0} ${y0} A92 92 0 ${seg>180?1:0} 1 ${x1} ${y1} Z" fill="${col}" stroke="#ffd23f" stroke-width=".8"/>`;
-    const name = g.name.length>18 ? g.name.slice(0,17)+"…" : g.name;
-    const fs = Math.min(n>8?8:9.5, 40/(Math.max(name.length,4)*0.56)).toFixed(2);
-    s += `<g transform="rotate(${c-90})">
-      <text x="72" y="0" text-anchor="end" dominant-baseline="central" font-family="Nunito, sans-serif" font-weight="900" font-size="${fs}" fill="#fff6e6">${esc(name)}</text>
-      <text x="82" y="0" text-anchor="middle" dominant-baseline="central" font-size="10.5" transform="rotate(90 82 0)">${esc(g.icon)}</text></g>`;
+    let ci = i % SEGCOL.length;
+    if(n>1 && i===n-1 && ci===0) ci = 3;                  // nie zwei gleiche Farben nebeneinander
+    const [x0,y0]=pt(a0,90),[x1,y1]=pt(a1,90);
+    s += n===1 ? `<circle r="90" fill="url(#sg0)"/>` :
+      `<path d="M0 0 L${x0} ${y0} A90 90 0 ${seg>180?1:0} 1 ${x1} ${y1} Z" fill="url(#sg${ci})"/>`;
+    const nm = wheelName(g.name), ft = fitText(nm, n===1?120:seg), fs = ft.fs, lh = fs*1.02;
+    const dark = ci===1 || ci===3 || ci===7;
+    const tsp = ft.lines.map((l,k)=>`<tspan x="86.5" y="${((k-(ft.lines.length-1)/2)*lh).toFixed(2)}">${esc(l)}</tspan>`).join("");
+    s += `<g transform="rotate(${c-90})"><text text-anchor="end" dominant-baseline="central" font-family="Nunito, sans-serif" font-weight="900" font-size="${fs.toFixed(2)}"
+      fill="${dark?"#2a1400":"#fff"}" stroke="${dark?"rgba(255,255,255,.35)":"rgba(0,0,0,.35)"}" stroke-width="${(fs*.06).toFixed(2)}" paint-order="stroke">${tsp}</text></g>`;
   });
-  s += `<circle r="95.5" fill="none" stroke="url(#rim)" stroke-width="7"/>`;
-  for(let i=0;i<24;i++){ const [bx,by]=pt(i*15,95.5); s+=`<circle class="bulb b${i%2+1}" cx="${bx}" cy="${by}" r="1.9"/>`; }
+  // Trennlinien, Ränder, Stifte, Lichter
+  if(n>1) items.forEach((_,i)=>{ const [x,y]=pt(i*seg,90); s += `<line x1="0" y1="0" x2="${x}" y2="${y}" stroke="#fff3c4" stroke-width=".9" opacity=".9"/>`; });
+  s += `<circle r="90" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1.5"/>
+    <circle r="94.5" fill="none" stroke="url(#rim)" stroke-width="8"/>
+    <circle r="98.6" fill="none" stroke="#5a3a00" stroke-width="1.2"/>`;
+  if(n>1) items.forEach((_,i)=>{ const [x,y]=pt(i*seg,87.2); s += `<circle cx="${x}" cy="${y}" r="2.3" fill="url(#stud)" stroke="#444" stroke-width=".4"/>`; });
+  for(let i=0;i<32;i++){ const [bx,by]=pt(i*360/32+5.6,94.5); s+=`<circle class="bulb b${i%2+1}" cx="${bx}" cy="${by}" r="1.7"/>`; }
   $("wheel").innerHTML = s;
+  $("wheel").style.transform = `rotate(${wheelRot}deg)`;
+}
+
+/* Ton: kurzes Klacken am Zeiger */
+let wactx = null;
+function wclick(vol){
+  try{ wactx = wactx || new (window.AudioContext||window.webkitAudioContext)();
+    const t = wactx.currentTime, n = Math.floor(wactx.sampleRate*.025), b = wactx.createBuffer(1,n,wactx.sampleRate), d = b.getChannelData(0);
+    for(let i=0;i<n;i++) d[i] = (Math.random()*2-1)*Math.pow(1-i/n,5);
+    const src = wactx.createBufferSource(), f = wactx.createBiquadFilter(), g = wactx.createGain();
+    src.buffer = b; f.type = "bandpass"; f.frequency.value = 2400; f.Q.value = 2; g.gain.value = Math.min(.6, vol);
+    src.connect(f).connect(g).connect(wactx.destination); src.start(t);
+  }catch(e){}
+}
+
+/* Drehung mit echter Verzögerung, Zeiger klappert an den Stiften */
+let lastSpinId = null;
+function animateSpin(sp, done){
+  const items = sp.items.map(game).filter(Boolean);
+  if(items.length !== sp.items.length){ done && done(); return; }
+  renderWheel(true, items);
+  spinning = true;
+  $("spinBtn").disabled = true; $("wheel").parentElement.classList.add("spinning");
+  const n = items.length, seg = 360/n;
+  const start = ((wheelRot%360)+360)%360;
+  const target = -((sp.idx+.5)*seg + sp.jit*seg*.7);
+  const total = 360*sp.turns + ((((target-start)%360)+360)%360);
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const dur = reduce ? 500 : sp.dur;
+  const t0 = performance.now() - Math.max(0, Math.min(dur*.5, Date.now() - sp.at - 300));  // spät angekommen? aufholen
+  const ease = x => 1 - Math.pow(1-x, 3.4);
+  const ptr = $("pointer"), r = $("wheelResult");
+  r.className = "result"; r.textContent = "🥁 …";
+  let lastPeg = Math.floor((start)/seg), flap = 0, prevA = start;
+  const frame = now => {
+    let x = Math.min(1, (now - t0)/dur), a = start + total*ease(x);
+    // kleines Nachfedern am Ende
+    if(x >= 1){ const k = (now - t0 - dur)/420; a = start + total - Math.sin(Math.min(1,k)*Math.PI)*Math.min(1.6, seg*.08)*(1-Math.min(1,k)); }
+    wheelRot = a;
+    $("wheel").style.transform = `rotate(${a}deg)`;
+    const peg = Math.floor(a/seg), speed = Math.abs(a - prevA); prevA = a;
+    if(n>1 && peg !== lastPeg){ lastPeg = peg; flap = Math.min(28, 10 + speed*2.2); wclick(.15 + Math.min(.45, speed/18)); }
+    flap *= .78;
+    ptr.style.setProperty("--flap", (-flap).toFixed(2)+"deg");
+    if(now - t0 < dur + 420) return requestAnimationFrame(frame);
+    ptr.style.setProperty("--flap","0deg");
+    wheelRot = start + total;
+    $("wheel").style.transform = `rotate(${wheelRot}deg)`;
+    spinning = false; $("wheel").parentElement.classList.remove("spinning");
+    const g = items[sp.idx];
+    r.innerHTML = `<span>${esc(g.icon)}</span><span>${esc(wheelName(g.name))}</span>`; void r.offsetWidth; r.className = "result pop";
+    renderWheel(true);
+    done && done(g);
+  };
+  requestAnimationFrame(frame);
 }
 function spin(){
   if(spinning || !wheelItems.length || !O() || state.pending) return;
-  const n=wheelItems.length, seg=360/n, idx=Math.floor(Math.random()*n);
-  const target = -((idx+.5)*seg + (Math.random()-.5)*seg*.7);
-  const cur = ((wheelRot%360)+360)%360;
-  wheelRot += 360*6 + (((target-cur)%360)+360)%360;
-  spinning = true; renderWheel();
-  $("wheelResult").className="result"; $("wheelResult").textContent = "🥁 …";
-  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const dur = reduce ? 400 : 4800;
-  const w = $("wheel"); w.style.transitionDuration = dur+"ms"; w.style.transform = `rotate(${wheelRot}deg)`;
-  let ticks=0; const tk=setInterval(()=>{ const p=$("pointer"); p.classList.remove("tick"); void p.offsetWidth; p.classList.add("tick"); if(++ticks>24) clearInterval(tk); },110);
-  setTimeout(()=>{
-    clearInterval(tk); spinning=false;
-    const g = wheelItems[idx];
-    const r=$("wheelResult"); r.innerHTML = `<span>${esc(g.icon)}</span><span>${esc(g.name)}</span>`; void r.offsetWidth; r.className="result pop";
-    startRound(g.id);
-  }, dur+150);
+  const n = wheelItems.length;
+  const sp = {id:uid(), idx:Math.floor(Math.random()*n), jit:Math.random()-.5, turns:5+Math.floor(Math.random()*3),
+    dur:5200+Math.floor(Math.random()*1400), at:Date.now(), items:wheelItems.map(g=>g.id)};
+  lastSpinId = sp.id;
+  state.spin = sp; save();                                 // alle anderen drehen mit
+  animateSpin(sp, g => { if(g) startRound(g.id); });
+}
+// Drehung von einem anderen Gerät abspielen
+function maybeRemoteSpin(){
+  const sp = state.spin;
+  if(!sp || sp.id===lastSpinId) return;
+  lastSpinId = sp.id;
+  if(Date.now() - sp.at > sp.dur + 4000) return;          // alt – nur Ergebnis zählt
+  if(!spinning) animateSpin(sp);
 }
 $("spinBtn").onclick = spin;
 
