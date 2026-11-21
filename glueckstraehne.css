@@ -28,6 +28,24 @@
 .gcard .tl{left:9%;top:7%}.gcard .br{right:9%;bottom:7%;transform:rotate(180deg)}
 .gcard .pips{position:absolute;left:18%;right:18%;bottom:11%;display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--cw)*.02)}
 .gcard .pips i{width:calc(var(--cw)*.045);aspect-ratio:1;border-radius:50%;background:var(--hc);box-shadow:0 0 4px var(--hc)}
+/* Zahlenkarte im Stil der Motivkarten: Rahmen, Namensbanner, Energiestrahlen, massive Leuchtziffer */
+.gcard.num{border-radius:calc(var(--cw)*.1);
+  background:radial-gradient(circle at 50% 52%,hsl(var(--h) 100% 60% / .55),transparent 42%),
+    repeating-conic-gradient(from 0deg at 50% 52%,hsl(var(--h) 100% 65% / .18) 0 6deg,transparent 6deg 18deg),
+    radial-gradient(circle at 50% 52%,hsl(var(--h) 80% 22%),#07081a 75%);
+  box-shadow:inset 0 0 0 calc(var(--cw)*.035) hsl(var(--h) 100% 62%),inset 0 0 0 calc(var(--cw)*.055) #07081a,inset 0 0 0 calc(var(--cw)*.07) hsl(var(--h) 100% 70% / .6),
+    inset 0 0 calc(var(--cw)*.25) hsl(var(--h) 100% 50% / .5),0 10px 22px -8px #000,0 0 18px -6px var(--hc)}
+.gcard.num::before{inset:auto;left:0;right:0;bottom:0;height:46%;border:0;border-radius:0;background:linear-gradient(transparent,rgba(0,0,0,.55));}
+.gcard.num .banner{position:absolute;z-index:2;left:12%;right:12%;top:6%;height:12%;display:grid;place-items:center;border-radius:calc(var(--cw)*.04);
+  font:900 calc(var(--cw)*.08)/1 var(--fh);letter-spacing:.06em;color:#fff;background:linear-gradient(180deg,hsl(var(--h) 70% 30%),hsl(var(--h) 80% 12%));
+  box-shadow:inset 0 0 0 1.5px hsl(var(--h) 100% 65%),0 0 10px -2px var(--hc);text-shadow:0 0 6px var(--hc)}
+.gcard.num .big{z-index:1;margin-top:8%;font-size:calc(var(--cw)*.56);-webkit-text-stroke:0;
+  background:linear-gradient(180deg,#fff 15%,hsl(var(--h) 100% 78%) 55%,hsl(var(--h) 100% 52%));-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 calc(var(--cw)*.05) hsl(var(--h) 100% 60%)) drop-shadow(0 calc(var(--cw)*.02) 0 rgba(0,0,0,.6))}
+.gcard.num .cx{z-index:2;display:grid;place-items:center;width:calc(var(--cw)*.17);aspect-ratio:1;border-radius:50%;font-size:calc(var(--cw)*.1);color:#fff;
+  background:hsl(var(--h) 80% 18%);box-shadow:inset 0 0 0 1px hsl(var(--h) 100% 65%)}
+.gcard.num .tl{left:5%;top:auto;bottom:5%}.gcard.num .br{right:5%;bottom:5%;transform:none}
+.gcard.num .pips{z-index:2;left:26%;right:26%;bottom:8%}
 .gcard .lbl{position:relative;font:700 calc(var(--cw)*.085)/1.15 var(--fb);letter-spacing:.04em;color:rgba(255,255,255,.75);padding:0 8%}
 .gcard.boost{--h:46;background:radial-gradient(120% 70% at 50% 0,rgba(255,216,77,.45),transparent 60%),linear-gradient(160deg,#3a2a08,#120c02 75%)}
 .gcard.boost .big{font-size:calc(var(--cw)*.36)}
@@ -77,6 +95,10 @@
 .gs-pts b{font:700 24px var(--fn)}.gs-pts small{font:700 8.5px var(--fh);letter-spacing:.16em;color:var(--mu);margin-top:3px}
 .gs-pts.tot b{color:var(--gold);font-size:18px}
 .gs-seat.big .gcard{--cw:110px}
+.gs-specials{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed var(--ln2)}
+.gs-specials .gcard{--cw:76px}
+.gs-others .gs-specials{gap:4px;margin-bottom:6px;padding-bottom:6px}
+.gs-others .gs-specials .gcard{--cw:34px}
 .gs-cards{position:relative;display:flex;flex-wrap:wrap;gap:10px;min-height:134px;align-items:center;perspective:900px}
 .gs-empty{color:var(--mu);font-size:14px}
 .gs-meter{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;color:var(--mu)}
@@ -100,7 +122,8 @@
 .gs-others .gs-pts b{font-size:18px}.gs-others .gs-pts.tot b{font-size:15px}
 .gs-others .gs-cards{min-height:62px;gap:4px}
 .gs-others .gcard{--cw:44px;box-shadow:inset 0 0 0 1px var(--hc),0 4px 10px -4px #000}
-.gs-others .gcard .pips,.gs-others .gcard .lbl,.gs-others .gcard .cx{display:none}
+.gs-others .gcard .pips,.gs-others .gcard .lbl,.gs-others .gcard .cx,.gs-others .gcard .banner{display:none}
+.gs-others .gcard.num .big{margin-top:0}
 .gs-others .gcard.action .name{font-size:6px}
 
 .gs-banner{position:fixed;left:50%;top:40%;z-index:85;transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;padding:18px 34px;border-radius:20px;

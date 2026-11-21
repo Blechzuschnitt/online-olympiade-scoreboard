@@ -28,6 +28,7 @@ let gsMe = null; try{ gsMe = localStorage.getItem("gs-me"); }catch(e){}
 let gsSeen = new Set(), gsLastEv = null, gsInit = false, gsTarget = 200, gsOpts = {sabotage:true, apokalypse:false}, gsBots = [], gsBotTimer = null, gsBotKey = null;
 picks.gs = picks.gs || [];
 const gsHue = n => 188 + n*11;                       // 0 = Cyan … 12 = Magenta
+const GS_WORD = ["NULL","EINS","ZWEI","DREI","VIER","FÜNF","SECHS","SIEBEN","ACHT","NEUN","ZEHN","ELF","ZWÖLF"];
 
 function gsDo(a){
   const r = GSL.act(state.gs, a);
@@ -49,7 +50,7 @@ function gsCard(c, opt = {}){
   if(opt.hidden) return `<div class="gcard back${fresh}" data-cid="${c.id}"><span class="seal">?</span></div>`;
   if(t==="num"){
     const n = GSL.cval(c), copies = Math.max(1, GSL.val(k));
-    return `<div class="gcard num${fresh}${pickCls}" style="--h:${gsHue(n)}"${pickAttr}><span class="cx tl">${n}</span><span class="cx br">${n}</span>
+    return `<div class="gcard num${fresh}${pickCls}" style="--h:${gsHue(n)}"${pickAttr}><span class="banner">${GS_WORD[n]||n}</span><span class="cx tl">${n}</span><span class="cx br">${n}</span>
       <b class="big">${n}</b>${c.v!=null ? `<span class="tag">😈 war ${GSL.val(k)}</span>` : ""}${opt.plus ? `<span class="tag grow">🪱 +${opt.plus}</span>` : ""}<span class="pips" aria-hidden="true">${"<i></i>".repeat(copies)}</span></div>`;
   }
   if(t==="boost") return `<div class="gcard boost${fresh}${pickCls}"${pickAttr}><span class="lbl">BOOST</span><b class="big">${k==="x2" ? "×2" : "+"+GSL.val(k)}</b><span class="lbl">${k==="x2" ? "Zahlen doppelt" : "Punkte"}</span></div>`;
@@ -105,12 +106,14 @@ function gsRow(S, p, i, big){
   const hidden = big && (S.blackout||[]).includes(p.id) && gsCan(p.id);
   const choosing = S.pending && GSL.NEEDS[S.pending.type]==="own" && S.pending.from===p.id && gsCan(p.id);
   const ts = choosing ? GSL.targets(S, S.pending) : [];
+  const card = c => gsCard(c, {fresh:!gsSeen.has(c.id), hidden, pick:ts.includes(c.id), plus:(p.muts||{}).P && p.muts.P.cid===c.id ? p.muts.P.plus : 0});
   const m = p.muts || {}, tags = [p.anchor && "⚓", p.guard && "🛡️", p.double && "🎲×2", p.cursed && "🔗", m.P && "🪱", m.J===1 && "😈", m.U && "🏁", m.D && (o=>o ? `👥 ${esc(o.name)}: ${o.row.length} Karten` : "👥")(S.players.filter(x=>x!==p).sort((a,b)=>b.row.length-a.row.length)[0]),
     m.V && `🗡️→${esc((S.players.find(x=>x.id===m.V)||{}).name||"")}`].filter(Boolean);
   return `<div class="gs-seat${big ? " big" : ""}${act ? " act" : ""} st-${p.status}" data-pid="${esc(p.id)}">
     <div class="gs-head"><span class="who">${gsWho(p)}${tags.length ? ` <span class="gs-tags">${tags.join(" ")}</span>` : ""}</span>${badge ? `<span class="gs-badge">${badge}</span>` : ""}
       <span class="gs-pts"><b>${hidden ? "?" : p.status==="bust" ? 0 : sc}</b><small>Runde</small></span><span class="gs-pts tot"><b>${p.total}</b><small>Konto</small></span></div>
-    <div class="gs-cards">${p.row.map(c=>gsCard(c, {fresh:!gsSeen.has(c.id), hidden, pick:ts.includes(c.id), plus:m.P && m.P.cid===c.id ? m.P.plus : 0})).join("") || `<span class="gs-empty">${big ? "Noch keine Karte – zieh die erste!" : "–"}</span>`}</div>
+    ${(sp=>sp.length ? `<div class="gs-specials">${sp.map(card).join("")}</div>` : "")(p.row.filter(c=>GSL.kind(c.k)!=="num"))}
+    <div class="gs-cards">${p.row.filter(c=>GSL.kind(c.k)==="num").map(card).join("") || `<span class="gs-empty">${big ? (p.row.length ? "Noch keine Zahl" : "Noch keine Karte – zieh die erste!") : "–"}</span>`}</div>
     ${big ? `<div class="gs-meter" aria-label="${nums} von 7 verschiedenen Zahlen">${Array.from({length:7},(_,k)=>`<i class="${k<nums && !hidden ? "on" : ""}"></i>`).join("")}<span>${hidden ? "🌑 Blackout – deine Karten sind verdeckt" : `${nums}/7 verschiedene`}</span></div>` : ""}
   </div>`;
 }
