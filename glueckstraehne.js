@@ -83,7 +83,7 @@ function renderGs(){
   gsLastEv = S.ev && S.ev.id; gsSeen = ids; gsInit = true;
   if(ev) gsEffects(ev, S);
   const cur = S.players[S.turn], tk = S.phase==="play" ? S.round + ":" + cur.id : null;   // „Du bist dran“
-  if(tk && tk!==gsTurnKey && gsTurnKey!==null && gsCan(cur.id)) setTimeout(()=>gsSfx.turn(), gsPopBusy ? 1800 : 450);
+  if(tk && tk!==gsTurnKey && gsTurnKey!==null && gsCan(cur.id)) setTimeout(()=>gsSfx.turn(), gsPopBusy ? 3400 : 1300);
   gsTurnKey = tk || ""; gsChan();
   gsBotTick(S);
 }
@@ -232,23 +232,81 @@ function gsCatPop(key){
 }
 
 
-/* ---------- Töne (alles synthetisch, gilt nur bei „Ton an“) ---------- */
-const gsT = (f, len, type, gain, to, at = 0) => setTimeout(()=>rrTone(f, len, type, gain, to), at);
-const gsN = (len, pow, type, freq, gain, at = 0) => setTimeout(()=>{ const ac = audio(); if(ac) noise(ac, ac.currentTime, len, pow, type, freq, gain); }, at);
+/* ---------- Töne: kleiner Synthesizer (Hüllkurven, Filter, Vibrato, Kompressor) – nur bei „Ton an“ ---------- */
+let gsBus = null;
+function gsOut(ac){
+  if(!gsBus || gsBus.context!==ac){
+    const c = ac.createDynamicsCompressor(), g = ac.createGain();
+    c.threshold.value = -20; c.knee.value = 12; c.ratio.value = 4; c.attack.value = .004; c.release.value = .2; g.gain.value = 1.15;
+    c.connect(g).connect(ac.destination); gsBus = c;
+  }
+  return gsBus;
+}
+// Ton: f→to Gleiten, Hüllkurve att/len, optional Filter (filt, ft, q, fto) und Vibrato (vib = Tiefe in Hz, vibF)
+function gsTone(o){
+  const ac = audio(); if(!ac) return;
+  const t = ac.currentTime + (o.at||0), len = o.len||.3, osc = ac.createOscillator(), g = ac.createGain();
+  osc.type = o.type||"sine"; osc.frequency.setValueAtTime(o.f, t); if(o.det) osc.detune.value = o.det;
+  if(o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + (o.glide||len));
+  let node = osc;
+  if(o.filt){ const f = ac.createBiquadFilter(); f.type = o.ft||"lowpass"; f.frequency.setValueAtTime(o.filt, t); f.Q.value = o.q||1;
+    if(o.fto) f.frequency.exponentialRampToValueAtTime(o.fto, t+len); node.connect(f); node = f; }
+  if(o.vib){ const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = o.vibF||6; lg.gain.value = o.vib; l.connect(lg).connect(osc.frequency); l.start(t); l.stop(t+len+.05); }
+  const a = o.att||.008;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(o.gain||.1, t+a);
+  if(o.hold) g.gain.setValueAtTime(o.gain||.1, t+a+o.hold);
+  g.gain.exponentialRampToValueAtTime(.0001, t+len);
+  node.connect(g).connect(gsOut(ac)); osc.start(t); osc.stop(t+len+.05);
+}
+// Rauschen mit wanderndem Filter (Wischen, Klatschen, Becken)
+function gsNoise(o){
+  const ac = audio(); if(!ac) return;
+  const t = ac.currentTime + (o.at||0), len = o.len||.2, n = Math.floor(ac.sampleRate*len), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
+  for(let i=0;i<n;i++) d[i] = Math.random()*2-1;
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = b; f.type = o.ft||"bandpass"; f.frequency.setValueAtTime(o.f||1000, t); f.Q.value = o.q||1;
+  if(o.to) f.frequency.exponentialRampToValueAtTime(o.to, t+len);
+  const a = o.att||.005;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(o.gain||.2, t+a); g.gain.exponentialRampToValueAtTime(.0001, t+len);
+  s.connect(f).connect(g).connect(gsOut(ac)); s.start(t); s.stop(t+len+.02);
+}
+const gsBell = (f, at, gain = .08, len = 1.2) => { gsTone({f, at, len, gain}); gsTone({f:f*2.01, at, len:len*.6, gain:gain*.35}); gsTone({f:f*3.02, at, len:len*.3, gain:gain*.15}); };
 const gsSfx = {
-  deal: () => { gsN(.12, 1.2, "highpass", 2600, .22); gsN(.05, 4, "lowpass", 500, .35, 110); },      // Wischen + Ablegen
-  turn: () => { gsT(660, .18, "triangle", .07); gsT(880, .18, "triangle", .07, 0, 120); gsT(1320, .4, "sine", .06, 0, 240); }
+  // Ziehen: Karte zischt vom Stapel, flattert beim Drehen, landet mit Klatsch und Glitzer
+  deal: (land = 1.1) => {
+    gsNoise({len:.5, ft:"bandpass", f:500, to:4200, q:1.4, gain:.28, att:.12});
+    for(let k=0;k<7;k++) gsNoise({len:.035, ft:"bandpass", f:2600+k*150, q:3, gain:.09, at:.25+k*.09});
+    gsTone({f:170, to:48, len:.22, gain:.55, at:land}); gsNoise({len:.08, ft:"highpass", f:2500, gain:.28, at:land});
+    gsTone({f:1568, len:.35, type:"triangle", gain:.05, at:land+.03}); gsTone({f:2093, len:.4, type:"triangle", gain:.035, at:land+.09});
+  },
+  // Du bist dran: Glocken-Arpeggio mit Schimmer
+  turn: () => { [523, 659, 784, 1047].forEach((f,i)=>gsBell(f, i*.11, .09, .9)); gsTone({f:1047, len:1.4, type:"triangle", gain:.04, att:.3, at:.4, vib:6, vibF:5}); },
+  // Sonderkarte: aufsteigender Wirbel, Glitzer, dann Akkord
+  reveal: () => {
+    gsTone({f:180, to:1400, len:.8, type:"sawtooth", filt:600, fto:5000, q:6, gain:.07, att:.05});
+    for(let k=0;k<8;k++) gsBell(1200+Math.random()*1600, .08*k, .025, .4);
+    [523, 659, 784, 1047].forEach(f=>gsTone({f, len:1.3, type:"triangle", gain:.06, att:.02, at:.78, vib:4, vibF:6}));
+  },
+  fly: () => gsNoise({len:.7, ft:"bandpass", f:3500, to:400, q:1.2, gain:.22, att:.1})
 };
 // Soundboard: [Symbol, Name, Klang]
 const GS_FX = {
-  applaus:["👏","Applaus", () => { for(let k=0;k<34;k++) gsN(.03, 3, "bandpass", 1500+Math.random()*1800, .12+Math.random()*.15, Math.random()*1300); }],
-  lachen:["😂","Lachen", () => [0,170,340,510].forEach((t,i)=>gsT(520-i*40, .14, "square", .05, 420-i*40, t))],
-  wahwah:["😢","Wah-wah", () => { [392,370,349].forEach((f,i)=>gsT(f, .38, "sawtooth", .06, f*.97, i*400)); for(let k=0;k<6;k++) gsT(330-k*4, .12, "sawtooth", .06, 315-k*4, 1200+k*110); }],
-  trommel:["🥁","Ba-dum-tss", () => { gsT(150, .15, "sine", .3, 60); gsT(180, .15, "sine", .3, 70, 170); gsN(.6, 1.5, "highpass", 6000, .25, 360); }],
-  grillen:["🦗","Grillen", () => [0,500,1000].forEach(t=>[0,45,90].forEach(d=>gsT(4300, .03, "sine", .05, 0, t+d)))],
-  tusch:["🎺","Tusch", () => fanfare(false)],
-  boing:["🤸","Boing", () => gsT(180, .6, "sine", .25, 720)],
-  troete:["📯","Tröte", () => { gsT(466, .7, "square", .05); gsT(587, .7, "square", .04); gsT(698, .7, "square", .035); }]
+  applaus:["👏","Applaus", () => { gsNoise({len:2.4, ft:"bandpass", f:1300, q:.6, gain:.07, att:.3});
+    for(let k=0;k<110;k++) gsNoise({len:.045, ft:"bandpass", f:900+Math.random()*1900, q:1.2, gain:.12+Math.random()*.22, at:Math.pow(Math.random(), .8)*2}); }],
+  lachen:["😂","Lachen", () => [0,1,2,3,4,5].forEach(i=>{ const at = i*.17, f = 300 - i*14;
+    gsTone({f, to:f*.82, len:.15, type:"sawtooth", filt:950, ft:"bandpass", q:4, gain:.32, at, att:.015});
+    gsTone({f:f*1.5, to:f*1.25, len:.13, type:"sawtooth", filt:2400, ft:"bandpass", q:5, gain:.12, at, att:.015}); })],
+  wahwah:["😢","Wah-wah", () => { [294, 277, 262].forEach((f,i)=>gsTone({f, to:f*.98, len:.48, type:"sawtooth", filt:900, fto:500, q:3, gain:.16, at:i*.5, att:.04}));
+    gsTone({f:247, to:236, len:1.6, type:"sawtooth", filt:1000, fto:350, q:3, gain:.17, at:1.5, att:.04, vib:7, vibF:5}); }],
+  trommel:["🥁","Ba-dum-tss", () => { gsTone({f:160, to:45, len:.35, gain:.9});
+    gsNoise({len:.2, ft:"bandpass", f:1900, q:.8, gain:.45, at:.2}); gsTone({f:220, to:160, len:.12, type:"triangle", gain:.25, at:.2});
+    gsTone({f:150, to:45, len:.3, gain:.8, at:.42}); gsNoise({len:1.5, ft:"highpass", f:6500, gain:.32, at:.42, att:.002}); gsNoise({len:.9, ft:"bandpass", f:9000, q:2, gain:.15, at:.42}); }],
+  grillen:["🦗","Grillen", () => { for(let g=0;g<5;g++) for(let k=0;k<4;k++) gsTone({f:4600, len:.03, gain:.07, at:g*.42 + k*.05 + (g%2)*.08, att:.004}); }],
+  tusch:["🎺","Tusch", () => { [392, 494, 587, 784].forEach(f=>gsTone({f, len:.22, type:"sawtooth", filt:2600, gain:.07, att:.015}));
+    [523, 659, 784, 1047].forEach(f=>{ gsTone({f, len:1.2, type:"sawtooth", filt:3000, fto:1200, gain:.07, att:.02, at:.28, vib:5, vibF:5.5}); gsTone({f:f*1.003, len:1.2, type:"square", filt:2000, gain:.03, at:.28}); }); }],
+  boing:["🤸","Boing", () => { gsTone({f:90, to:420, glide:.12, len:.9, gain:.4, vib:60, vibF:16}); gsTone({f:180, to:840, glide:.12, len:.5, type:"triangle", gain:.08, vib:120, vibF:16}); }],
+  troete:["📯","Tröte", () => { gsTone({f:330, to:520, glide:.18, len:1.1, type:"sawtooth", filt:1600, q:5, gain:.2, att:.03, hold:.7, vib:9, vibF:7});
+    gsTone({f:332, to:523, glide:.18, len:1.1, type:"square", filt:900, q:2, gain:.08, att:.03, hold:.7}); gsNoise({len:1, ft:"bandpass", f:1500, q:3, gain:.05, at:.05}); }]
 };
 function gsChan(){
   if(gsCh || typeof sb==="undefined" || !sb || !online) return gsCh;
@@ -271,7 +329,8 @@ function gsShowReact(m){
 /* ---------- Austeilen: neue Karten fliegen vom Stapel in die Reihe ---------- */
 const gsCalm = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 function gsDeal(els){
-  els.forEach((el, i)=>setTimeout(()=>gsSfx.deal(), i*170));
+  const STEP = 420, DUR = 1150;                                       // langsamer, Karte für Karte
+  els.forEach((el, i)=>setTimeout(()=>gsSfx.deal(DUR/1000 - .05), i*STEP));
   const dk = document.querySelector("#gsRoot .gs-deck"); if(!dk || !els.length || gsCalm()) return;
   const a = dk.getBoundingClientRect();
   dk.animate && dk.animate([{transform:"none"}, {transform:"translateY(-6px) rotate(-3deg)"}, {transform:"none"}], {duration:300});
@@ -279,12 +338,14 @@ function gsDeal(els){
     if(!el.animate) return;
     el.classList.remove("fresh");
     const b = el.getBoundingClientRect(), dx = a.left+a.width/2-b.left-b.width/2, dy = a.top+a.height/2-b.top-b.height/2;
+    // vom Stapel hochwirbeln, einmal komplett (360°) drehen, dabei aufdecken, mit kleinem Federn landen
     el.animate([
-      {transform:`translate(${dx}px,${dy}px) scale(${a.width/b.width}) rotate(-14deg) rotateY(180deg)`, filter:"brightness(.35)", opacity:.9},
-      {transform:`translate(${dx*.35}px,${dy*.35 - 40}px) scale(1.12) rotate(4deg) rotateY(90deg)`, filter:"brightness(.8)", offset:.55},
-      {transform:"translate(0,0) scale(1.06) rotate(0) rotateY(0deg)", filter:"brightness(1.7)", offset:.85},
-      {transform:"none", filter:"none", opacity:1}],
-      {duration:620, delay:i*170, easing:"cubic-bezier(.35,.8,.4,1)", fill:"backwards"});
+      {transform:`translate(${dx}px,${dy}px) scale(${a.width/b.width}) rotate(0deg) rotateY(180deg)`, filter:"brightness(.35)"},
+      {transform:`translate(${dx*.55}px,${dy*.55 - 110}px) scale(1.3) rotate(150deg) rotateY(150deg)`, filter:"brightness(.6)", offset:.4},
+      {transform:`translate(${dx*.15}px,${dy*.15 - 50}px) scale(1.2) rotate(300deg) rotateY(40deg)`, filter:"brightness(1.3)", offset:.72},
+      {transform:"translate(0px,6px) scale(.96) rotate(360deg) rotateY(0deg)", filter:"brightness(1.9)", offset:.88},
+      {transform:"translate(0px,0px) scale(1) rotate(360deg) rotateY(0deg)", filter:"brightness(1)"}],
+      {duration:DUR, delay:i*STEP, easing:"cubic-bezier(.4,.1,.35,1)", fill:"backwards"});
   });
 }
 
@@ -302,23 +363,29 @@ function gsCardPop(c, pid, done){
   const dk = document.querySelector("#gsRoot .gs-deck");                // Karte kommt vom Stapel und dreht sich auf
   if(pc && dk && pc.animate && !gsCalm()){
     const a = dk.getBoundingClientRect(), b = pc.getBoundingClientRect();
-    pc.animate([{transform:`translate(${a.left+a.width/2-b.left-b.width/2}px,${a.top+a.height/2-b.top-b.height/2}px) scale(${a.width/b.width}) rotateY(180deg)`, filter:"brightness(.4)"},
-      {transform:"translate(0,0) scale(1.08) rotateY(0deg)", filter:"brightness(1.6)", offset:.75}, {transform:"none", filter:"none"}], {duration:700, easing:"cubic-bezier(.3,.9,.4,1)"});
+    const dx = a.left+a.width/2-b.left-b.width/2, dy = a.top+a.height/2-b.top-b.height/2;
+    pc.animate([{transform:`translate(${dx}px,${dy}px) scale(${a.width/b.width}) rotate(0deg) rotateY(180deg)`, filter:"brightness(.4)"},
+      {transform:`translate(${dx*.4}px,${dy*.4}px) scale(.8) rotate(200deg) rotateY(90deg)`, filter:"brightness(.8)", offset:.45},
+      {transform:"translate(0px,0px) scale(1.12) rotate(360deg) rotateY(0deg)", filter:"brightness(1.8)", offset:.8},
+      {transform:"translate(0px,0px) scale(1) rotate(360deg) rotateY(0deg)", filter:"brightness(1)"}], {duration:1100, easing:"cubic-bezier(.35,.2,.3,1)"});
   }
-  if(typeof rrTone==="function") rrTone(520, .25, "triangle", .06, 900);
+  gsSfx.reveal();
   const land = ()=>{ gsIncoming.delete(c.id); const t = document.querySelector(`#gsRoot .gs-seat [data-cid="${c.id}"]`); if(t) t.classList.remove("incoming"); };
   setTimeout(()=>{
     const card = ov.querySelector(".gcard"), t = document.querySelector(`#gsRoot .gs-seat [data-cid="${c.id}"]`);
     ov.classList.add("fly");
     let fin = false; const finish = ()=>{ if(fin) return; fin = true; land(); ov.className = "gs-cardpop"; ov.innerHTML = ""; done(); };
-    setTimeout(finish, 1000);                                         // Sicherheitsnetz, falls die Animation pausiert (Tab im Hintergrund)
+    setTimeout(finish, 1500);                                         // Sicherheitsnetz, falls die Animation pausiert (Tab im Hintergrund)
     if(card && t && card.animate){
       const a = card.getBoundingClientRect(), b = t.getBoundingClientRect();
-      const anim = card.animate([{transform:"none"}, {transform:`translate(${b.left+b.width/2-a.left-a.width/2}px,${b.top+b.height/2-a.top-a.height/2}px) scale(${b.width/a.width})`}],
-        {duration:650, easing:"cubic-bezier(.5,0,.25,1)", fill:"forwards"});
+      const dx = b.left+b.width/2-a.left-a.width/2, dy = b.top+b.height/2-a.top-a.height/2, sc = b.width/a.width;
+      gsSfx.fly();
+      const anim = card.animate([{transform:"translate(0px,0px) scale(1) rotate(0deg)"},
+        {transform:`translate(${dx*.5}px,${dy*.5 - 60}px) scale(${(1+sc)/2}) rotate(200deg)`, offset:.55},
+        {transform:`translate(${dx}px,${dy}px) scale(${sc}) rotate(360deg)`}], {duration:950, easing:"cubic-bezier(.45,.05,.3,1)", fill:"forwards"});
       anim.onfinish = finish;
     } else setTimeout(finish, 350);
-  }, 1500);
+  }, 2300);
 }
 /* ---------- KI-Gegner: das startende Gerät steuert sie; ist es weg, übernimmt ein anderes ---------- */
 function gsBotTick(S){
@@ -334,7 +401,7 @@ function gsBotTick(S){
     if(!driver) S2.host = GS_CID;
     const m = who==="next" ? {type:"next"} : GSL.botMove(S2, who);
     if(m) gsDo(m);
-  }, (driver ? (S.pending ? 1100 : 1400) : 9000) + (gsPopBusy ? 2200 * Math.max(1, gsPopQ.length + 1) : 0));
+  }, (driver ? (S.pending ? 1100 : 1400) : 9000) + (gsPopBusy ? 3400 * Math.max(1, gsPopQ.length + 1) : 0));
 }
 
 /* ---------- Ergebnis in die Olympiade (über die vorhandene Rundenwertung) ---------- */
