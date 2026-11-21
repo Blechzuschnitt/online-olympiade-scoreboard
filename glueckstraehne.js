@@ -72,6 +72,7 @@ function renderGs(){
   if(ev0) ev0.items.forEach(e=>{ if(e.type==="card" && e.card && GSL.kind(e.card.k)!=="num") gsIncoming.add(e.card.id); });
   if(!gsInit){ gsSeen = ids; gsLastEv = S.ev && S.ev.id; }
   root.innerHTML = gsTableHTML(S); root._html = null;
+  if(gsInit) gsDeal([...root.querySelectorAll(".gs-seat [data-cid]")].filter(el=>!gsSeen.has(el.dataset.cid) && !gsIncoming.has(el.dataset.cid)));
   const ev = S.ev && S.ev.id!==gsLastEv ? S.ev : null;
   gsLastEv = S.ev && S.ev.id; gsSeen = ids; gsInit = true;
   if(ev) gsEffects(ev, S);
@@ -211,6 +212,25 @@ function gsCatPop(key){
 }
 
 
+/* ---------- Austeilen: neue Karten fliegen vom Stapel in die Reihe ---------- */
+const gsCalm = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+function gsDeal(els){
+  const dk = document.querySelector("#gsRoot .gs-deck"); if(!dk || !els.length || gsCalm()) return;
+  const a = dk.getBoundingClientRect();
+  dk.animate && dk.animate([{transform:"none"}, {transform:"translateY(-6px) rotate(-3deg)"}, {transform:"none"}], {duration:300});
+  els.forEach((el, i)=>{
+    if(!el.animate) return;
+    el.classList.remove("fresh");
+    const b = el.getBoundingClientRect(), dx = a.left+a.width/2-b.left-b.width/2, dy = a.top+a.height/2-b.top-b.height/2;
+    el.animate([
+      {transform:`translate(${dx}px,${dy}px) scale(${a.width/b.width}) rotate(-14deg) rotateY(180deg)`, filter:"brightness(.35)", opacity:.9},
+      {transform:`translate(${dx*.35}px,${dy*.35 - 40}px) scale(1.12) rotate(4deg) rotateY(90deg)`, filter:"brightness(.8)", offset:.55},
+      {transform:"translate(0,0) scale(1.06) rotate(0) rotateY(0deg)", filter:"brightness(1.7)", offset:.85},
+      {transform:"none", filter:"none", opacity:1}],
+      {duration:620, delay:i*170, easing:"cubic-bezier(.35,.8,.4,1)", fill:"backwards"});
+  });
+}
+
 /* ---------- Gezogene Sonderkarte groß zeigen und zum Spieler fliegen lassen ---------- */
 function gsQueue(fn){ gsPopQ.push(fn); if(!gsPopBusy) gsPopNext(); }
 function gsPopNext(){ const f = gsPopQ.shift(); gsPopBusy = !!f; if(f) f(()=>setTimeout(gsPopNext, 120)); }
@@ -222,6 +242,12 @@ function gsCardPop(c, pid, done){
   ov.innerHTML = `<div class="gs-cp-who">${p ? gsWho(p) : ""} zieht</div><div class="gs-cp-card">${gsCard(c)}</div>`;
   const pc = ov.querySelector(".gcard"); if(pc) pc.classList.remove("incoming", "fresh");
   ov.className = "gs-cardpop"; void ov.offsetWidth; ov.className = "gs-cardpop show";
+  const dk = document.querySelector("#gsRoot .gs-deck");                // Karte kommt vom Stapel und dreht sich auf
+  if(pc && dk && pc.animate && !gsCalm()){
+    const a = dk.getBoundingClientRect(), b = pc.getBoundingClientRect();
+    pc.animate([{transform:`translate(${a.left+a.width/2-b.left-b.width/2}px,${a.top+a.height/2-b.top-b.height/2}px) scale(${a.width/b.width}) rotateY(180deg)`, filter:"brightness(.4)"},
+      {transform:"translate(0,0) scale(1.08) rotateY(0deg)", filter:"brightness(1.6)", offset:.75}, {transform:"none", filter:"none"}], {duration:700, easing:"cubic-bezier(.3,.9,.4,1)"});
+  }
   if(typeof rrTone==="function") rrTone(520, .25, "triangle", .06, 900);
   const land = ()=>{ gsIncoming.delete(c.id); const t = document.querySelector(`#gsRoot .gs-seat [data-cid="${c.id}"]`); if(t) t.classList.remove("incoming"); };
   setTimeout(()=>{

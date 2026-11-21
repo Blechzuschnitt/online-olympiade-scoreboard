@@ -108,7 +108,7 @@
 .gs-specials .gcard{--cw:76px}
 .gs-others .gs-specials{gap:4px;margin-bottom:6px;padding-bottom:6px}
 .gs-others .gs-specials .gcard{--cw:34px}
-.gs-cards{position:relative;display:flex;flex-wrap:wrap;gap:10px;min-height:134px;align-items:center;perspective:900px}
+.gs-cards{position:relative;display:flex;flex-wrap:wrap;gap:10px;min-height:134px;align-items:center}
 .gs-empty{color:var(--mu);font-size:14px}
 .gs-meter{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;color:var(--mu)}
 .gs-meter i{width:26px;height:6px;border-radius:3px;background:rgba(255,255,255,.1)}
@@ -217,6 +217,4 @@
 .gs-cardpop.fly .gs-cp-who{opacity:0;transition:opacity .2s}
 .gs-cp-who{font:800 clamp(16px,2.6vw,22px) var(--fb);color:#fff;text-shadow:0 2px 8px #000}
 .gs-cardpop .gcard{--cw:min(210px,50vw)}
-.gs-cardpop.show .gs-cp-card .gcard{animation:gsCatCard .8s cubic-bezier(.3,1.4,.5,1)}
-@media (prefers-reduced-motion:reduce){ .gs-cardpop.show .gs-cp-card .gcard{animation:none} }
 .gs-others .gs-specials .gcard{--cw:40px}.gs-others .gcard.special.used::before{display:none}
