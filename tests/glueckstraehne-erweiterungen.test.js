@@ -104,4 +104,18 @@ test("KI spielt ganze Partien in allen Varianten ohne Fehler", () => {
     assert.equal(S.phase, "over");
   }
 });
+test("Gezogene Sonderkarten liegen sichtbar beim Spieler, bis die Runde endet", () => {
+  let S = gameX(["G","n4","n5"], [P[0],P[1]]);
+  S = go(S, {type:"draw"});
+  assert.deepEqual(S.players[0].used.map(c=>c.k), ["G"]);
+  S = go(S, {type:"draw"}); S = go(S, {type:"draw"}); S = go(S, {type:"stay"}); S = go(S, {type:"stay"});
+  assert.equal(S.phase, "roundEnd"); assert.equal(S.players[0].used.length, 1);
+  S = go(S, {type:"next"}); assert.deepEqual(S.players[0].used, []);
+});
+test("Beenden nach einer Runde macht das Spiel fertig", () => {
+  let S = gameX(["n3","n4"], [P[0],P[1]], {});
+  assert.ok(G.act(S, {type:"finish"}).err);
+  S = go(S, {type:"draw"}); S = go(S, {type:"draw"}); S = go(S, {type:"stay"}); S = go(S, {type:"stay"});
+  S = go(S, {type:"finish"}); assert.equal(S.phase, "over");
+});
 console.log(`\n${n} Tests bestanden.`);

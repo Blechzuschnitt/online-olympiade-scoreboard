@@ -25,6 +25,7 @@ const GS_CAT = {
 const GS_BOTS = [{id:"bot-robo", name:"Robo", bot:"clever"}, {id:"bot-ada", name:"Ada", bot:"locker"}, {id:"bot-max", name:"Max", bot:"clever"}];
 const GS_CID = (()=>{ try{ let c = localStorage.getItem("gs-cid"); if(!c){ c = uid(); localStorage.setItem("gs-cid", c); } return c; }catch(e){ return uid(); } })();
 let gsMe = null; try{ gsMe = localStorage.getItem("gs-me"); }catch(e){}
+let gsPopQ = [], gsPopBusy = false, gsIncoming = new Set();
 let gsSeen = new Set(), gsLastEv = null, gsInit = false, gsTarget = 200, gsOpts = {sabotage:true, apokalypse:false}, gsBots = [], gsBotTimer = null, gsBotKey = null;
 picks.gs = picks.gs || [];
 const gsHue = n => 188 + n*11;                       // 0 = Cyan … 12 = Magenta
@@ -45,9 +46,9 @@ function gsFace(k, title, text, hue, cls, extra = ""){
   return `<div class="gcard special ${isArt ? "art" : "sym"} ${cls}"${style} ${extra}><span class="banner">${title}</span>${isArt ? "" : `<span class="ico">${k}</span>`}<span class="eff">${text}</span></div>`;
 }
 function gsCard(c, opt = {}){
-  const k = c.k, t = GSL.kind(k), fresh = opt.fresh && gsInit ? " fresh" : "";
+  const k = c.k, t = GSL.kind(k), fresh = (opt.fresh && gsInit ? " fresh" : "") + (gsIncoming.has(c.id) ? " incoming" : "") + (opt.used ? " used" : "");
   const pickAttr = opt.pick ? ` data-gs="pickcard" data-cid="${c.id}"` : ` data-cid="${c.id}"`, pickCls = opt.pick ? " pickable" : "";
-  if(opt.hidden) return `<div class="gcard back${fresh}" data-cid="${c.id}"><span class="seal">?</span></div>`;
+  if(opt.hidden) return gsBack(fresh, "?", ` data-cid="${c.id}"`);
   if(t==="num"){
     const n = GSL.cval(c), copies = Math.max(1, GSL.val(k));
     return `<div class="gcard num${fresh}${pickCls}" style="--h:${gsHue(n)}"${pickAttr}><span class="banner">${GS_WORD[n]||n}</span><span class="cx tl">${n}</span><span class="cx br">${n}</span>
@@ -57,7 +58,8 @@ function gsCard(c, opt = {}){
   const d = GS_CARD[k] || ["❔", k, "", 200];
   return gsFace(d[0], d[1], d[2], d[3], `${t==="mut" ? "mut" : ""}${fresh}${pickCls}`, pickAttr);
 }
-const gsBack = (extra="") => `<div class="gcard back ${extra}"><span class="seal">7</span></div>`;
+// Kartenrücken: Gitter, Doppelrahmen, Rauten-Siegel mit Stern
+const gsBack = (extra="", mark="✦", attr="") => `<div class="gcard back ${extra}"${attr}><span class="bk-l t">GLÜCKS</span><span class="seal"><i>${mark}</i></span><span class="bk-l b">STRÄHNE</span></div>`;
 const gsCatCard = (key, cls="") => { const d = GS_CAT[key]; return gsFace(d[0], d[1], d[2], key==="virus" ? 90 : 0, "cat "+cls); };
 
 /* ---------- Bildschirme ---------- */
@@ -65,7 +67,9 @@ function renderGs(){
   const root = $("gsRoot"); if(!root || typeof GSL==="undefined") return;
   const S = state.gs;
   if(!S){ gsInit = false; clearTimeout(gsBotTimer); gsBotKey = null; return gsHtml(root, gsSetupHTML()); }
-  const ids = new Set(S.players.flatMap(p=>p.row.map(c=>c.id)));
+  const ids = new Set(S.players.flatMap(p=>p.row.concat(p.used||[]).map(c=>c.id)));
+  const ev0 = gsInit && S.ev && S.ev.id!==gsLastEv ? S.ev : null;   // neue Sonderkarten fliegen erst noch zum Spieler
+  if(ev0) ev0.items.forEach(e=>{ if(e.type==="card" && e.card && GSL.kind(e.card.k)!=="num") gsIncoming.add(e.card.id); });
   if(!gsInit){ gsSeen = ids; gsLastEv = S.ev && S.ev.id; }
   root.innerHTML = gsTableHTML(S); root._html = null;
   const ev = S.ev && S.ev.id!==gsLastEv ? S.ev : null;
@@ -112,7 +116,7 @@ function gsRow(S, p, i, big){
   return `<div class="gs-seat${big ? " big" : ""}${act ? " act" : ""} st-${p.status}" data-pid="${esc(p.id)}">
     <div class="gs-head"><span class="who">${gsWho(p)}${tags.length ? ` <span class="gs-tags">${tags.join(" ")}</span>` : ""}</span>${badge ? `<span class="gs-badge">${badge}</span>` : ""}
       <span class="gs-pts"><b>${hidden ? "?" : p.status==="bust" ? 0 : sc}</b><small>Runde</small></span><span class="gs-pts tot"><b>${p.total}</b><small>Konto</small></span></div>
-    ${(sp=>sp.length ? `<div class="gs-specials">${sp.map(card).join("")}</div>` : "")(p.row.filter(c=>GSL.kind(c.k)!=="num"))}
+    ${(sp=>sp.length ? `<div class="gs-specials">${sp.join("")}</div>` : "")(p.row.filter(c=>GSL.kind(c.k)!=="num").map(card).concat((p.used||[]).map(c=>gsCard(c, {used:true}))))}
     <div class="gs-cards">${p.row.filter(c=>GSL.kind(c.k)==="num").map(card).join("") || `<span class="gs-empty">${big ? (p.row.length ? "Noch keine Zahl" : "Noch keine Karte – zieh die erste!") : "–"}</span>`}</div>
     ${big ? `<div class="gs-meter" aria-label="${nums} von 7 verschiedenen Zahlen">${Array.from({length:7},(_,k)=>`<i class="${k<nums && !hidden ? "on" : ""}"></i>`).join("")}<span>${hidden ? "🌑 Blackout – deine Karten sind verdeckt" : `${nums}/7 verschiedene`}</span></div>` : ""}
   </div>`;
@@ -147,7 +151,7 @@ function gsTableHTML(S){
       <div class="gs-res">${GSL.ranking(S).map((p,i)=>{ const j = S.players.indexOf(p); return `<div class="${i===0 && S.phase==="over" ? "win" : ""}"><span>${i+1}.</span><span>${gsWho(p)}</span><em>${last.status[j]==="bust" ? "raus" : "+"+last.scores[j]}</em><b>${p.total}</b></div>`; }).join("")}</div>
       <div class="row center">${S.phase==="over"
         ? `${O() && !S.transferred ? `<button class="pri" data-gs="transfer">🏆 In die Olympiade übertragen</button>` : S.transferred ? `<span class="pill">✓ übertragen</span>` : ""}<button class="ghost" data-gs="new">🔁 Neues Spiel</button>`
-        : `<button class="pri big" data-gs="next">▶ Nächste Runde</button>`}</div></div>` : "";
+        : `<button class="pri big" data-gs="next">▶ Nächste Runde</button><button class="ghost" data-gs="finish">🏁 Beenden</button>`}</div></div>` : "";
   return `<div class="gs">
     <div class="gs-top">
       <div class="gs-brand"><span class="gs-logo sm">GLÜCKS<span>STRÄHNE</span></span><span class="pill">Runde ${S.round} · Ziel ${S.target}</span>${modes ? `<span class="pill">${modes}</span>` : ""}</div>
@@ -192,7 +196,8 @@ function gsEffects(ev, S){
     if(e.type==="bust" && seat){ seat.classList.add("shatter"); if(typeof rrTone==="function") rrTone(160, .5, "sawtooth", .08, 60); }
     if(e.type==="seven"){ gsBanner("🌟 SIEBEN! +15"); confetti($("fx"), 2500); fanfare(true); }
     if((e.type==="anchor" || e.type==="joker") && seat){ seat.classList.add("saved"); gsBanner(e.type==="anchor" ? "⚓ GERETTET" : "😈 JOKER!"); }
-    if(e.type==="cat" || e.type==="riss") gsCatPop(e.type==="riss" ? e.sub : e.k);
+    if(e.type==="card" && e.card && GSL.kind(e.card.k)!=="num"){ const c = e.card, pid = e.pid; gsQueue(done=>gsCardPop(c, pid, done)); }
+    if(e.type==="cat" || e.type==="riss"){ const key = e.type==="riss" ? e.sub : e.k; gsQueue(done=>{ gsCatPop(key); setTimeout(done, 2700); }); }
     if(e.type==="over"){ confetti($("fx"), 4000); fanfare(true); }
   }
   if(ev.items.some(x=>x.type==="card")) wclick(.35);
@@ -205,6 +210,33 @@ function gsCatPop(key){
   if(typeof rrTone==="function") rrTone(90, 1, "sawtooth", .08, 40);
 }
 
+
+/* ---------- Gezogene Sonderkarte groß zeigen und zum Spieler fliegen lassen ---------- */
+function gsQueue(fn){ gsPopQ.push(fn); if(!gsPopBusy) gsPopNext(); }
+function gsPopNext(){ const f = gsPopQ.shift(); gsPopBusy = !!f; if(f) f(()=>setTimeout(gsPopNext, 120)); }
+function gsCardPop(c, pid, done){
+  if(typeof curView!=="undefined" && curView!=="gs"){ gsIncoming.delete(c.id); return done(); }
+  let ov = $("gsCardPop");
+  if(!ov){ ov = document.createElement("div"); ov.id = "gsCardPop"; document.body.appendChild(ov); }
+  const p = gsPlayer(pid);
+  ov.innerHTML = `<div class="gs-cp-who">${p ? gsWho(p) : ""} zieht</div><div class="gs-cp-card">${gsCard(c)}</div>`;
+  const pc = ov.querySelector(".gcard"); if(pc) pc.classList.remove("incoming", "fresh");
+  ov.className = "gs-cardpop"; void ov.offsetWidth; ov.className = "gs-cardpop show";
+  if(typeof rrTone==="function") rrTone(520, .25, "triangle", .06, 900);
+  const land = ()=>{ gsIncoming.delete(c.id); const t = document.querySelector(`#gsRoot .gs-seat [data-cid="${c.id}"]`); if(t) t.classList.remove("incoming"); };
+  setTimeout(()=>{
+    const card = ov.querySelector(".gcard"), t = document.querySelector(`#gsRoot .gs-seat [data-cid="${c.id}"]`);
+    ov.classList.add("fly");
+    let fin = false; const finish = ()=>{ if(fin) return; fin = true; land(); ov.className = "gs-cardpop"; ov.innerHTML = ""; done(); };
+    setTimeout(finish, 1000);                                         // Sicherheitsnetz, falls die Animation pausiert (Tab im Hintergrund)
+    if(card && t && card.animate){
+      const a = card.getBoundingClientRect(), b = t.getBoundingClientRect();
+      const anim = card.animate([{transform:"none"}, {transform:`translate(${b.left+b.width/2-a.left-a.width/2}px,${b.top+b.height/2-a.top-a.height/2}px) scale(${b.width/a.width})`}],
+        {duration:650, easing:"cubic-bezier(.5,0,.25,1)", fill:"forwards"});
+      anim.onfinish = finish;
+    } else setTimeout(finish, 350);
+  }, 1500);
+}
 /* ---------- KI-Gegner: das startende Gerät steuert sie; ist es weg, übernimmt ein anderes ---------- */
 function gsBotTick(S){
   let who = null;
@@ -219,7 +251,7 @@ function gsBotTick(S){
     if(!driver) S2.host = GS_CID;
     const m = who==="next" ? {type:"next"} : GSL.botMove(S2, who);
     if(m) gsDo(m);
-  }, driver ? (S.pending ? 1100 : 1400) : 9000);
+  }, (driver ? (S.pending ? 1100 : 1400) : 9000) + (gsPopBusy ? 2200 * Math.max(1, gsPopQ.length + 1) : 0));
 }
 
 /* ---------- Ergebnis in die Olympiade (über die vorhandene Rundenwertung) ---------- */
@@ -255,6 +287,7 @@ document.addEventListener("click", e=>{
     case "choose": gsDo({type:"choose", pid:b.dataset.pid}); break;
     case "pickcard": gsDo({type:"choose", cid:b.dataset.cid}); break;
     case "next": gsDo({type:"next"}); break;
+    case "finish": confirmTap(b, ()=>gsDo({type:"finish"})); break;
     case "target": gsTarget = +b.dataset.t; renderGs(); break;
     case "mode": gsOpts[b.dataset.k] = !gsOpts[b.dataset.k]; renderGs(); break;
     case "addbot": { const nb = GS_BOTS.find(x=>!gsBots.some(y=>y.id===x.id)); if(nb) gsBots.push(nb); renderGs(); break; }

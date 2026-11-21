@@ -104,6 +104,8 @@ function drawFor(S, p, rnd, items, depth = 0){
     return placeNumber(S, p, c, items);
   }
   items.push({type:"card", pid:p.id, card:c});
+  // Ausgespielte Sonderkarten bleiben bis Rundenende sichtbar beim Spieler liegen (nur Anzeige)
+  if(t!=="boost" && c.k!=="D" && !(c.k==="S" && !p.anchor)) (p.used = p.used || []).push({k:c.k, id:c.id});
   if(t==="boost") return void p.row.push(c);
   if(t==="mut"){ S.discard.push(c); return mutate(S, p, c.k, items); }
   if(t==="riss"){ S.discard.push(c); return riss(S, rnd, items); }
@@ -286,9 +288,12 @@ function act(state, a, rnd = Math.random){
     case "next":
       if(S.phase!=="roundEnd") return fail("Die Runde läuft noch.");
       S.players.forEach(x=>{ x.row.forEach(c=>{ delete c.v; }); S.discard.push(...x.row);
-        Object.assign(x, {row:[], status:"in", anchor:false, guard:false, double:false, volStay:false, cursed:false, muts:{}, survivor:false}); });
+        Object.assign(x, {row:[], status:"in", anchor:false, guard:false, double:false, volStay:false, cursed:false, muts:{}, survivor:false, used:[]}); });
       Object.assign(S, {round:S.round+1, dealer:(S.dealer+1) % S.players.length, phase:"play", cat:null, catDone:false, mods:{}, turns:0, blackout:[], lastAction:null});
       S.turn = S.dealer; items.push({type:"round"}); break;
+    case "finish":                                                    // nach einer Runde vorzeitig beenden
+      if(S.phase!=="roundEnd") return fail("Beenden geht nur zwischen den Runden.");
+      S.phase = "over"; S.finished = true; items.push({type:"over"}); break;
     default: return fail("Unbekannte Aktion.");
   }
   S.seq++; S.ev = {id:S.seq, items};

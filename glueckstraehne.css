@@ -3,7 +3,7 @@
    ===================================================================== */
 .gs{position:relative}
 .gs-logo{font:900 clamp(30px,6.5vw,64px)/1 var(--fh);letter-spacing:.06em;color:#fff;text-shadow:0 0 24px rgba(0,245,255,.55)}
-.gs-logo span{background:linear-gradient(90deg,var(--gold),var(--orange),var(--mag));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 12px rgba(255,0,229,.5))}
+.gs-logo span{background:linear-gradient(90deg,var(--gold),var(--orange),var(--mag));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
 .gs-logo.sm{font-size:clamp(18px,2.4vw,26px)}
 .gs-hero{display:grid;justify-items:center;gap:10px;margin:6px 0 22px;text-align:center}
 .gs-sub{font:700 clamp(10px,1.3vw,13px) var(--fh);letter-spacing:.24em;color:var(--mu)}
@@ -23,7 +23,7 @@
 .gcard::after{content:"";position:absolute;inset:-40%;pointer-events:none;mix-blend-mode:screen;opacity:.55;transform:translateX(-60%) rotate(20deg);
   background:linear-gradient(90deg,transparent 35%,rgba(255,255,255,.22) 45%,rgba(0,245,255,.25) 50%,rgba(255,0,229,.25) 55%,transparent 65%);transition:transform .9s var(--ease)}
 .gcard:hover::after,.gcard.fresh::after{transform:translateX(60%) rotate(20deg)}
-.gcard .big{position:relative;font:900 calc(var(--cw)*.5)/1 var(--fh);color:transparent;-webkit-text-stroke:calc(var(--cw)*.018) var(--hc);filter:drop-shadow(0 0 calc(var(--cw)*.06) var(--hc))}
+.gcard .big{padding:0;min-width:0;letter-spacing:0;border:0;border-radius:0;background:none;box-shadow:none;justify-self:center;position:relative;font:900 calc(var(--cw)*.5)/1 var(--fh);color:#fff;text-shadow:0 0 calc(var(--cw)*.06) var(--hc),0 0 calc(var(--cw)*.14) var(--hc)}
 .gcard .cx{position:absolute;font:800 calc(var(--cw)*.15)/1 var(--fn);color:var(--hc)}
 .gcard .tl{left:9%;top:7%}.gcard .br{right:9%;bottom:7%;transform:rotate(180deg)}
 .gcard .pips{position:absolute;left:18%;right:18%;bottom:11%;display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--cw)*.02)}
@@ -39,9 +39,9 @@
 .gcard.num .banner{position:absolute;z-index:2;left:12%;right:12%;top:6%;height:12%;display:grid;place-items:center;border-radius:calc(var(--cw)*.04);
   font:900 calc(var(--cw)*.08)/1 var(--fh);letter-spacing:.06em;color:#fff;background:linear-gradient(180deg,hsl(var(--h) 70% 30%),hsl(var(--h) 80% 12%));
   box-shadow:inset 0 0 0 1.5px hsl(var(--h) 100% 65%),0 0 10px -2px var(--hc);text-shadow:0 0 6px var(--hc)}
-.gcard.num .big{z-index:1;margin-top:8%;font-size:calc(var(--cw)*.56);-webkit-text-stroke:0;
-  background:linear-gradient(180deg,#fff 15%,hsl(var(--h) 100% 78%) 55%,hsl(var(--h) 100% 52%));-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 calc(var(--cw)*.05) hsl(var(--h) 100% 60%)) drop-shadow(0 calc(var(--cw)*.02) 0 rgba(0,0,0,.6))}
+/* massive Ziffer ohne Verlaufstext + Filter – das verschiebt iPad-Safari */
+.gcard.num .big{z-index:1;margin-top:8%;font-size:calc(var(--cw)*.56);color:hsl(var(--h) 100% 90%);
+  text-shadow:0 calc(var(--cw)*.015) 0 hsl(var(--h) 100% 45%),0 0 calc(var(--cw)*.06) hsl(var(--h) 100% 60%),0 0 calc(var(--cw)*.16) hsl(var(--h) 100% 55%)}
 .gcard.num .cx{z-index:2;display:grid;place-items:center;width:calc(var(--cw)*.17);aspect-ratio:1;border-radius:50%;font-size:calc(var(--cw)*.1);color:#fff;
   background:hsl(var(--h) 80% 18%);box-shadow:inset 0 0 0 1px hsl(var(--h) 100% 65%)}
 .gcard.num .tl{left:5%;top:auto;bottom:5%}.gcard.num .br{right:5%;bottom:5%;transform:none}
@@ -53,10 +53,19 @@
 .gcard.action .ico{position:relative;font-size:calc(var(--cw)*.34);line-height:1;filter:drop-shadow(0 0 8px rgba(255,216,77,.8))}
 .gcard.action .name{position:relative;font:900 calc(var(--cw)*.1)/1.05 var(--fh);letter-spacing:.04em;color:var(--gold);margin-top:4px}
 .gcard.aF{--h:350}.gcard.aZ{--h:285}
-.gcard.back{--h:250;background:repeating-conic-gradient(from 0deg at 50% 50%,#141a44 0 15deg,#1c1450 15deg 30deg),#0b0e24}
-.gcard.back::before{inset:9%;border:2px solid rgba(0,245,255,.55);background:radial-gradient(circle,rgba(255,0,229,.35),transparent 62%)}
-.gcard.back .seal{position:relative;display:grid;place-items:center;width:42%;aspect-ratio:1;border-radius:50%;font:900 calc(var(--cw)*.24) var(--fh);color:#fff;
-  background:radial-gradient(circle at 35% 30%,#ff7af0,#7d0070);box-shadow:0 0 0 2px var(--cyan),0 0 18px var(--mag)}
+/* Kartenrücken: Rautengitter, goldener Außen- und Cyan-Innenrahmen, Rauten-Siegel */
+.gcard.back{--h:300;background:
+    radial-gradient(circle at 50% 50%,rgba(255,0,229,.45),transparent 34%),
+    repeating-linear-gradient(45deg,rgba(0,245,255,.16) 0 1px,transparent 1px calc(var(--cw)*.09)),
+    repeating-linear-gradient(-45deg,rgba(255,0,229,.16) 0 1px,transparent 1px calc(var(--cw)*.09)),
+    linear-gradient(160deg,#22104f,#0a0b26 55%,#1b0a3a);
+  box-shadow:inset 0 0 0 calc(var(--cw)*.03) #ffd84d,inset 0 0 0 calc(var(--cw)*.05) #0a0b26,0 10px 22px -8px #000,0 0 16px -6px var(--mag)}
+.gcard.back::before{inset:9%;border:1.5px solid rgba(0,245,255,.75);border-radius:calc(var(--cw)*.06);background:none;box-shadow:0 0 10px -2px var(--cyan),inset 0 0 10px -2px var(--cyan)}
+.gcard.back .seal{position:absolute;left:50%;top:50%;display:grid;place-items:center;width:38%;aspect-ratio:1;border-radius:18%;transform:translate(-50%,-50%) rotate(45deg);
+  background:linear-gradient(135deg,#ffe27a,#ff8a1f 45%,#ff00e5);box-shadow:0 0 0 calc(var(--cw)*.02) #0a0b26,0 0 0 calc(var(--cw)*.035) var(--cyan),0 0 calc(var(--cw)*.22) rgba(255,0,229,.8)}
+.gcard.back .seal i{transform:rotate(-45deg);font:900 calc(var(--cw)*.2)/1 var(--fh);font-style:normal;color:#2a0838}
+.gcard.back .bk-l{position:absolute;left:0;right:0;text-align:center;font:800 calc(var(--cw)*.075)/1 var(--fh);letter-spacing:.14em;color:#ffe27a;text-shadow:0 0 6px rgba(255,138,31,.8)}
+.gcard.back .bk-l.t{top:15%}.gcard.back .bk-l.b{bottom:15%}
 .gcard.fresh{animation:gsFlip .7s cubic-bezier(.3,1.4,.5,1)}
 @keyframes gsFlip{0%{transform:perspective(600px) translateY(-40px) rotateY(-100deg) scale(.7);filter:brightness(2.2)}60%{filter:brightness(1.4)}}
 
@@ -121,9 +130,12 @@
 .gs-others .gs-head{margin-bottom:8px}.gs-others .gs-head .who{font-size:14px}
 .gs-others .gs-pts b{font-size:18px}.gs-others .gs-pts.tot b{font-size:15px}
 .gs-others .gs-cards{min-height:62px;gap:4px}
-.gs-others .gcard{--cw:44px;box-shadow:inset 0 0 0 1px var(--hc),0 4px 10px -4px #000}
-.gs-others .gcard .pips,.gs-others .gcard .lbl,.gs-others .gcard .cx,.gs-others .gcard .banner{display:none}
-.gs-others .gcard.num .big{margin-top:0}
+/* Gegner: kleine, klar lesbare Karten – volle Farbe, große Ziffer mittig */
+.gs-others .gcard{--cw:48px;box-shadow:inset 0 0 0 1.5px var(--hc),0 4px 10px -4px #000}
+.gs-others .gcard .pips,.gs-others .gcard .lbl,.gs-others .gcard .cx,.gs-others .gcard .banner,.gs-others .gcard.back .bk-l{display:none}
+.gs-others .gcard.num{background:linear-gradient(165deg,hsl(var(--h) 85% 34%),hsl(var(--h) 80% 14%));box-shadow:inset 0 0 0 1.5px hsl(var(--h) 100% 68%),0 4px 10px -4px #000}
+.gs-others .gcard.num::before{display:none}
+.gs-others .gcard.num .big{margin:0;font-size:calc(var(--cw)*.62);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.6),0 0 6px hsl(var(--h) 100% 60%)}
 .gs-others .gcard.action .name{font-size:6px}
 
 .gs-banner{position:fixed;left:50%;top:40%;z-index:85;transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;padding:18px 34px;border-radius:20px;
@@ -192,3 +204,19 @@
 .gs-others .gcard.special .banner{font-size:5px}.gs-others .gcard.special .eff,.gs-others .gcard .tag{display:none}
 .gs-fan .gcard.special{--cw:84px}
 @media (max-width:600px){ .gs-fan .gcard.special{--cw:62px} }
+
+/* ---------- Ausgespielte Sonderkarten & großes Aufdecken ---------- */
+.gcard.used{filter:saturate(.6) brightness(.72)}
+.gcard.special.used::before{display:block;content:"GESPIELT";inset:auto;left:-10%;right:-10%;top:44%;z-index:4;border:0;border-radius:0;padding:2px 0;text-align:center;
+  font:900 calc(var(--cw)*.09)/1 var(--fh);letter-spacing:.12em;color:#fff;background:rgba(255,61,90,.85);transform:rotate(-14deg)}
+.gcard.incoming{visibility:hidden}
+.gs-cardpop{position:fixed;inset:0;z-index:87;display:grid;place-content:center;justify-items:center;gap:12px;padding:20px;text-align:center;pointer-events:none;opacity:0;
+  background:radial-gradient(circle,rgba(60,20,120,.7),rgba(5,5,18,.9) 70%);transition:opacity .25s}
+.gs-cardpop.show{opacity:1}
+.gs-cardpop.fly{background:transparent;transition:background .4s}
+.gs-cardpop.fly .gs-cp-who{opacity:0;transition:opacity .2s}
+.gs-cp-who{font:800 clamp(16px,2.6vw,22px) var(--fb);color:#fff;text-shadow:0 2px 8px #000}
+.gs-cardpop .gcard{--cw:min(210px,50vw)}
+.gs-cardpop.show .gs-cp-card .gcard{animation:gsCatCard .8s cubic-bezier(.3,1.4,.5,1)}
+@media (prefers-reduced-motion:reduce){ .gs-cardpop.show .gs-cp-card .gcard{animation:none} }
+.gs-others .gs-specials .gcard{--cw:40px}.gs-others .gcard.special.used::before{display:none}
