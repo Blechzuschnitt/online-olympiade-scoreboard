@@ -25,7 +25,7 @@ const GS_CAT = {
 const GS_BOTS = [{id:"bot-robo", name:"Robo", bot:"clever"}, {id:"bot-ada", name:"Ada", bot:"locker"}, {id:"bot-max", name:"Max", bot:"clever"}];
 const GS_CID = (()=>{ try{ let c = localStorage.getItem("gs-cid"); if(!c){ c = uid(); localStorage.setItem("gs-cid", c); } return c; }catch(e){ return uid(); } })();
 let gsMe = null; try{ gsMe = localStorage.getItem("gs-me"); }catch(e){}
-let gsPopQ = [], gsPopBusy = false, gsIncoming = new Set();
+let gsPopQ = [], gsPopBusy = false, gsIncoming = new Set(), gsTurnKey = null, gsCh = null, gsReactAt = 0;
 let gsSeen = new Set(), gsLastEv = null, gsInit = false, gsTarget = 200, gsOpts = {sabotage:true, apokalypse:false}, gsBots = [], gsBotTimer = null, gsBotKey = null;
 picks.gs = picks.gs || [];
 const gsHue = n => 188 + n*11;                       // 0 = Cyan … 12 = Magenta
@@ -76,6 +76,9 @@ function renderGs(){
   const ev = S.ev && S.ev.id!==gsLastEv ? S.ev : null;
   gsLastEv = S.ev && S.ev.id; gsSeen = ids; gsInit = true;
   if(ev) gsEffects(ev, S);
+  const cur = S.players[S.turn], tk = S.phase==="play" ? S.round + ":" + cur.id : null;   // „Du bist dran“
+  if(tk && tk!==gsTurnKey && gsTurnKey!==null && gsCan(cur.id)) setTimeout(()=>gsSfx.turn(), gsPopBusy ? 1800 : 450);
+  gsTurnKey = tk || ""; gsChan();
   gsBotTick(S);
 }
 function gsHtml(el, h){ if(el._html!==h){ el._html = h; el.innerHTML = h; } }
@@ -155,9 +158,11 @@ function gsTableHTML(S){
         : `<button class="pri big" data-gs="next">▶ Nächste Runde</button><button class="ghost" data-gs="finish">🏁 Beenden</button>`}</div></div>` : "";
   return `<div class="gs">
     <div class="gs-top">
-      <div class="gs-brand"><span class="gs-logo sm">GLÜCKS<span>STRÄHNE</span></span><span class="pill">Runde ${S.round} · Ziel ${S.target}</span>${modes ? `<span class="pill">${modes}</span>` : ""}</div>
+      <div class="gs-brand"><span class="gs-logo sm">GLÜCKS<span>STRÄHNE</span></span><span class="pill">Runde ${S.round} · Ziel ${S.target}</span>${modes ? `<span class="pill">${modes}</span>` : ""}
+        <button class="pill gs-snd${soundOn ? "" : " off"}" data-gs="sound" aria-pressed="${soundOn}" title="Alle Töne an/aus (dieses Gerät)">${soundOn ? "🔊 Ton an" : "🔇 Ton aus"}</button></div>
       <div class="gs-me">Ich bin: ${humans.map(p=>`<button class="chip${gsMe===p.id ? " on" : ""}" data-gs="me" data-pid="${esc(p.id)}">${who(p)}</button>`).join("")}<button class="chip${gsMe==="all" ? " on" : ""}" data-gs="me" data-pid="all">📱 Alle hier</button></div>
     </div>
+    <div class="gs-board" role="group" aria-label="Soundboard – Reaktion an alle">${Object.entries(GS_FX).map(([k,f])=>`<button data-gs="react" data-k="${k}" title="${f[1]}" aria-label="${f[1]}">${f[0]}</button>`).join("")}</div>
     <div class="gs-main">
       <div class="gs-pile">
         <div class="gs-deck">${gsBack("d3")}${gsBack("d2")}${gsBack("d1")}<span class="gs-count">${S.deck.length}</span></div>
@@ -211,7 +216,6 @@ function gsEffects(ev, S){
     if(e.type==="cat" || e.type==="riss"){ const key = e.type==="riss" ? e.sub : e.k; gsQueue(done=>{ gsCatPop(key); setTimeout(done, 2700); }); }
     if(e.type==="over"){ confetti($("fx"), 4000); fanfare(true); }
   }
-  if(ev.items.some(x=>x.type==="card")) wclick(.35);
 }
 function gsBanner(t){ const b = $("gsBanner"); if(!b) return; b.textContent = t; b.className = "gs-banner"; void b.offsetWidth; b.className = "gs-banner show"; }
 function gsCatPop(key){
@@ -222,9 +226,46 @@ function gsCatPop(key){
 }
 
 
+/* ---------- Töne (alles synthetisch, gilt nur bei „Ton an“) ---------- */
+const gsT = (f, len, type, gain, to, at = 0) => setTimeout(()=>rrTone(f, len, type, gain, to), at);
+const gsN = (len, pow, type, freq, gain, at = 0) => setTimeout(()=>{ const ac = audio(); if(ac) noise(ac, ac.currentTime, len, pow, type, freq, gain); }, at);
+const gsSfx = {
+  deal: () => { gsN(.12, 1.2, "highpass", 2600, .22); gsN(.05, 4, "lowpass", 500, .35, 110); },      // Wischen + Ablegen
+  turn: () => { gsT(660, .18, "triangle", .07); gsT(880, .18, "triangle", .07, 0, 120); gsT(1320, .4, "sine", .06, 0, 240); }
+};
+// Soundboard: [Symbol, Name, Klang]
+const GS_FX = {
+  applaus:["👏","Applaus", () => { for(let k=0;k<34;k++) gsN(.03, 3, "bandpass", 1500+Math.random()*1800, .12+Math.random()*.15, Math.random()*1300); }],
+  lachen:["😂","Lachen", () => [0,170,340,510].forEach((t,i)=>gsT(520-i*40, .14, "square", .05, 420-i*40, t))],
+  wahwah:["😢","Wah-wah", () => { [392,370,349].forEach((f,i)=>gsT(f, .38, "sawtooth", .06, f*.97, i*400)); for(let k=0;k<6;k++) gsT(330-k*4, .12, "sawtooth", .06, 315-k*4, 1200+k*110); }],
+  trommel:["🥁","Ba-dum-tss", () => { gsT(150, .15, "sine", .3, 60); gsT(180, .15, "sine", .3, 70, 170); gsN(.6, 1.5, "highpass", 6000, .25, 360); }],
+  grillen:["🦗","Grillen", () => [0,500,1000].forEach(t=>[0,45,90].forEach(d=>gsT(4300, .03, "sine", .05, 0, t+d)))],
+  tusch:["🎺","Tusch", () => fanfare(false)],
+  boing:["🤸","Boing", () => gsT(180, .6, "sine", .25, 720)],
+  troete:["📯","Tröte", () => { gsT(466, .7, "square", .05); gsT(587, .7, "square", .04); gsT(698, .7, "square", .035); }]
+};
+function gsChan(){
+  if(gsCh || typeof sb==="undefined" || !sb || !online) return gsCh;
+  gsCh = sb.channel("gs-react", {config:{broadcast:{self:false}}}).on("broadcast", {event:"react"}, m=>gsShowReact(m.payload||{})).subscribe();
+  return gsCh;
+}
+function gsSendReact(k){
+  if(!GS_FX[k] || Date.now()-gsReactAt<900) return; gsReactAt = Date.now();
+  const p = gsMe && gsMe!=="all" ? gsPlayer(gsMe) : null, msg = {k, name:p ? p.name : ""};
+  gsShowReact(msg); const ch = gsChan(); if(ch) ch.send({type:"broadcast", event:"react", payload:msg});
+}
+function gsShowReact(m){
+  const f = GS_FX[m.k]; if(!f || curView!=="gs") return;
+  f[2]();
+  const b = document.createElement("div"); b.className = "gs-react";
+  b.style.left = (12 + Math.random()*70) + "%"; b.innerHTML = `<span>${f[0]}</span>${m.name ? `<small>${esc(String(m.name).slice(0,20))}</small>` : ""}`;
+  document.body.appendChild(b); setTimeout(()=>b.remove(), 2600);
+}
+
 /* ---------- Austeilen: neue Karten fliegen vom Stapel in die Reihe ---------- */
 const gsCalm = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 function gsDeal(els){
+  els.forEach((el, i)=>setTimeout(()=>gsSfx.deal(), i*170));
   const dk = document.querySelector("#gsRoot .gs-deck"); if(!dk || !els.length || gsCalm()) return;
   const a = dk.getBoundingClientRect();
   dk.animate && dk.animate([{transform:"none"}, {transform:"translateY(-6px) rotate(-3deg)"}, {transform:"none"}], {duration:300});
@@ -323,6 +364,8 @@ document.addEventListener("click", e=>{
     case "choose": gsDo({type:"choose", pid:b.dataset.pid}); break;
     case "pickcard": gsDo({type:"choose", cid:b.dataset.cid}); break;
     case "next": gsDo({type:"next"}); break;
+    case "sound": setSound(!soundOn); renderGs(); break;
+    case "react": gsSendReact(b.dataset.k); break;
     case "finish": confirmTap(b, ()=>gsDo({type:"finish"})); break;
     case "target": gsTarget = +b.dataset.t; renderGs(); break;
     case "mode": gsOpts[b.dataset.k] = !gsOpts[b.dataset.k]; renderGs(); break;
