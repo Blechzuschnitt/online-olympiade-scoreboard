@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="raetselrad.css?v=20261121a">
-<link rel="stylesheet" href="glueckstraehne.css?v=20261121a">
+<link rel="stylesheet" href="glueckstraehne.css?v=20261121b">
 <style>
 /* ============ Design-System ============ */
 :root{
@@ -704,8 +704,9 @@ function setLive(mode){
   $("live").classList.toggle("on", online);
   $("liveText").textContent = online ? "Live – für alle synchron" : mode==="connecting" ? "Verbinde …" : "Offline – nur auf diesem Gerät";
 }
+const myRevs = [];                 // eigene Speicherstände: kommen sie verspätet als Echo zurück, wird nicht zurückgesprungen
 function save(){
-  state._rev = uid(); keepLocal();
+  state._rev = uid(); myRevs.push(state._rev); if(myRevs.length>50) myRevs.shift(); keepLocal();
   if(!sb) return;
   clearTimeout(saveTimer); saveTimer = setTimeout(pushRemote, 250);
 }
@@ -718,7 +719,7 @@ function pushRemote(){
   });
 }
 function applyRemote(d){
-  if(!valid(d) || d._rev===state._rev) return;
+  if(!valid(d) || d._rev===state._rev || myRevs.includes(d._rev)) return;
   if(spinning || editingId || (typeof rrBusy==="function" && rrBusy())){ applyRemote.queued = d; return; }   // später übernehmen
   setState(d); keepLocal(); render();
   maybeRemoteSpin(); maybeRemoteCeremony();
@@ -1575,7 +1576,7 @@ if(startHash==="live" || startHash==="tv") tvOn(true);
 </script>
 <script src="raetselrad-logic.js?v=20261121a"></script>
 <script src="raetselrad.js?v=20261121a"></script>
-<script src="glueckstraehne-logic.js?v=20261121a"></script>
-<script src="glueckstraehne.js?v=20261121a"></script>
+<script src="glueckstraehne-logic.js?v=20261121b"></script>
+<script src="glueckstraehne.js?v=20261121b"></script>
 </body>
 </html>

@@ -25,6 +25,7 @@ const GS_CAT = {
 const GS_BOTS = [{id:"bot-robo", name:"Robo", bot:"clever"}, {id:"bot-ada", name:"Ada", bot:"locker"}, {id:"bot-max", name:"Max", bot:"clever"}];
 const GS_CID = (()=>{ try{ let c = localStorage.getItem("gs-cid"); if(!c){ c = uid(); localStorage.setItem("gs-cid", c); } return c; }catch(e){ return uid(); } })();
 let gsMe = null; try{ gsMe = localStorage.getItem("gs-me"); }catch(e){}
+let gsGid = null, gsMaxSeq = 0;
 let gsPopQ = [], gsPopBusy = false, gsIncoming = new Set(), gsTurnKey = null, gsCh = null, gsReactAt = 0;
 let gsSeen = new Set(), gsLastEv = null, gsInit = false, gsTarget = 200, gsOpts = {sabotage:true, apokalypse:false}, gsBots = [], gsBotTimer = null, gsBotKey = null;
 picks.gs = picks.gs || [];
@@ -67,6 +68,11 @@ function renderGs(){
   const root = $("gsRoot"); if(!root || typeof GSL==="undefined") return;
   const S = state.gs;
   if(!S){ gsInit = false; clearTimeout(gsBotTimer); gsBotKey = null; return gsHtml(root, gsSetupHTML()); }
+  // Ein älterer Stand desselben Spiels (verspätetes Echo) wird nur gezeigt – ohne Animationen, Töne oder KI-Zug
+  const gid = S.gid || (S.host + S.players.map(p=>p.id).join());
+  if(gid!==gsGid){ gsGid = gid; gsMaxSeq = 0; }
+  if(gsInit && S.seq < gsMaxSeq){ root.innerHTML = gsTableHTML(S); root._html = null; return; }
+  gsMaxSeq = S.seq;
   const ids = new Set(S.players.flatMap(p=>p.row.concat(p.used||[]).map(c=>c.id)));
   const ev0 = gsInit && S.ev && S.ev.id!==gsLastEv ? S.ev : null;   // neue Sonderkarten fliegen erst noch zum Spieler
   if(ev0) ev0.items.forEach(e=>{ if(e.type==="card" && e.card && GSL.kind(e.card.k)!=="num") gsIncoming.add(e.card.id); });

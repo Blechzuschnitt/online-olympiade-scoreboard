@@ -67,7 +67,7 @@ function rowScore(p, S){
 
 function newGame(players, target, rnd = Math.random, opts = {}){
   const o = {sabotage:!!opts.sabotage, apokalypse:!!opts.apokalypse};
-  return {v:2, opts:o, phase:"play", round:1, target:target||200, dealer:0, turn:0, seq:1, ev:{id:1, items:[{type:"start"}]},
+  return {v:2, gid:Math.floor(rnd()*2e9).toString(36) + Date.now().toString(36), opts:o, phase:"play", round:1, target:target||200, dealer:0, turn:0, seq:1, ev:{id:1, items:[{type:"start"}]},
     deck:shuffle(makeDeck(o), rnd), discard:[], cats:o.apokalypse ? shuffle(CATS, rnd) : [],
     pending:null, forced:null, queue:[], advanceFrom:null, last:null, lastAction:null,
     cat:null, mods:{}, turns:0, blackout:[], host:opts.host||null,
