@@ -235,3 +235,7 @@
 .gs-score .bt{left:0;background:linear-gradient(90deg,var(--gold),var(--orange))}
 .gs-score .br{background:var(--green);opacity:.8}
 @media (max-width:900px){ .gs-pile .gs-score{grid-column:1/-1} }
+
+/* Eigene Zahlenkarten: immer eine Reihe – Platz für 7 (bei mehr Karten schrumpfen sie weiter) */
+.gs-seat.big .gs-cards{container-type:inline-size;flex-wrap:nowrap;gap:clamp(4px,1.2vw,10px);min-height:0}
+.gs-seat.big .gs-cards .gcard{--cw:min(124px,calc((100cqi - (var(--n) - 1) * clamp(4px,1.2vw,10px)) / var(--n)))}

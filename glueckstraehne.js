@@ -118,7 +118,7 @@ function gsRow(S, p, i, big){
     <div class="gs-head"><span class="who">${gsWho(p)}${tags.length ? ` <span class="gs-tags">${tags.join(" ")}</span>` : ""}</span>${badge ? `<span class="gs-badge">${badge}</span>` : ""}
       <span class="gs-pts"><b>${hidden ? "?" : p.status==="bust" ? 0 : sc}</b><small>Runde</small></span><span class="gs-pts tot"><b>${p.total}</b><small>Konto</small></span></div>
     ${(sp=>sp.length ? `<div class="gs-specials">${sp.join("")}</div>` : "")(p.row.filter(c=>GSL.kind(c.k)!=="num").map(card).concat((p.used||[]).map(c=>gsCard(c, {used:true}))))}
-    <div class="gs-cards">${p.row.filter(c=>GSL.kind(c.k)==="num").map(card).join("") || `<span class="gs-empty">${big ? (p.row.length ? "Noch keine Zahl" : "Noch keine Karte – zieh die erste!") : "–"}</span>`}</div>
+    <div class="gs-cards" style="--n:${Math.max(7, p.row.filter(c=>GSL.kind(c.k)==="num").length)}">${p.row.filter(c=>GSL.kind(c.k)==="num").map(card).join("") || `<span class="gs-empty">${big ? (p.row.length ? "Noch keine Zahl" : "Noch keine Karte – zieh die erste!") : "–"}</span>`}</div>
     ${big ? `<div class="gs-meter" aria-label="${nums} von 7 verschiedenen Zahlen">${Array.from({length:7},(_,k)=>`<i class="${k<nums && !hidden ? "on" : ""}"></i>`).join("")}<span>${hidden ? "🌑 Blackout – deine Karten sind verdeckt" : `${nums}/7 verschiedene`}</span></div>` : ""}
   </div>`;
 }
