@@ -162,7 +162,7 @@ function gsTableHTML(S){
       <div class="gs-pile">
         <div class="gs-deck">${gsBack("d3")}${gsBack("d2")}${gsBack("d1")}<span class="gs-count">${S.deck.length}</span></div>
         <div class="gs-msg" id="gsMsg">${gsMsg(S)}</div>
-        ${gsControls(S)}${gsCatInfo(S)}${roundBox}
+        ${gsControls(S)}${gsCatInfo(S)}${roundBox}${S.phase==="play" ? gsScores(S) : ""}
       </div>
       ${gsRow(S, bigP, S.players.indexOf(bigP), true)}
     </div>
@@ -170,6 +170,16 @@ function gsTableHTML(S){
     <div class="row center" style="margin-top:14px"><button class="ghost sm" data-gs="quit">Spiel beenden</button><button class="ghost sm" data-view="spiele">← Spiele</button></div>
     <div class="gs-banner" id="gsBanner"></div><div class="gs-catpop" id="gsCatPop"></div>
   </div>`;
+}
+// Aktueller Stand: Konto + was in dieser Runde gerade auf dem Tisch liegt, Balken bis zum Ziel
+function gsScores(S){
+  const cur = S.players[S.turn];
+  return `<div class="gs-score"><div class="k">Punktestand <small>Ziel ${S.target}</small></div>${GSL.ranking(S).map((p,i)=>{
+    const r = p.status==="bust" ? 0 : GSL.rowScore(p, S), hid = (S.blackout||[]).includes(p.id) && gsCan(p.id);
+    const w = v => Math.min(100, v / S.target * 100).toFixed(1);
+    return `<div class="${p===cur ? "cur" : ""} st-${p.status}"><span class="pl">${i+1}.</span><span class="nm">${gsWho(p)}</span>
+      <em>${p.status==="bust" ? "💥" : hid ? "+?" : "+" + r}</em><b>${p.total}</b>
+      <span class="gs-bar"><span class="bt" style="width:${w(p.total)}%"></span><span class="br" style="left:${w(p.total)}%;width:${hid ? 0 : Math.max(0, w(p.total + r) - w(p.total))}%"></span></span></div>`; }).join("")}</div>`;
 }
 function gsMsg(S){
   const nm = id => esc((gsPlayer(id)||{}).name||""), items = S.ev ? S.ev.items : [];
